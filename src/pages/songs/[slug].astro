@@ -22,23 +22,34 @@ const { Content } = await render(entry);
         <a href="/songs" class="text-red-300 hover:text-[#c9c9c9] transition-colors">← 返回列表</a>
       </nav>
 
-      <header class="mb-8">
+      <header class="mb-6">
+        <!-- 标题 -->
         <h1 class="text-5xl text-[#c9c9c9] tracking-[0.2em] drop-shadow-[0_0_10px_rgba(201,201,201,0.3)]">
           {entry.data.title}
         </h1>
-        <div class="flex justify-start mt-4 items-center gap-4 text-[#888] text-sm tracking-widest">
-          <span>词：{entry.data.lyricist}</span>
-          <span class="h-3 w-px bg-[#c9c9c9]/30"></span>
-          <span>曲：{entry.data.composer}</span>
-          <span class="h-3 w-px bg-[#c9c9c9]/30"></span>
-          <span>专辑：{entry.data.album}</span>
-          <span class="h-3 w-px bg-[#c9c9c9]/30"></span>
-          <span>{entry.data.releaseDate}</span>
-          <span class="h-3 w-px bg-[#c9c9c9]/30"></span>
-          <button id="show-credits" class="transition-all duration-300 border-b border-transparent hover:border-red-300 hover:text-red-300"> 制作人员 </button>
+        <!-- 元数据 -->
+        <div class="flex flex-wrap items-center gap-y-2 text-[#888] text-sm tracking-widest mt-4">
+          <div class="flex items-center">
+            <span>词：{entry.data.lyricist}</span>
+            <span class="mx-4 h-3 w-px bg-[#c9c9c9]/30"></span>
+          </div>
+          <div class="flex items-center">
+            <span>曲：{entry.data.composer}</span>
+            <span class="mx-4 h-3 w-px bg-[#c9c9c9]/30"></span>
+          </div>
+          <div class="flex items-center">
+            <span>专辑：{entry.data.album}</span>
+            <span class="mx-4 h-3 w-px bg-[#c9c9c9]/30"></span>
+          </div>
+          <div class="flex items-center">
+            <span>{entry.data.releaseDate}</span>
+            <span class="mx-4 h-3 w-px bg-[#c9c9c9]/30"></span>
+          </div>
+          <button id="show-credits" class="w-fit transition-all duration-300 border-b border-transparent hover:border-red-300 hover:text-red-300 text-left"> 制作人员 </button>
         </div>
       </header>
-      <hr class="border-[#c9c9c9]/30 mb-6" />
+      <!-- 装饰线 -->
+      <hr class="border-[#c9c9c9]/30 mb-5" />
       <!-- 歌词内容 -->
       <div class="prose prose-invert prose-lg mx-auto lyrics-container mt-0">
         <Content />
