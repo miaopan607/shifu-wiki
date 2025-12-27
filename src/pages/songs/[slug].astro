@@ -18,15 +18,15 @@ const { Content } = await render(entry);
 <Layout title={`${entry.data.title} | 黄诗扶 Wiki`}>
   <main class="min-h-screen bg-[rgb(77,0,0)] p-8 md:p-20 font-serif">
     <article class="max-w-2xl mx-auto">
-      <nav class="mb-8 text-center">
+      <nav class="mb-8">
         <a href="/songs" class="text-red-300 hover:text-[#c9c9c9] transition-colors">← 返回列表</a>
       </nav>
 
-      <header class="mb-8 text-center">
+      <header class="mb-8">
         <h1 class="text-5xl text-[#c9c9c9] tracking-[0.2em] drop-shadow-[0_0_10px_rgba(201,201,201,0.3)]">
           {entry.data.title}
         </h1>
-        <div class="flex justify-center mt-4 items-center gap-4 text-[#888] text-sm tracking-widest">
+        <div class="flex justify-start mt-4 items-center gap-4 text-[#888] text-sm tracking-widest">
           <span>词：{entry.data.lyricist}</span>
           <span class="h-3 w-px bg-[#c9c9c9]/30"></span>
           <span>曲：{entry.data.composer}</span>
@@ -38,12 +38,12 @@ const { Content } = await render(entry);
           <button id="show-credits" class="transition-all duration-300 border-b border-transparent hover:border-red-300 hover:text-red-300"> 制作人员 </button>
         </div>
       </header>
+      <hr class="border-[#c9c9c9]/30 mb-6" />
+      <!-- 歌词内容 -->
+      <div class="prose prose-invert prose-lg mx-auto lyrics-container mt-0">
+        <Content />
+      </div>
     </article>
-
-    <!-- 歌词内容 -->
-    <div class="prose prose-invert prose-lg mx-auto text-center lyrics-container mt-0">
-      <Content />
-    </div>
   </main>
 
   <!-- 制作人员名单 -->
@@ -55,8 +55,8 @@ const { Content } = await render(entry);
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
         </svg>
       </button>
-      <div class="text-center">
-        <h3 class="text-2xl text-[#c9c9c9] mb-10 tracking-widest border-b border-[#c9c9c9]/10 pb-4 inline-block px-8">制作人员</h3>
+      <div>
+        <h3 class="text-2xl text-[#c9c9c9] mb-10 tracking-widest border-b border-[#c9c9c9]/10 pb-4 inline-block">制作人员</h3>
         <div class="whitespace-pre-line text-[#c9c9c9] leading-loose tracking-widest font-serif text-lg">
           {entry.data.credits}
         </div>
