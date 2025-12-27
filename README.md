@@ -1,4 +1,4 @@
-# 黄诗扶 Wiki (Shifu Wiki)
+# 黄诗扶 Wiki
 
 一个基于 [Astro](https://astro.build/) 构建的黄诗扶 Wiki。
 
