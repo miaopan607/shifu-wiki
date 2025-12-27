@@ -1,11 +1,49 @@
 ---
-import Welcome from '../components/Welcome.astro';
 import Layout from '../layouts/Layout.astro';
-
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+import '../styles/global.css';
 ---
 
-<Layout>
-	<Welcome />
+<Layout title="黄诗扶 Wiki">
+	<main class="min-h-screen bg-[rgb(77,0,0)] flex flex-col items-center justify-center p-4">
+		<div class="max-w-2xl w-full text-center space-y-8">
+			<!-- 标题 -->
+			<header class="space-y-2">
+				<h1 class="text-5xl font-serif text-[#c9c9c9] tracking-widest drop-shadow-[0_0_15px_rgba(162,50,62,0.3)]">黄诗扶 Wiki</h1>
+			</header>
+
+			<header class="space-y-2">
+				<h1 class="text-2xl font-serif text-[#c9c9c9] tracking-widest drop-shadow-[0_0_15px_rgba(162,50,62,0.3)]">开发预览</h1>
+			</header>
+
+			<!-- 装饰线 -->
+			<div class="flex justify-center">
+				<div class="h-px w-24 bg-[#c9c9c9] shadow-[0_0_8px] shadow-[#c9c9c9]"></div>
+			</div>
+
+			<!-- 卿卿与黄，地久天长！ -->
+			<section class="flex flex-col items-center py-10">
+				<div class="[writing-mode:vertical-rl] text-2xl font-serif text-[#c9c9c9] h-64 leading-relaxed tracking-widest">
+					<p>卿卿与黄</p>
+					<!-- 给这一句加上你的主题红 -->
+					<p class="mt-4 text-red-300">地久天长</p>
+				</div>
+			</section>
+
+			<!-- 导航 -->
+			<nav class="flex justify-center gap-6 text-md font-light text-[#888]">
+				<a href="/songs" class="links">音乐</a>
+			</nav>
+		</div>
+
+		<!-- 页脚 -->
+		<footer class="absolute bottom-8 text-[10px] text-[#333] tracking-widest">黄诗扶 Wiki</footer>
+	</main>
 </Layout>
+
+<style>
+	h1,
+	p,
+	div {
+		font-family: 'Source Han Serif SC', 'Noto Serif CJK SC', 'SimSun', 'STSong', serif;
+	}
+</style>

@@ -1,46 +1,44 @@
-# Astro Starter Kit: Basics
+# 黄诗扶 Wiki (Shifu Wiki)
 
-```sh
-npm create astro@latest -- --template basics
-```
+一个基于 [Astro](https://astro.build/) 构建的黄诗扶 Wiki。
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
-
-## 🚀 Project Structure
-
-Inside of your Astro project, you'll see the following folders and files:
+## 项目结构
 
 ```text
 /
-├── public/
-│   └── favicon.svg
-├── src
-│   ├── assets
-│   │   └── astro.svg
-│   ├── components
-│   │   └── Welcome.astro
-│   ├── layouts
-│   │   └── Layout.astro
-│   └── pages
-│       └── index.astro
-└── package.json
+├── src/
+│   ├── content/       # 内容库 (Markdown 文件)
+│   │   └── songs/     # 歌曲信息
+│   ├── layouts/       # 页面布局
+│   ├── pages/         # 页面路由
+│   └── styles/        # 全局样式
+├── public/            # 静态资源
+├── astro.config.mjs   # Astro 配置
+└── tailwind.config.mjs # Tailwind 配置
 ```
 
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
+## 开发指南
 
-## 🧞 Commands
+### 快速开始
 
-All commands are run from the root of the project, from a terminal:
+```bash
+# 安装依赖
+npm install
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+# 启动开发服务器
+npm run dev
+```
 
-## 👀 Want to learn more?
+### 生产构建
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+```bash
+# 构建静态站点
+npm run build
+
+# 预览构建结果
+npm run preview
+```
+
+## 开源协议
+
+本项目采用 [MIT](LICENSE) 协议开源。
