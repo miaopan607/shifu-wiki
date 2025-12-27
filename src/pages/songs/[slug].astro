@@ -4,11 +4,11 @@ import { getCollection, render } from 'astro:content';
 
 // 告诉 Astro 根据哪些 MD 文件生成路径
 export async function getStaticPaths() {
-	const songEntries = await getCollection('songs');
-	return songEntries.map((entry) => ({
-		params: { slug: entry.id.replace(/\.md$/, '') },
-		props: { entry },
-	}));
+  const songEntries = await getCollection('songs');
+  return songEntries.map((entry) => ({
+    params: { slug: entry.id.replace(/\.md$/, '') },
+    props: { entry },
+  }));
 }
 
 const { entry } = Astro.props;
@@ -16,43 +16,43 @@ const { Content } = await render(entry);
 ---
 
 <Layout title={`${entry.data.title} | 黄诗扶 Wiki`}>
-	<main class="min-h-screen bg-[rgb(77,0,0)] p-8 md:p-20 font-serif">
-		<article class="max-w-2xl mx-auto">
-			<nav class="mb-12 text-center">
-				<a href="/songs" class="text-red-300 hover:text-[#c9c9c9] transition-colors">← 返回列表</a>
-			</nav>
+  <main class="min-h-screen bg-[rgb(77,0,0)] p-8 md:p-20 font-serif">
+    <article class="max-w-2xl mx-auto">
+      <nav class="mb-12 text-center">
+        <a href="/songs" class="text-red-300 hover:text-[#c9c9c9] transition-colors">← 返回列表</a>
+      </nav>
 
-			<header class="mb-20 text-center">
-				<h1 class="text-5xl text-[#c9c9c9] tracking-[0.2em] drop-shadow-[0_0_10px_rgba(201,201,201,0.3)]">
-					{entry.data.title}
-				</h1>
-				<div class="flex justify-center mt-6 items-center gap-4 text-[#888] text-sm tracking-widest">
-					<span>{entry.data.album}</span>
-					<span class="h-3 w-px bg-[#c9c9c9]/30"></span>
-					<span>{entry.data.releaseDate}</span>
-				</div>
-			</header>
+      <header class="mb-20 text-center">
+        <h1 class="text-5xl text-[#c9c9c9] tracking-[0.2em] drop-shadow-[0_0_10px_rgba(201,201,201,0.3)]">
+          {entry.data.title}
+        </h1>
+        <div class="flex justify-center mt-6 items-center gap-4 text-[#888] text-sm tracking-widest">
+          <span>{entry.data.album}</span>
+          <span class="h-3 w-px bg-[#c9c9c9]/30"></span>
+          <span>{entry.data.releaseDate}</span>
+        </div>
+      </header>
 
-			<!-- 歌词内容 -->
-			<div class="prose prose-invert prose-lg mx-auto text-center lyrics-container">
-				<Content />
-			</div>
-		</article>
-	</main>
+      <!-- 歌词内容 -->
+      <div class="prose prose-invert prose-lg mx-auto text-center lyrics-container">
+        <Content />
+      </div>
+    </article>
+  </main>
 </Layout>
 
 <style is:global>
-	.lyrics-container p {
-		margin-top: 0 !important;
-		margin-bottom: 2rem !important;
-		color: #c9c9c9;
-		line-height: 1.8;
-	}
+  .lyrics-container p {
+    margin-top: 0 !important;
+    margin-bottom: 2rem !important;
+    color: #c9c9c9;
+    line-height: 1.8;
+  }
 
-	.lyrics-container h2 {
-		color: #c9c9c9 !important;
-		font-family: serif;
-		margin-top: 3rem !important;
-		margin-bottom: 1.5rem !important;
-	}
+  .lyrics-container h2 {
+    color: #c9c9c9 !important;
+    font-family: serif;
+    margin-top: 3rem !important;
+    margin-bottom: 1.5rem !important;
+  }
 </style>
