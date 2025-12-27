@@ -1,18 +1,19 @@
 @import 'tailwindcss';
 
 .links {
-  @apply transition-all duration-300 border-b border-transparent pb-1;
+	@apply transition-all duration-300 border-b border-transparent pb-1;
 
-  &:hover {
-    @apply border-red-300 text-red-300;
-  }
+	&:hover {
+		@apply border-red-300 text-red-300;
+	}
 }
 
-html, body {
-  scrollbar-gutter: stable;
+html,
+body {
+	scrollbar-gutter: stable;
 }
 
 html {
-  background-color: rgb(77, 0, 0);
-  color: #c9c9c9;
+	background-color: rgb(77, 0, 0);
+	color: #c9c9c9;
 }
