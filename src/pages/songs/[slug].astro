@@ -4,11 +4,11 @@ import { getCollection, render } from 'astro:content';
 
 // 告诉 Astro 根据哪些 MD 文件生成路径
 export async function getStaticPaths() {
-  const songEntries = await getCollection('songs');
-  return songEntries.map((entry) => ({
-    params: { slug: entry.id.replace(/\.md$/, '') },
-    props: { entry },
-  }));
+	const songEntries = await getCollection('songs');
+	return songEntries.map((entry) => ({
+		params: { slug: entry.id.replace(/\.md$/, '') },
+		props: { entry },
+	}));
 }
 
 const { entry } = Astro.props;
@@ -16,112 +16,160 @@ const { Content } = await render(entry);
 ---
 
 <Layout title={`${entry.data.title} | 黄诗扶 Wiki`}>
-  <main class="min-h-screen bg-[rgb(77,0,0)] p-8 md:p-20 font-serif">
-    <article class="max-w-2xl mx-auto">
-      <nav class="mb-8">
-        <a href="/songs" class="text-lg text-red-300 hover:text-[#c9c9c9] transition-colors">← 返回列表</a>
-      </nav>
+	<main class="min-h-screen bg-[rgb(77,0,0)] p-8 md:p-20 font-serif">
+		<div class="max-w-2xl mx-auto relative">
+			<nav class="mb-12">
+				<a href="/songs" class="text-lg text-red-300 hover:text-[#c9c9c9] transition-colors">← 返回列表</a>
+			</nav>
 
-      <header class="mb-6">
-        <!-- 标题 -->
-        <h1 class="text-5xl text-[#c9c9c9] tracking-[0.2em] drop-shadow-[0_0_10px_rgba(201,201,201,0.3)]">
-          {entry.data.title}
-        </h1>
-        <!-- 元数据 -->
-        <div class="flex flex-wrap items-center gap-y-2 text-[#888] text-sm tracking-widest mt-4">
-          <div class="flex items-center">
-            <span>词：{entry.data.lyricist}</span>
-            <span class="mx-4 h-3 w-px bg-[#c9c9c9]/30"></span>
-          </div>
-          <div class="flex items-center">
-            <span>曲：{entry.data.composer}</span>
-            <span class="mx-4 h-3 w-px bg-[#c9c9c9]/30"></span>
-          </div>
-          <div class="flex items-center">
-            <span>专辑：{entry.data.album}</span>
-            <span class="mx-4 h-3 w-px bg-[#c9c9c9]/30"></span>
-          </div>
-          <div class="flex items-center">
-            <span>{entry.data.releaseDate}</span>
-            <span class="mx-4 h-3 w-px bg-[#c9c9c9]/30"></span>
-          </div>
-          <button id="show-credits" class="w-fit transition-all duration-300 border-b border-transparent hover:border-red-300 hover:text-red-300 text-left"> 制作人员 </button>
-        </div>
-      </header>
-      <!-- 装饰线 -->
-      <hr class="border-[#c9c9c9]/30 mb-5" />
-      <!-- 歌词内容 -->
-      <div class="prose prose-invert mx-auto lyrics-container mt-0 [&_p]:text-lg">
-        <Content />
-      </div>
-    </article>
-  </main>
+			<div class="relative">
+				<article class="w-full">
+					<header class="mb-6">
+						<!-- 标题 -->
+						<h1 class="text-5xl text-[#c9c9c9] tracking-[0.2em] drop-shadow-[0_0_10px_rgba(201,201,201,0.3)]">
+							{entry.data.title}
+						</h1>
+						<!-- 元数据 -->
+						<div class="flex flex-wrap items-center gap-y-2 text-[#888] text-sm tracking-widest mt-4">
+							<div class="flex items-center">
+								<span>词：{entry.data.lyricist}</span>
+								<span class="mx-4 h-3 w-px bg-[#c9c9c9]/30"></span>
+							</div>
+							<div class="flex items-center">
+								<span>曲：{entry.data.composer}</span>
+								<span class="mx-4 h-3 w-px bg-[#c9c9c9]/30"></span>
+							</div>
+							<div class="flex items-center">
+								<span>专辑：{entry.data.album}</span>
+								<span class="mx-4 h-3 w-px bg-[#c9c9c9]/30"></span>
+							</div>
+							<div class="flex items-center">
+								<span>{entry.data.releaseDate}</span>
+								<span class="mx-4 h-3 w-px bg-[#c9c9c9]/30"></span>
+							</div>
+							<button id="show-credits" class="w-fit transition-all duration-300 border-b border-transparent hover:border-red-300 hover:text-red-300 text-left"> 制作人员 </button>
+						</div>
+					</header>
+					<!-- 装饰线 -->
+					<hr class="border-[#c9c9c9]/30 mb-5" />
+					<!-- 歌词内容 -->
+					<div class="prose prose-invert mx-auto lyrics-container mt-0 [&_p]:text-lg">
+						<Content />
+					</div>
+				</article>
+				<!-- 右侧边栏 -->
+				<aside class="w-full lg:w-56 shrink-0 mt-12 lg:mt-0 lg:absolute lg:left-[calc(100%+4rem)] lg:top-0">
+					<hr class="border-[#c9c9c9]/30 mb-5" />
+					{
+						entry.data.links && entry.data.links.length > 0 && (
+							<div class="flex flex-col gap-4 px-2">
+								{
+									entry.data.links.map((link) => (
+										<a
+											href={link.url}
+											target="_blank"
+											rel="noopener noreferrer"
+											class="text-[#c9c9c9]/80 hover:text-red-300 transition-all duration-300 text-sm tracking-[0.2em] flex items-start group whitespace-pre-line"
+										>
+											<span class="mr-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform -translate-x-2 group-hover:translate-x-0">→</span>
+											{link.name}
+										</a>
+									))
+								}
+							</div>
+							<hr class="border-[#c9c9c9]/30 mt-5 mb-5" />
+						)
+					}
+					{
+						entry.data.otherLinks && entry.data.otherLinks.length > 0 && (
+							<div class="flex flex-col gap-4 px-2">
+								{
+									entry.data.otherLinks.map((link) => (
+										<a
+											href={link.url}
+											target="_blank"
+											rel="noopener noreferrer"
+											class="text-[#c9c9c9]/80 hover:text-red-300 transition-all duration-300 text-sm tracking-[0.2em] flex items-start group whitespace-pre-line"
+										>
+											<span class="mr-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform -translate-x-2 group-hover:translate-x-0">→</span>
+											{link.name}
+										</a>
+									))
+								}
+							</div>
+							<hr class="border-[#c9c9c9]/30 mt-5" />
+						)
+					}
+				</aside>
+			</div>
+		</div>
+	</main>
 
-  <!-- 制作人员名单 -->
-  <div id="credits-modal" class="fixed inset-0 z-50 hidden items-center justify-center px-4">
-    <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" id="modal-overlay"></div>
-    <div class="relative bg-[rgb(60,0,0)] p-8 md:p-12 max-w-lg w-full max-h-[80vh] overflow-y-auto rounded-lg shadow-2xl border border-red-300/20 scrollbar-hide">
-      <button id="close-modal" class="absolute top-4 right-4 text-[#c9c9c9] hover:text-red-300 transition-colors cursor-pointer">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-        </svg>
-      </button>
-      <div>
-        <h3 class="text-2xl text-[#c9c9c9] mb-10 tracking-widest border-b border-[#c9c9c9]/10 pb-4 inline-block">制作人员</h3>
-        <div class="whitespace-pre-line text-[#c9c9c9] leading-loose tracking-widest font-serif text-lg">
-          {entry.data.credits}
-        </div>
-      </div>
-    </div>
-  </div>
+	<!-- 制作人员名单 -->
+	<div id="credits-modal" class="fixed inset-0 z-50 hidden items-center justify-center px-4">
+		<div class="absolute inset-0 bg-black/80 backdrop-blur-sm" id="modal-overlay"></div>
+		<div class="relative bg-[rgb(60,0,0)] p-8 md:p-12 max-w-lg w-full max-h-[80vh] overflow-y-auto rounded-lg shadow-2xl border border-red-300/20 scrollbar-hide">
+			<button id="close-modal" class="absolute top-4 right-4 text-[#c9c9c9] hover:text-red-300 transition-colors cursor-pointer">
+				<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+				</svg>
+			</button>
+			<div>
+				<h3 class="text-2xl text-[#c9c9c9] mb-10 tracking-widest border-b border-[#c9c9c9]/10 pb-4 inline-block">制作人员</h3>
+				<div class="whitespace-pre-line text-[#c9c9c9] leading-loose tracking-widest font-serif text-lg">
+					{entry.data.credits}
+				</div>
+			</div>
+		</div>
+	</div>
 </Layout>
 
 <script>
-  function setupModal() {
-    const showBtn = document.getElementById('show-credits');
-    const modal = document.getElementById('credits-modal');
-    const closeBtn = document.getElementById('close-modal');
-    const overlay = document.getElementById('modal-overlay');
+	function setupModal() {
+		const showBtn = document.getElementById('show-credits');
+		const modal = document.getElementById('credits-modal');
+		const closeBtn = document.getElementById('close-modal');
+		const overlay = document.getElementById('modal-overlay');
 
-    if (showBtn && modal && closeBtn && overlay) {
-      showBtn.addEventListener('click', () => {
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-        document.body.style.overflow = 'hidden';
-      });
+		if (showBtn && modal && closeBtn && overlay) {
+			showBtn.addEventListener('click', () => {
+				modal.classList.remove('hidden');
+				modal.classList.add('flex');
+				document.body.style.overflow = 'hidden';
+			});
 
-      const closeModal = () => {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-        document.body.style.overflow = 'auto';
-      };
+			const closeModal = () => {
+				modal.classList.add('hidden');
+				modal.classList.remove('flex');
+				document.body.style.overflow = 'auto';
+			};
 
-      closeBtn.addEventListener('click', closeModal);
-      overlay.addEventListener('click', closeModal);
+			closeBtn.addEventListener('click', closeModal);
+			overlay.addEventListener('click', closeModal);
 
-      // ESC 键关闭
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeModal();
-      });
-    }
-  }
+			// ESC 键关闭
+			document.addEventListener('keydown', (e) => {
+				if (e.key === 'Escape') closeModal();
+			});
+		}
+	}
 
-  // 初始加载和 Astro 视图过渡支持
-  document.addEventListener('astro:page-load', setupModal);
+	// 初始加载和 Astro 视图过渡支持
+	document.addEventListener('astro:page-load', setupModal);
 </script>
 
 <style is:global>
-  .lyrics-container p {
-    margin-top: 0 !important;
-    margin-bottom: 2rem !important;
-    color: #c9c9c9;
-    line-height: 1.8;
-  }
+	.lyrics-container p {
+		margin-top: 0 !important;
+		margin-bottom: 2rem !important;
+		color: #c9c9c9;
+		line-height: 1.8;
+	}
 
-  .lyrics-container h2 {
-    color: #c9c9c9 !important;
-    font-family: serif;
-    margin-top: 3rem !important;
-    margin-bottom: 1.5rem !important;
-  }
+	.lyrics-container h2 {
+		color: #c9c9c9 !important;
+		font-family: serif;
+		margin-top: 3rem !important;
+		margin-bottom: 1.5rem !important;
+	}
 </style>
