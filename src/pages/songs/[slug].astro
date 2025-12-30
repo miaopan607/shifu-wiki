@@ -12,8 +12,8 @@ if (!slug) {
 // 实时获取单条歌曲数据
 let song;
 try {
-	// 通过自定义的 number 字段查找
-	song = await pb.collection('songs').getFirstListItem(`number="${slug}"`);
+	// 通过自定义的 index 字段查找
+	song = await pb.collection('songs').getFirstListItem(`index="${slug}"`);
 } catch (e) {
 	// 如果找不到，返回 404
 	return Astro.redirect('/404');
