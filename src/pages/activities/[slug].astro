@@ -1,0 +1,65 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { pb } from '../../lib/pocketbase';
+
+const { slug } = Astro.params;
+
+// 确保 slug 存在
+if (!slug) {
+	return Astro.redirect('/404');
+}
+
+// 实时获取单条活动数据
+let activity;
+try {
+	// 通过自定义的 index 字段查找
+	activity = await pb.collection('activities').getFirstListItem(`index="${slug}"`);
+} catch (e) {
+	// 如果找不到，返回 404
+	return Astro.redirect('/404');
+}
+
+// 这里的颜色可以根据活动标签动态调整，目前先延用音乐页的逻辑
+const THEME_COLOR = "rgb(77,0,0)";
+---
+
+<Layout title={`${activity.title} | 黄诗扶 Wiki`}>
+	<main class={`min-h-screen p-8 md:p-20 font-serif`} style={`background-color: ${THEME_COLOR};`}>
+		<div class="max-w-2xl mx-auto relative">
+			<nav class="mb-12">
+				<a href="/activities" class="text-lg text-red-300 hover:text-[#c9c9c9] transition-colors">← 返回列表</a>
+			</nav>
+
+			<article class="w-full">
+				<header class="mb-6">
+					<h1 class="text-5xl text-[#c9c9c9] tracking-[0.2em] drop-shadow-[0_0_10px_rgba(201,201,201,0.3)]">
+						{activity.title}
+					</h1>
+					<div class="flex flex-wrap items-center gap-y-2 text-[#888] text-sm tracking-widest mt-4">
+						<div class="flex items-center">
+							<span>时间：{activity.date}</span>
+							<span class="mx-4 h-3 w-px bg-[#c9c9c9]/30"></span>
+						</div>
+						{activity.location && (
+							<div class="flex items-center">
+								<span>地点：{activity.location}</span>
+								<span class="mx-4 h-3 w-px bg-[#c9c9c9]/30"></span>
+							</div>
+						)}
+					</div>
+				</header>
+				<hr class="border-[#c9c9c9]/30 mb-8" />
+				
+				<!-- 活动正文内容 -->
+				<div class="prose prose-invert mx-auto content-container text-lg leading-relaxed text-[#c9c9c9]" set:html={activity.content || activity.description || '暂无详细介绍'} />
+			</article>
+		</div>
+	</main>
+</Layout>
+
+<style is:global>
+	.content-container p {
+		margin-bottom: 2rem !important;
+		line-height: 1.8;
+	}
+</style>

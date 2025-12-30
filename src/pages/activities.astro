@@ -1,16 +1,218 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { pb } from '../lib/pocketbase';
+
+interface Theme {
+	id: string;
+	label: string;
+	bgColor: string;
+	textColor: string;
+	accentColor: string;
+	tag?: string;
+}
+
+interface Activity {
+	index: number;
+	title: string;
+	date: string;
+	location?: string;
+	tags?: string[];
+}
+
+/**
+ * 配置区域 - 方便统一管理颜色和主题
+ */
+const THEMES: Record<string, Theme> = {
+	all: {
+		id: 'all',
+		label: '全部',
+		bgColor: 'rgb(77, 0, 0)',
+		textColor: '#c9c9c9',
+		accentColor: '#fca5a5',
+	},
+	mortal: {
+		id: 'mortal',
+		label: '人间',
+		tag: '人间',
+		bgColor: '#516a6f',
+		textColor: '#d1d5db',
+		accentColor: '#fbbf24',
+	},
+	dream: {
+		id: 'dream',
+		label: '入梦',
+		tag: '入梦',
+		bgColor: 'rgb(77, 0, 0)',
+		textColor: '#c9c9c9',
+		accentColor: '#fca5a5',
+	},
+};
+
+// 字体配置
+const FONT_FAMILY = 'font-serif';
+
+// 获取活动数据
+let activities: Activity[] = [];
+try {
+	const records = await pb.collection('activities').getFullList({
+		sort: '-date',
+	});
+	activities = records.map((record) => ({
+		index: record.index,
+		title: record.title,
+		date: record.date,
+		location: record.location,
+		tags: Array.isArray(record.tags) ? record.tags : [],
+	}));
+} catch (e) {
+	console.warn('未找到 activities 集合或获取失败，请确保 PocketBase 中已创建该集合。\n', e);
+}
 ---
 
 <Layout title="活动 | 黄诗扶 Wiki">
-	<main class="min-h-screen bg-[rgb(77,0,0)] p-8 md:p-20 font-serif">
+	<main
+		id="main-container"
+		class={`min-h-screen p-8 md:p-20 transition-colors duration-500 ${FONT_FAMILY}`}
+		style={`background-color: ${THEMES.all.bgColor}; color: ${THEMES.all.textColor}; --accent-color: ${THEMES.all.accentColor}; --scroll-thumb: ${THEMES.all.accentColor}44; --scroll-track: ${THEMES.all.bgColor};`}
+	>
 		<div class="max-w-2xl mx-auto">
-			<header class="mb-16">
-				<a href="/" class="text-lg text-red-300 hover:text-[#c9c9c9] transition-colors">← 返回首页</a>
-				<h1 class="text-5xl text-[#c9c9c9] mt-8 tracking-widest drop-shadow-[0_0_10px_rgba(201,201,201,0.3)]">活动</h1>
-				<div class="h-px w-25 bg-[#c9c9c9] mt-4 shadow-[0_0_5px_#c9c9c9]"></div>
+			<header class="mb-12">
+				<a href="/" id="back-link" class="text-lg transition-colors" style={`color: ${THEMES.all.accentColor};`}>← 返回首页</a>
+				<h1 id="page-title" class="text-5xl mt-8 tracking-widest drop-shadow-[0_0_10px_rgba(201,201,201,0.3)]">活动</h1>
+				<div id="title-line" class="h-px w-25 mt-4 shadow-[0_0_5px_currentColor]" style="background-color: currentColor;"></div>
 			</header>
+
+			<!-- 选项卡按钮 -->
+			<nav class="flex gap-4 mb-12">
+				{
+					Object.values(THEMES).map((theme) => (
+						<button
+							data-theme-id={theme.id}
+							data-tag={theme.tag || ''}
+							class="tab-button px-6 py-1.5 rounded-full border border-current hover:opacity-80 transition-all cursor-pointer text-lg"
+							style={theme.id === 'all' ? `background-color: ${theme.textColor}; color: ${theme.bgColor};` : ''}
+						>
+							{theme.label}
+						</button>
+					))
+				}
+			</nav>
+
+			<div id="activities-list" class="space-y-10">
+				{
+					activities.length > 0 ? (
+						activities.map((activity) => (
+							<a href={`/activities/${activity.index}`} class="activity-item group block border-b border-current/20 pb-8 hover:border-red-300/50 transition-all" data-tags={(activity.tags || []).join(',')}>
+								<div class="flex justify-between items-end">
+									<div>
+										<h2 class="text-2xl group-hover:text-red-300 transition-colors">{activity.title}</h2>
+										<p class="opacity-60 mt-2 tracking-widest text-sm">
+											{activity.date} {activity.location ? `· ${activity.location}` : ''}
+										</p>
+									</div>
+									<span class="accent-text opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">详情 →</span>
+								</div>
+							</a>
+						))
+					) : (
+						<p class="text-center py-20 opacity-40 italic tracking-widest">暂无活动记录</p>
+					)
+				}
+			</div>
 		</div>
 	</main>
-	<script></script></Layout
->
+</Layout>
+
+<script define:vars={{ THEMES }}>
+	function initActivities() {
+		const buttons = document.querySelectorAll('.tab-button');
+		const items = document.querySelectorAll('.activity-item');
+		const container = document.getElementById('main-container');
+		const backLink = document.getElementById('back-link');
+
+		function switchTheme(themeId) {
+			const theme = THEMES[themeId];
+			if (!theme) return;
+
+			// 更新容器样式
+			container.style.backgroundColor = theme.bgColor;
+			container.style.color = theme.textColor;
+			container.style.setProperty('--accent-color', theme.accentColor);
+			container.style.setProperty('--scroll-thumb', theme.accentColor + '44');
+			container.style.setProperty('--scroll-track', theme.bgColor);
+
+			// 同步更新 html 背景色，确保滚动条区域一致
+			document.documentElement.style.backgroundColor = theme.bgColor;
+
+			// 更新链接颜色
+			if (backLink) backLink.style.color = theme.accentColor;
+
+			// 更新按钮样式
+			buttons.forEach((btn) => {
+				const btnThemeId = btn.getAttribute('data-theme-id');
+				if (btnThemeId === themeId) {
+					btn.style.backgroundColor = theme.textColor;
+					btn.style.color = theme.bgColor;
+				} else {
+					btn.style.backgroundColor = 'transparent';
+					btn.style.color = 'inherit';
+				}
+			});
+
+			// 过滤列表
+			const targetTag = theme.tag;
+			items.forEach((item) => {
+				const itemTagsStr = item.getAttribute('data-tags') || '';
+				const itemTags = itemTagsStr.split(',').filter((t) => t !== '');
+				if (!targetTag || itemTags.includes(targetTag)) {
+					item.style.display = 'block';
+				} else {
+					item.style.display = 'none';
+				}
+			});
+		}
+
+		buttons.forEach((button) => {
+			button.addEventListener('click', () => {
+				const themeId = button.getAttribute('data-theme-id');
+				switchTheme(themeId);
+			});
+		});
+	}
+
+	// 初始加载和 Astro 视图过渡支持
+	document.addEventListener('astro:page-load', initActivities);
+</script>
+
+<style>
+	.tab-button {
+		font-family: inherit;
+	}
+	.accent-text {
+		color: var(--accent-color, inherit);
+	}
+
+	/* 滚动条样式 */
+	:global(html) {
+		scrollbar-color: var(--scroll-thumb, #fca5a544) var(--scroll-track, rgb(77, 0, 0));
+		scrollbar-width: thin;
+		transition: background-color 0.5s ease;
+	}
+
+	:global(::-webkit-scrollbar) {
+		width: 8px;
+	}
+
+	:global(::-webkit-scrollbar-track) {
+		background: var(--scroll-track, rgb(77, 0, 0));
+	}
+
+	:global(::-webkit-scrollbar-thumb) {
+		background: var(--scroll-thumb, #fca5a544);
+		border-radius: 10px;
+	}
+
+	:global(::-webkit-scrollbar-thumb:hover) {
+		background: var(--accent-color);
+	}
+</style>
