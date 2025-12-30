@@ -10,11 +10,13 @@
 		"astro": "astro",
 		"format": "prettier --write .",
 		"lint": "prettier --check .",
-		"deploy": "astro build && rsync -avz --delete ./dist/ shifu:/var/www/shifu-wiki/dist/"
+		"deploy": "astro build && rsync -avz --delete ./dist/ shifu:/var/www/shifu-wiki/dist/ && rsync -avz ./package*.json shifu:/var/www/shifu-wiki/ && ssh shifu sudo systemctl restart shifu-wiki"
 	},
 	"dependencies": {
+		"@astrojs/node": "^9.5.1",
 		"@tailwindcss/vite": "^4.1.18",
 		"astro": "^5.16.6",
+		"pocketbase": "^0.26.5",
 		"tailwindcss": "^4.1.18"
 	},
 	"devDependencies": {

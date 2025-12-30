@@ -1,21 +1,26 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { getCollection, render } from 'astro:content';
+import { pb } from '../../lib/pocketbase';
 
-// 告诉 Astro 根据哪些 MD 文件生成路径
-export async function getStaticPaths() {
-	const songEntries = await getCollection('songs');
-	return songEntries.map((entry) => ({
-		params: { slug: entry.id.replace(/\.md$/, '') },
-		props: { entry },
-	}));
+const { slug } = Astro.params;
+
+// 确保 slug 存在，否则直接 404
+if (!slug) {
+	return Astro.redirect('/404');
 }
 
-const { entry } = Astro.props;
-const { Content } = await render(entry);
+// 实时获取单条歌曲数据
+let song;
+try {
+	// 通过自定义的 number 字段查找
+	song = await pb.collection('songs').getFirstListItem(`number="${slug}"`);
+} catch (e) {
+	// 如果找不到，返回 404
+	return Astro.redirect('/404');
+}
 ---
 
-<Layout title={`${entry.data.title} | 黄诗扶 Wiki`}>
+<Layout title={`${song.title} | 黄诗扶 Wiki`}>
 	<main class="min-h-screen bg-[rgb(77,0,0)] p-8 md:p-20 font-serif">
 		<div class="max-w-2xl mx-auto relative">
 			<nav class="mb-12">
@@ -27,24 +32,24 @@ const { Content } = await render(entry);
 					<header class="mb-6">
 						<!-- 标题 -->
 						<h1 class="text-5xl text-[#c9c9c9] tracking-[0.2em] drop-shadow-[0_0_10px_rgba(201,201,201,0.3)]">
-							{entry.data.title}
+							{song.title}
 						</h1>
 						<!-- 元数据 -->
 						<div class="flex flex-wrap items-center gap-y-2 text-[#888] text-sm tracking-widest mt-4">
 							<div class="flex items-center">
-								<span>词：{entry.data.lyricist}</span>
+								<span>词：{song.lyricist}</span>
 								<span class="mx-4 h-3 w-px bg-[#c9c9c9]/30"></span>
 							</div>
 							<div class="flex items-center">
-								<span>曲：{entry.data.composer}</span>
+								<span>曲：{song.composer}</span>
 								<span class="mx-4 h-3 w-px bg-[#c9c9c9]/30"></span>
 							</div>
 							<div class="flex items-center">
-								<span>专辑：{entry.data.album}</span>
+								<span>专辑：{song.album}</span>
 								<span class="mx-4 h-3 w-px bg-[#c9c9c9]/30"></span>
 							</div>
 							<div class="flex items-center">
-								<span>{entry.data.releaseDate}</span>
+								<span>{song.releaseDate}</span>
 								<span class="mx-4 h-3 w-px bg-[#c9c9c9]/30"></span>
 							</div>
 							<button id="show-credits" class="w-fit transition-all duration-300 border-b border-transparent hover:border-red-300 hover:text-red-300 text-left"> 制作人员 </button>
@@ -53,18 +58,16 @@ const { Content } = await render(entry);
 					<!-- 装饰线 -->
 					<hr class="border-[#c9c9c9]/30 mb-5" />
 					<!-- 歌词内容 -->
-					<div class="prose prose-invert mx-auto lyrics-container mt-0 [&_p]:text-lg">
-						<Content />
-					</div>
+					<div class="prose prose-invert mx-auto lyrics-container mt-0 text-lg" set:html={song.lyric} />
 				</article>
 				<!-- 右侧边栏 -->
 				<aside class="w-full lg:w-56 shrink-0 mt-12 lg:mt-0 lg:absolute lg:left-[calc(100%+4rem)] lg:top-0">
 					<hr class="border-[#c9c9c9]/30 mb-5" />
 					{
-						entry.data.links && entry.data.links.length > 0 && (
+						song.links && Array.isArray(song.links) && song.links.length > 0 && (
 							<div class="flex flex-col gap-4 px-2">
 								{
-									entry.data.links.map((link) => (
+									song.links.map((link) => (
 										<a
 											href={link.url}
 											target="_blank"
@@ -81,10 +84,10 @@ const { Content } = await render(entry);
 						)
 					}
 					{
-						entry.data.otherLinks && entry.data.otherLinks.length > 0 && (
+						song.otherLinks && Array.isArray(song.otherLinks) && song.otherLinks.length > 0 && (
 							<div class="flex flex-col gap-4 px-2">
 								{
-									entry.data.otherLinks.map((link) => (
+									song.otherLinks.map((link) => (
 										<a
 											href={link.url}
 											target="_blank"
@@ -116,9 +119,7 @@ const { Content } = await render(entry);
 			</button>
 			<div>
 				<h3 class="text-2xl text-[#c9c9c9] mb-10 tracking-widest border-b border-[#c9c9c9]/10 pb-4 inline-block">制作人员</h3>
-				<div class="whitespace-pre-line text-[#c9c9c9] leading-loose tracking-widest font-serif text-lg">
-					{entry.data.credits}
-				</div>
+				<div class="whitespace-pre-line text-[#c9c9c9] leading-loose tracking-widest font-serif text-xl" set:html={song.credits} />
 			</div>
 		</div>
 	</div>

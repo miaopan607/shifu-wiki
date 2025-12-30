@@ -1,8 +1,11 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { getCollection } from 'astro:content';
+import { pb } from '../lib/pocketbase';
 
-const allSongs = await getCollection('songs');
+// 实时从 PocketBase 获取所有歌曲
+const allSongs = await pb.collection('songs').getFullList({
+	sort: '-releaseDate', // 按发布日期倒序
+});
 ---
 
 <Layout title="音乐 | 黄诗扶 Wiki">
@@ -17,12 +20,12 @@ const allSongs = await getCollection('songs');
 			<div class="space-y-10">
 				{
 					allSongs.map((song) => (
-						<a href={`/songs/${song.id.replace(/\.md$/, '')}`} class="group block border-b border-[#c9c9c9]/20 pb-8 hover:border-red-300/50 transition-all">
+						<a href={`/songs/${song.number}`} class="group block border-b border-[#c9c9c9]/20 pb-8 hover:border-red-300/50 transition-all">
 							<div class="flex justify-between items-end">
 								<div>
-									<h2 class="text-2xl text-[#c9c9c9] group-hover:text-red-300 transition-colors">{song.data.title}</h2>
+									<h2 class="text-2xl text-[#c9c9c9] group-hover:text-red-300 transition-colors">{song.title}</h2>
 									<p class="text-[#888] mt-2 tracking-widest text-sm">
-										{song.data.album} · {song.data.releaseDate}
+										{song.album} · {song.releaseDate}
 									</p>
 								</div>
 								<span class="text-red-300 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">详情 →</span>
