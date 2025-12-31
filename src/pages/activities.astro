@@ -19,9 +19,7 @@ interface Activity {
 	tags?: string[];
 }
 
-/**
- * 配置区域 - 方便统一管理颜色和主题
- */
+// 配置区域 - 方便统一管理颜色和主题
 const THEMES: Record<string, Theme> = {
 	all: {
 		id: 'all',
@@ -30,16 +28,16 @@ const THEMES: Record<string, Theme> = {
 		textColor: '#c9c9c9',
 		accentColor: '#fca5a5',
 	},
-	mortal: {
-		id: 'mortal',
+	ren_jian: {
+		id: 'ren_jian',
 		label: '人间',
 		tag: '人间',
 		bgColor: '#516a6f',
 		textColor: '#d1d5db',
 		accentColor: '#fbbf24',
 	},
-	dream: {
-		id: 'dream',
+	back_into_fantasia: {
+		id: 'back_into_fantasia',
 		label: '入梦',
 		tag: '入梦',
 		bgColor: 'rgb(77, 0, 0)',
