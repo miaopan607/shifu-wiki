@@ -1,0 +1,37 @@
+---
+interface Props {
+	activePage: 'songs' | 'activities';
+}
+
+const { activePage } = Astro.props;
+---
+
+<div class="flex gap-12 mt-8 items-baseline mb-4">
+	<div class="relative group">
+		<a 
+			href="/songs" 
+			id="nav-songs"
+			class={`nav-link text-5xl tracking-widest transition-all duration-300 block ${activePage === 'songs' ? 'active text-[#c9c9c9] drop-shadow-[0_0_10px_rgba(201,201,201,0.3)]' : 'text-[#888] hover:text-[#c9c9c9]'}`}
+		>
+			音乐
+		</a>
+		<div id="nav-line-songs" class={`nav-line h-px w-full transition-all duration-300 mt-4 ${activePage === 'songs' ? 'bg-[#c9c9c9] shadow-[0_0_5px_#c9c9c9] opacity-100' : 'bg-transparent opacity-0'}`}></div>
+	</div>
+
+	<div class="relative group">
+		<a 
+			href="/activities" 
+			id="nav-activities"
+			class={`nav-link text-5xl tracking-widest transition-all duration-300 block ${activePage === 'activities' ? 'active text-[#c9c9c9] drop-shadow-[0_0_10px_rgba(201,201,201,0.3)]' : 'text-[#888] hover:text-[#c9c9c9]'}`}
+		>
+			活动
+		</a>
+		<div id="nav-line-activities" class={`nav-line h-px w-full transition-all duration-300 mt-4 ${activePage === 'activities' ? 'bg-[#c9c9c9] shadow-[0_0_5px_#c9c9c9] opacity-100' : 'bg-transparent opacity-0'}`}></div>
+	</div>
+</div>
+
+<style>
+	.nav-link.active {
+		color: inherit;
+	}
+</style>

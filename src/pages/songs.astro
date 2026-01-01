@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { pb } from '../lib/pocketbase';
+import SubPageNav from '../components/SubPageNav.astro';
 
 // 实时从 PocketBase 获取所有歌曲
 const allSongs = await pb.collection('songs').getFullList({
@@ -13,8 +14,7 @@ const allSongs = await pb.collection('songs').getFullList({
 		<div class="max-w-2xl mx-auto">
 			<header class="mb-16">
 				<a href="/" class="text-lg text-red-300 hover:text-[#c9c9c9] transition-colors">← 返回首页</a>
-				<h1 class="text-5xl text-[#c9c9c9] mt-8 tracking-widest drop-shadow-[0_0_10px_rgba(201,201,201,0.3)]">音乐</h1>
-				<div class="h-px w-25 bg-[#c9c9c9] mt-4 shadow-[0_0_5px_#c9c9c9]"></div>
+				<SubPageNav activePage="songs" />
 			</header>
 
 			<div class="space-y-10">
@@ -36,5 +36,4 @@ const allSongs = await pb.collection('songs').getFullList({
 			</div>
 		</div>
 	</main>
-	<script></script></Layout
->
+</Layout>
