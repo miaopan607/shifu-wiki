@@ -202,28 +202,4 @@ try {
 	.accent-text {
 		color: var(--accent-color, inherit);
 	}
-
-	/* 滚动条样式 */
-	:global(html) {
-		scrollbar-color: var(--scroll-thumb, #fca5a544) var(--scroll-track, rgb(77, 0, 0));
-		scrollbar-width: thin;
-		transition: background-color 0.5s ease;
-	}
-
-	:global(::-webkit-scrollbar) {
-		width: 8px;
-	}
-
-	:global(::-webkit-scrollbar-track) {
-		background: var(--scroll-track, rgb(77, 0, 0));
-	}
-
-	:global(::-webkit-scrollbar-thumb) {
-		background: var(--scroll-thumb, #fca5a544);
-		border-radius: 10px;
-	}
-
-	:global(::-webkit-scrollbar-thumb:hover) {
-		background: var(--accent-color);
-	}
 </style>
