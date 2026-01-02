@@ -72,7 +72,7 @@ try {
 	<main
 		id="main-container"
 		class={`min-h-screen p-8 md:p-20 transition-colors duration-500 ${FONT_FAMILY}`}
-		style={`background-color: ${THEMES.all.bgColor}; color: ${THEMES.all.textColor}; --accent-color: ${THEMES.all.accentColor}; --scroll-thumb: ${THEMES.all.accentColor}44; --scroll-track: ${THEMES.all.bgColor};`}
+		style={`color: ${THEMES.all.textColor}; --accent-color: ${THEMES.all.accentColor};`}
 	>
 		<div class="max-w-2xl mx-auto">
 			<header class="mb-12">
@@ -100,7 +100,11 @@ try {
 				{
 					activities.length > 0 ? (
 						activities.map((activity) => (
-							<a href={`/activities/${activity.index}`} class="activity-item group block border-b border-current/20 pb-8 hover:border-red-300/50 transition-all" data-tags={(activity.tags || []).join(',')}>
+							<a
+								href={`/activities/${activity.index}`}
+								class="activity-item group block border-b border-current/20 pb-8 hover:border-red-300/50 transition-all"
+								data-tags={(activity.tags || []).join(',')}
+							>
 								<div class="flex justify-between items-end">
 									<div>
 										<h2 class="text-2xl group-hover:text-red-300 transition-colors">{activity.title}</h2>
@@ -134,15 +138,14 @@ try {
 			const theme = THEMES[themeId];
 			if (!theme) return;
 
-			// 更新容器样式
-			container.style.backgroundColor = theme.bgColor;
+			// 更新容器样式 (只处理文字和强调色)
 			container.style.color = theme.textColor;
 			container.style.setProperty('--accent-color', theme.accentColor);
-			container.style.setProperty('--scroll-thumb', theme.accentColor + '44');
-			container.style.setProperty('--scroll-track', theme.bgColor);
 
-			// 同步更新 html 背景色，确保滚动条区域一致
+			// 统一在 html 上处理背景色和滚动条变量
 			document.documentElement.style.backgroundColor = theme.bgColor;
+			document.documentElement.style.setProperty('--scroll-thumb', theme.accentColor + '44');
+			document.documentElement.style.setProperty('--scroll-track', theme.bgColor);
 
 			// 更新链接颜色
 			if (backLink) backLink.style.color = theme.accentColor;
@@ -151,7 +154,7 @@ try {
 			if (navActive) {
 				navActive.style.color = theme.textColor;
 			}
-			navLines.forEach(line => {
+			navLines.forEach((line) => {
 				if (line.classList.contains('opacity-100')) {
 					line.style.backgroundColor = theme.textColor;
 					line.style.boxShadow = `0 0 5px ${theme.textColor}`;
@@ -201,5 +204,21 @@ try {
 	}
 	.accent-text {
 		color: var(--accent-color, inherit);
+	}
+
+	html {
+		background-color: rgb(77, 0, 0);
+		--scroll-thumb: #fca5a544;
+		--scroll-track: rgb(77, 0, 0);
+
+		transition:
+			background-color 500ms cubic-bezier(0.4, 0, 0.2, 1),
+			scrollbar-color 500ms cubic-bezier(0.4, 0, 0.2, 1);
+		scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+	}
+
+	/* 强制覆盖 body 的背景色 */
+	:global(body) {
+		background-color: transparent !important;
 	}
 </style>
