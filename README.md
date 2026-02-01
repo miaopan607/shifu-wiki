@@ -1,48 +1,53 @@
 # 黄诗扶 Wiki
 
-一个基于 [Astro](https://astro.build/) 构建的黄诗扶 Wiki。
+一个基于 [Vue 3](https://vuejs.org/) + [Vite](https://vitejs.dev/) 构建的黄诗扶 Wiki。
 
 ## 项目结构
 
 ```text
 /
 ├── src/
-│   ├── layouts/       # 页面布局
+│   ├── assets/        # 静态资源 (样式、图标)
+│   ├── components/    # 公用组件
 │   ├── lib/           # 工具库 (PocketBase 配置)
-│   ├── pages/         # 页面路由
-│   └── styles/        # 全局样式
-├── public/            # 静态资源
-├── astro.config.mjs   # Astro 配置
-└── tailwind.config.mjs # Tailwind 配置
+│   ├── router/        # 路由配置
+│   ├── views/         # 页面视图 (原 Astro 页面迁移)
+│   ├── App.vue        # 根组件
+│   └── main.ts        # 入口文件
+├── public/            # 公共静态资源
+├── index.html         # 入口 HTML
+├── package.json       # 项目配置
+├── tsconfig.json      # TypeScript 配置
+└── vite.config.ts     # Vite 配置
 ```
 
 ## 开发指南
 
 ### 数据库配置
 
-项目使用 [PocketBase](https://pocketbase.io/) 作为后端数据库。在 SSR 模式下，页面会实时从数据库获取内容。
+项目使用 [PocketBase](https://pocketbase.io/) 作为后端数据库。
 
 1. 确保 PocketBase 服务已启动。
-2. 在 `src/lib/pocketbase.ts` 中配置数据库连接地址。
+2. 在 `src/lib/pocketbase.ts` 中配置数据库连接地址，或通过 `.env` 文件配置。
 
 ### 快速开始
 
 ```bash
 # 安装依赖
-npm install
+pnpm install
 
 # 启动开发服务器
-npm run dev
+pnpm dev
 ```
 
 ### 生产构建
 
 ```bash
-# 构建 SSR 站点
-npm run build
+# 构建项目
+pnpm build
 
-# 启动 Node.js 服务器
-node ./dist/server/entry.mjs
+# 预览构建产物
+pnpm preview
 ```
 
 ## 开源协议

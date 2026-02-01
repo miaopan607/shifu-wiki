@@ -1,9 +1,8 @@
----
-import Layout from '../layouts/Layout.astro';
-import '../styles/global.css';
----
+<script setup lang="ts">
+import { RouterLink } from 'vue-router';
+</script>
 
-<Layout title="黄诗扶 Wiki">
+<template>
 	<main class="min-h-screen bg-[rgb(77,0,0)] flex flex-col items-center justify-center p-4">
 		<div class="max-w-2xl w-full text-center space-y-8">
 			<!-- 标题 -->
@@ -41,19 +40,18 @@ import '../styles/global.css';
 			</nav>
 
 			<!-- 导航 -->
-			<!-- 尝试添加过渡动画，然而拼尽全力无法战胜。 -->
 			<nav class="flex justify-center gap-6 text-md font-light text-[#c9c9c9] text-lg">
-				<a href="/songs" class="links">音乐</a>
-				<a href="/activities" class="links">活动</a>
+				<RouterLink to="/songs" class="links">音乐</RouterLink>
+				<RouterLink to="/activities" class="links">活动</RouterLink>
 			</nav>
 		</div>
 	</main>
-</Layout>
+</template>
 
-<style>
-	h1,
-	p,
-	div {
-		font-family: 'Source Han Serif SC', 'Noto Serif CJK SC', 'SimSun', 'STSong', serif;
-	}
+<style scoped>
+h1,
+p,
+div {
+	font-family: var(--font-serif);
+}
 </style>
