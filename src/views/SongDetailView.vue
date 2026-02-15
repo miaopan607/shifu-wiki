@@ -80,7 +80,16 @@ const openModal = () => {
 						</div>
 					</header>
 					<!-- 装饰线 -->
-					<hr class="border-[#c9c9c9]/30 mb-5" />
+					<hr class="border-[#c9c9c9]/30 mb-8" />
+					
+					<!-- 描述内容 -->
+					<div v-if="song.description" class="prose prose-invert mx-auto mb-8 text-[#c9c9c9]/90 leading-relaxed tracking-wider text-base">
+						<div v-html="song.description"></div>
+					</div>
+
+					<!-- 描述与歌词的分隔线 -->
+					<hr v-if="song.description" class="border-[#c9c9c9]/30 mb-8" />
+
 					<!-- 歌词内容 -->
 					<div class="prose prose-invert mx-auto lyrics-container mt-0 text-lg" v-html="song.lyric"></div>
 				</article>
