@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter, RouterLink } from 'vue-router';
 import { pb } from '@/lib/pocketbase';
 
@@ -8,6 +8,23 @@ const router = useRouter();
 const song = ref<any>(null);
 const loading = ref(true);
 const showCredits = ref(false);
+
+const backLink = computed(() => {
+	const from = route.query.from;
+	const albumTitle = route.query.albumTitle as string;
+
+	if (from === 'album' && albumTitle) {
+		return `/albums/${albumTitle}`;
+	}
+	return '/songs';
+});
+
+const backText = computed(() => {
+	if (route.query.from === 'album') {
+		return '← 返回专辑';
+	}
+	return '← 返回列表';
+});
 
 onMounted(async () => {
 	const slug = route.params.slug;
@@ -46,7 +63,7 @@ const openModal = () => {
 
 		<div v-else-if="song" class="max-w-2xl mx-auto relative transition-opacity duration-300">
 			<nav class="mb-12">
-				<RouterLink to="/songs" class="text-lg text-red-300 hover:text-[#c9c9c9] transition-colors">← 返回列表</RouterLink>
+				<RouterLink :to="backLink" class="text-lg text-red-300 hover:text-[#c9c9c9] transition-colors">{{ backText }}</RouterLink>
 			</nav>
 
 			<div class="relative">
