@@ -2,7 +2,7 @@
 import { RouterLink } from 'vue-router';
 
 defineProps<{
-	activePage: 'songs' | 'activities';
+	activePage: 'songs' | 'activities' | 'galleries';
 }>();
 </script>
 
@@ -37,6 +37,22 @@ defineProps<{
 				id="nav-line-activities"
 				class="nav-line h-px w-full transition-all duration-300 mt-4"
 				:class="activePage === 'activities' ? 'bg-[#c9c9c9] shadow-[0_0_5px_#c9c9c9] opacity-100' : 'bg-transparent opacity-0'"
+			></div>
+		</div>
+
+		<div class="relative group">
+			<RouterLink
+				to="/galleries"
+				id="nav-galleries"
+				class="nav-link text-5xl tracking-widest transition-all duration-300 block"
+				:class="activePage === 'galleries' ? 'active text-[#c9c9c9] drop-shadow-[0_0_10px_rgba(201,201,201,0.3)]' : 'text-[#888] hover:text-[#c9c9c9]'"
+			>
+				图集
+			</RouterLink>
+			<div
+				id="nav-line-galleries"
+				class="nav-line h-px w-full transition-all duration-300 mt-4"
+				:class="activePage === 'galleries' ? 'bg-[#c9c9c9] shadow-[0_0_5px_#c9c9c9] opacity-100' : 'bg-transparent opacity-0'"
 			></div>
 		</div>
 	</div>

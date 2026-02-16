@@ -47,6 +47,18 @@ const router = createRouter({
 			meta: { title: '加载中... | 黄诗扶 Wiki' },
 		},
 		{
+			path: '/galleries',
+			name: 'galleries',
+			component: () => import('../views/GalleriesView.vue'),
+			meta: { title: '图集 | 黄诗扶 Wiki' },
+		},
+		{
+			path: '/galleries/:slug',
+			name: 'gallery-detail',
+			component: () => import('../views/GalleryDetailView.vue'),
+			meta: { title: '加载中... | 黄诗扶 Wiki' },
+		},
+		{
 			path: '/404',
 			name: 'not-found',
 			component: () => import('../views/HomeView.vue'), // Placeholder

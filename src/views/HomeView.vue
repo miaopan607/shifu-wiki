@@ -43,6 +43,7 @@ import { RouterLink } from 'vue-router';
 			<nav class="flex justify-center gap-6 text-md font-light text-[#c9c9c9] text-lg">
 				<RouterLink to="/songs" class="links">音乐</RouterLink>
 				<RouterLink to="/activities" class="links">活动</RouterLink>
+				<RouterLink to="/galleries" class="links">图集</RouterLink>
 			</nav>
 		</div>
 	</main>
