@@ -59,9 +59,21 @@ const router = createRouter({
 			meta: { title: '加载中... | 黄诗扶 Wiki' },
 		},
 		{
+			path: '/misc',
+			name: 'misc',
+			component: () => import('../views/MiscView.vue'),
+			meta: { title: '杂记 | 黄诗扶 Wiki' },
+		},
+		{
+			path: '/misc/:index',
+			name: 'misc-detail',
+			component: () => import('../views/MiscDetailView.vue'),
+			meta: { title: '加载中... | 黄诗扶 Wiki' },
+		},
+		{
 			path: '/404',
 			name: 'not-found',
-			component: () => import('../views/HomeView.vue'), // Placeholder
+			component: () => import('../views/NotFoundView.vue'),
 			meta: { title: '404 | 黄诗扶 Wiki' },
 		},
 		{
