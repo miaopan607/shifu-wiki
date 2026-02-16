@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue';
 import { RouterLink } from 'vue-router';
 import { pb } from '@/lib/pocketbase';
 import SubPageNav from '@/components/SubPageNav.vue';
+import SongsNav from '@/components/SongsNav.vue';
 
 const allSongs = ref<any[]>([]);
 const loading = ref(true);
@@ -26,6 +27,7 @@ onMounted(async () => {
 			<header class="mb-16">
 				<RouterLink to="/" class="text-lg text-red-300 hover:text-[#c9c9c9] transition-colors">← 返回首页</RouterLink>
 				<SubPageNav activePage="songs" />
+				<SongsNav activeTab="singles" />
 			</header>
 
 			<div v-if="loading" class="text-center py-20 opacity-40 italic tracking-widest text-[#c9c9c9]">加载中...</div>

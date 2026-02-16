@@ -17,10 +17,22 @@ const router = createRouter({
 			meta: { title: '音乐 | 黄诗扶 Wiki' },
 		},
 		{
+			path: '/albums',
+			name: 'albums',
+			component: () => import('../views/AlbumsView.vue'),
+			meta: { title: '专辑 | 黄诗扶 Wiki' },
+		},
+		{
 			path: '/songs/:slug',
 			name: 'song-detail',
 			component: () => import('../views/SongDetailView.vue'),
 			meta: { title: '加载中... | 黄诗扶 Wiki' },
+		},
+		{
+			path: '/albums/:title',
+			name: 'album-detail',
+			component: () => import('../views/AlbumDetailView.vue'),
+			meta: { title: '专辑详情 | 黄诗扶 Wiki' },
 		},
 		{
 			path: '/activities',
