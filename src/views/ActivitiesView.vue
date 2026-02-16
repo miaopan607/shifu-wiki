@@ -5,12 +5,9 @@ import { pb } from '@/lib/pocketbase';
 import SubPageNav from '@/components/SubPageNav.vue';
 
 interface Theme {
-	id: string;
-	label: string;
 	bgColor: string;
 	textColor: string;
 	accentColor: string;
-	tag?: string;
 }
 
 interface Activity {
@@ -22,46 +19,87 @@ interface Activity {
 	tags?: string[];
 }
 
-const THEMES: Record<string, Theme> = {
-	all: {
-		id: 'all',
-		label: '全部',
-		bgColor: 'rgb(77, 0, 0)',
-		textColor: '#c9c9c9',
-		accentColor: '#fca5a5',
-	},
-	ren_jian: {
-		id: 'ren_jian',
-		label: '人间',
-		tag: '人间',
+interface SectionConfig {
+	id: string;
+	label: string;
+	tags?: string[]; // 该部分包含的 Tags，如果为空则包含所有
+	showFilter: boolean; // 是否显示二级筛选器
+}
+
+// 配色配置
+const DEFAULT_THEME: Theme = {
+	bgColor: 'rgb(77, 0, 0)',
+	textColor: '#c9c9c9',
+	accentColor: '#fca5a5',
+};
+
+const TAG_THEMES: Record<string, Theme> = {
+	'人间': {
 		bgColor: '#516a6f',
 		textColor: '#d1d5db',
 		accentColor: '#fbbf24',
 	},
-	back_into_fantasia: {
-		id: 'back_into_fantasia',
-		label: '入梦',
-		tag: '入梦',
+	'入梦': {
 		bgColor: 'rgb(77, 0, 0)',
 		textColor: '#c9c9c9',
 		accentColor: '#fca5a5',
 	},
 };
 
-const DEFAULT_BG = 'rgb(77, 0, 0)';
-const currentThemeId = ref('all');
+// 分区配置
+const SECTIONS: SectionConfig[] = [
+	{ id: 'all', label: '全部', tags: undefined, showFilter: false },
+	{ id: 'solo', label: '个人专场', tags: ['入梦', '人间'], showFilter: true },
+	{ id: 'mixed', label: '拼盘', tags: ['拼盘'], showFilter: false },
+	{ id: 'friends', label: '好友专场', tags: ['好友'], showFilter: false },
+];
+
+const activeSectionId = ref('all');
+const activeTag = ref<string | null>(null); // null 表示该分区下的"全部"
 const activities = ref<Activity[]>([]);
 const loading = ref(true);
 
+const currentSection = computed(() => SECTIONS.find(s => s.id === activeSectionId.value) || SECTIONS[0]);
+
+// 计算当前分区下应该显示的 Tag 列表
+const availableTags = computed(() => {
+	// 如果 Section 指定了 tags，就用指定的
+	if (currentSection.value.tags) {
+		return currentSection.value.tags;
+	}
+	// 如果 Section 是 "all"，则显示所有已知的带 Theme 的 tag，或者从 activities 动态提取
+	// 这里为了简单和可控，显示 TAG_THEMES 里定义的 tag，加上 Section 配置里用到的 tag
+	const tags = new Set<string>();
+	Object.keys(TAG_THEMES).forEach(t => tags.add(t));
+	SECTIONS.forEach(s => s.tags?.forEach(t => tags.add(t)));
+	return Array.from(tags);
+});
+
 const currentTheme = computed<Theme>(() => {
-	const theme = THEMES[currentThemeId.value];
-	return (theme || THEMES.all) as Theme;
+	// 优先使用当前选中 Tag 的 Theme
+	if (activeTag.value && TAG_THEMES[activeTag.value]) {
+		return TAG_THEMES[activeTag.value];
+	}
+	// 否则使用默认 Theme
+	return DEFAULT_THEME;
 });
 
 const filteredActivities = computed(() => {
-	const targetTag = currentTheme.value.tag;
-	if (!targetTag) return activities.value;
-	return activities.value.filter((a) => a.tags?.includes(targetTag));
+	let result = activities.value;
+
+	// 1. 先按 Section 筛选
+	if (currentSection.value.tags && currentSection.value.tags.length > 0) {
+		result = result.filter(a => 
+			a.tags && a.tags.some(t => currentSection.value.tags!.includes(t))
+		);
+	}
+
+	// 2. 再按 Active Tag 筛选
+	if (activeTag.value) {
+		result = result.filter(a => a.tags?.includes(activeTag.value!));
+	}
+
+	return result;
 });
 
 onMounted(async () => {
@@ -83,19 +121,22 @@ onMounted(async () => {
 		loading.value = false;
 	}
 
-	// Set initial theme colors
 	applyTheme(currentTheme.value);
 });
 
 onUnmounted(() => {
-	// Reset global styles when leaving
 	document.documentElement.style.backgroundColor = '';
 	document.documentElement.style.removeProperty('--scroll-thumb');
 	document.documentElement.style.removeProperty('--scroll-track');
 });
 
-const switchTheme = (id: string) => {
-	currentThemeId.value = id;
+const switchSection = (id: string) => {
+	activeSectionId.value = id;
+	activeTag.value = null; // 切换分区时重置 tag 筛选
+};
+
+const switchTag = (tag: string | null) => {
+	activeTag.value = tag;
 };
 
 const applyTheme = (theme: Theme) => {
@@ -120,23 +161,53 @@ watch(currentTheme, (newTheme) => {
 		}"
 	>
 		<div class="max-w-2xl mx-auto">
-			<header class="mb-12">
+			<header class="mb-8">
 				<RouterLink to="/" id="back-link" class="text-lg transition-colors" :style="{ color: currentTheme.accentColor }">← 返回首页</RouterLink>
 				<SubPageNav activePage="activities" />
 			</header>
 
-			<!-- 选项卡按钮 -->
-			<nav class="flex gap-4 mb-12">
+			<!-- 一级导航：分区 (Sections) -->
+			<nav class="flex gap-8 mb-8 border-b border-current/20 pb-4">
 				<button
-					v-for="theme in THEMES"
-					:key="theme.id"
-					@click="switchTheme(theme.id)"
-					class="tab-button px-6 py-1.5 rounded-full border border-current hover:opacity-80 transition-all cursor-pointer text-lg"
-					:style="theme.id === currentThemeId ? { backgroundColor: theme.textColor, color: theme.bgColor } : {}"
+					v-for="section in SECTIONS"
+					:key="section.id"
+					@click="switchSection(section.id)"
+					class="text-xl transition-colors relative hover:opacity-80"
+					:class="{ 'font-bold': activeSectionId === section.id }"
+					:style="activeSectionId === section.id ? { color: currentTheme.accentColor } : {}"
 				>
-					{{ theme.label }}
+					{{ section.label }}
+					<span 
+						v-if="activeSectionId === section.id" 
+						class="absolute -bottom-[17px] left-0 w-full h-0.5"
+						:style="{ backgroundColor: currentTheme.accentColor }"
+					></span>
 				</button>
 			</nav>
+
+			<!-- 二级导航：标签筛选 (Tags) -->
+			<nav v-if="currentSection.showFilter" class="flex gap-4 mb-12 flex-wrap">
+				<!-- '全部' 按钮 -->
+				<button
+					@click="switchTag(null)"
+					class="tab-button px-6 py-1.5 rounded-full border border-current hover:opacity-80 transition-all cursor-pointer text-lg"
+					:style="activeTag === null ? { backgroundColor: currentTheme.textColor, color: currentTheme.bgColor } : {}"
+				>
+					全部
+				</button>
+				<!-- 各个 Tag 按钮 -->
+				<button
+					v-for="tag in availableTags"
+					:key="tag"
+					@click="switchTag(tag)"
+					class="tab-button px-6 py-1.5 rounded-full border border-current hover:opacity-80 transition-all cursor-pointer text-lg"
+					:style="activeTag === tag ? { backgroundColor: currentTheme.textColor, color: currentTheme.bgColor } : {}"
+				>
+					{{ tag }}
+				</button>
+			</nav>
+			<!-- 即使不显示筛选器，也给个 margin 保持间距，或者不需要 -->
+			<div v-else class="mb-12"></div>
 
 			<div v-if="loading" class="text-center py-20 opacity-40 italic tracking-widest">加载中...</div>
 
