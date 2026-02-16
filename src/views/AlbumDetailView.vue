@@ -34,7 +34,7 @@ onMounted(async () => {
     <main class="min-h-screen bg-[rgb(77,0,0)] p-8 md:p-20 font-serif">
         <div class="max-w-2xl mx-auto">
             <header class="mb-16">
-                <RouterLink to="/songs" class="text-lg text-red-300 hover:text-[#c9c9c9] transition-colors">← 返回列表</RouterLink>
+                <RouterLink to="/albums" class="text-lg text-red-300 hover:text-[#c9c9c9] transition-colors">← 返回列表</RouterLink>
             </header>
 
             <div v-if="loading" class="text-center py-20 opacity-40 italic tracking-widest text-[#c9c9c9]">加载中...</div>
