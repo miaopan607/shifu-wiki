@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter, RouterLink } from 'vue-router';
 import { pb } from '@/lib/pocketbase';
+import { marked } from 'marked';
 
 const route = useRoute();
 const router = useRouter();
@@ -55,6 +56,11 @@ const openModal = () => {
 	showCredits.value = true;
 	document.body.style.overflow = 'hidden';
 };
+
+const renderMarkdown = (content: string | undefined) => {
+	if (!content) return '';
+	return marked.parse(content, { async: false }) as string;
+};
 </script>
 
 <template>
@@ -101,14 +107,14 @@ const openModal = () => {
 					
 					<!-- 描述内容 -->
 					<div v-if="song.description" class="prose prose-invert mx-auto mb-8 text-[#c9c9c9]/90 leading-relaxed tracking-wider text-base">
-						<div v-html="song.description"></div>
+						<div v-html="renderMarkdown(song.description)"></div>
 					</div>
 
 					<!-- 描述与歌词的分隔线 -->
 					<hr v-if="song.description" class="border-[#c9c9c9]/30 mb-8" />
 
 					<!-- 歌词内容 -->
-					<div class="prose prose-invert mx-auto lyrics-container mt-0 text-lg" v-html="song.lyric"></div>
+					<div class="prose prose-invert mx-auto lyrics-container mt-0 text-lg whitespace-pre-line" v-html="song.lyric"></div>
 				</article>
 				<!-- 右侧边栏 -->
 				<aside class="w-full lg:w-56 shrink-0 mt-12 lg:mt-0 lg:absolute lg:left-[calc(100%+4rem)] lg:top-0">
@@ -163,7 +169,7 @@ const openModal = () => {
 				</button>
 				<div>
 					<h3 class="text-2xl text-[#c9c9c9] mb-10 tracking-widest border-b border-[#c9c9c9]/10 pb-4 inline-block">制作人员</h3>
-					<div class="whitespace-pre-line text-[#c9c9c9] leading-loose tracking-widest font-serif text-xl" v-html="song.credits"></div>
+					<div class="whitespace-pre-line text-[#c9c9c9] leading-loose tracking-widest font-serif text-xl">{{ song.credits }}</div>
 				</div>
 			</div>
 		</div>
