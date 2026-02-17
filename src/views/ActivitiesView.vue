@@ -58,6 +58,7 @@ const activeSectionId = ref('all');
 const activeTag = ref<string | null>(null); // null 表示该分区下的"全部"
 const activities = ref<Activity[]>([]);
 const loading = ref(true);
+const searchQuery = ref('');
 
 const currentSection = computed<SectionConfig>(() => SECTIONS.find(s => s.id === activeSectionId.value) ?? SECTIONS[0]!);
 
@@ -90,7 +91,7 @@ const filteredActivities = computed(() => {
 
 	// 1. 先按 Section 筛选
 	if (currentSection.value.tags && currentSection.value.tags.length > 0) {
-		result = result.filter(a => 
+		result = result.filter(a =>
 			a.tags && a.tags.some(t => currentSection.value.tags!.includes(t))
 		);
 	}
@@ -98,6 +99,16 @@ const filteredActivities = computed(() => {
 	// 2. 再按 Active Tag 筛选
 	if (activeTag.value) {
 		result = result.filter(a => a.tags?.includes(activeTag.value!));
+	}
+
+	// 3. 最后按搜索关键词筛选
+	if (searchQuery.value.trim()) {
+		const query = searchQuery.value.toLowerCase();
+		result = result.filter(a =>
+			a.title?.toLowerCase().includes(query) ||
+			a.location?.toLowerCase().includes(query) ||
+			a.tags?.some(tag => tag.toLowerCase().includes(query))
+		);
 	}
 
 	return result;
@@ -209,6 +220,17 @@ watch(currentTheme, (newTheme) => {
 			</nav>
 			<!-- 即使不显示筛选器，也给个 margin 保持间距，或者不需要 -->
 			<div v-else class="mb-12"></div>
+
+			<!-- 搜索框 -->
+			<div class="mb-10">
+				<input
+					v-model="searchQuery"
+					type="text"
+					placeholder="搜索活动、地点或标签..."
+					class="w-full px-4 py-3 bg-current/10 border border-current/20 rounded transition-colors placeholder:opacity-50 focus:outline-none focus:border-current/50"
+					:style="{ color: currentTheme.textColor }"
+				/>
+			</div>
 
 			<div v-if="loading" class="text-center py-20 opacity-40 italic tracking-widest">加载中...</div>
 
