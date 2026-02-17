@@ -45,6 +45,7 @@ import { RouterLink } from 'vue-router';
 				<RouterLink to="/activities" class="links">活动</RouterLink>
 				<RouterLink to="/galleries" class="links">图集</RouterLink>
 				<RouterLink to="/misc" class="links">杂记</RouterLink>
+				<RouterLink to="/about" class="links">关于</RouterLink>
 			</nav>
 		</div>
 	</main>
