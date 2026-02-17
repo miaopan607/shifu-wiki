@@ -65,6 +65,12 @@ const router = createRouter({
 			meta: { title: '杂记 | 黄诗扶 Wiki' },
 		},
 		{
+			path: '/profile',
+			name: 'profile',
+			component: () => import('../views/ProfileView.vue'),
+			meta: { title: '个人介绍 | 黄诗扶 Wiki' },
+		},
+		{
 			path: '/about',
 			name: 'about',
 			component: () => import('../views/AboutView.vue'),

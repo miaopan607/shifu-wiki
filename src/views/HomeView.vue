@@ -37,6 +37,7 @@ import { RouterLink } from 'vue-router';
 				<a href="https://space.bilibili.com/16330793" target="_blank" rel="noopener noreferrer" class="links">哔哩哔哩</a>
 				<a href="https://weibo.com/u/2330621952" target="_blank" rel="noopener noreferrer" class="links">微博</a>
 				<a href="https://music.163.com/#/artist?id=12308369" target="_blank" rel="noopener noreferrer" class="links">网易云音乐</a>
+				<RouterLink to="/profile" class="links">个人介绍</RouterLink>
 			</nav>
 
 			<!-- 导航 -->
