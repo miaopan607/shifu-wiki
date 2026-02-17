@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { RouterLink } from 'vue-router';
 import { pb } from '@/lib/pocketbase';
 import SubPageNav from '@/components/SubPageNav.vue';
@@ -7,6 +7,7 @@ import SongsNav from '@/components/SongsNav.vue';
 
 const allSongs = ref<any[]>([]);
 const loading = ref(true);
+const searchQuery = ref('');
 
 onMounted(async () => {
 	try {
@@ -19,6 +20,17 @@ onMounted(async () => {
 		loading.value = false;
 	}
 });
+
+const filteredSongs = computed(() => {
+	if (!searchQuery.value.trim()) {
+		return allSongs.value;
+	}
+	const query = searchQuery.value.toLowerCase();
+	return allSongs.value.filter(song =>
+		song.title?.toLowerCase().includes(query) ||
+		song.album?.toLowerCase().includes(query)
+	);
+});
 </script>
 
 <template>
@@ -30,10 +42,21 @@ onMounted(async () => {
 				<SongsNav activeTab="singles" />
 			</header>
 
+			<div class="mb-10">
+				<input
+					v-model="searchQuery"
+					type="text"
+					placeholder="搜索歌曲或专辑..."
+					class="w-full px-4 py-3 bg-[#c9c9c9]/10 border border-[#c9c9c9]/20 rounded text-[#c9c9c9] placeholder-[#888] focus:outline-none focus:border-red-300/50 transition-colors"
+				/>
+			</div>
+
 			<div v-if="loading" class="text-center py-20 opacity-40 italic tracking-widest text-[#c9c9c9]">加载中...</div>
 
+			<div v-else-if="filteredSongs.length === 0" class="text-center py-20 opacity-40 italic tracking-widest text-[#c9c9c9]">未找到匹配的歌曲</div>
+
 			<div v-else class="space-y-10">
-				<RouterLink v-for="song in allSongs" :key="song.id" :to="`/songs/${song.index}`" class="group block border-b border-[#c9c9c9]/20 pb-8 hover:border-red-300/50 transition-all">
+				<RouterLink v-for="song in filteredSongs" :key="song.id" :to="`/songs/${song.index}`" class="group block border-b border-[#c9c9c9]/20 pb-8 hover:border-red-300/50 transition-all">
 					<div class="flex justify-between items-end">
 						<div>
 							<h2 class="text-2xl text-[#c9c9c9] group-hover:text-red-300 transition-colors">{{ song.title }}</h2>
