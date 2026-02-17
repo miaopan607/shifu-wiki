@@ -59,7 +59,7 @@ const activeTag = ref<string | null>(null); // null 表示该分区下的"全部
 const activities = ref<Activity[]>([]);
 const loading = ref(true);
 
-const currentSection = computed(() => SECTIONS.find(s => s.id === activeSectionId.value) || SECTIONS[0]);
+const currentSection = computed<SectionConfig>(() => SECTIONS.find(s => s.id === activeSectionId.value) ?? SECTIONS[0]!);
 
 // 计算当前分区下应该显示的 Tag 列表
 const availableTags = computed(() => {
@@ -77,8 +77,9 @@ const availableTags = computed(() => {
 
 const currentTheme = computed<Theme>(() => {
 	// 优先使用当前选中 Tag 的 Theme
-	if (activeTag.value && TAG_THEMES[activeTag.value]) {
-		return TAG_THEMES[activeTag.value];
+	if (activeTag.value) {
+		const theme = TAG_THEMES[activeTag.value];
+		if (theme) return theme;
 	}
 	// 否则使用默认 Theme
 	return DEFAULT_THEME;
@@ -179,7 +180,7 @@ watch(currentTheme, (newTheme) => {
 					{{ section.label }}
 					<span 
 						v-if="activeSectionId === section.id" 
-						class="absolute -bottom-[17px] left-0 w-full h-0.5"
+						class="absolute -bottom-4 left-0 w-full h-0.5"
 						:style="{ backgroundColor: currentTheme.accentColor }"
 					></span>
 				</button>
