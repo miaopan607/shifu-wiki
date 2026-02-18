@@ -16,7 +16,7 @@ import { RouterLink } from 'vue-router';
 
 			<!-- 装饰线 -->
 			<div class="flex justify-center">
-				<div class="h-px w-24 bg-[#c9c9c9] shadow-[0_0_8px] shadow-[#c9c9c9]"></div>
+				<div class="h-0.5 w-24 bg-[#c9c9c9] shadow-[0_0_8px] shadow-[#c9c9c9]"></div>
 			</div>
 
 			<!-- 卿卿与黄，地久天长！ -->
@@ -29,7 +29,7 @@ import { RouterLink } from 'vue-router';
 
 			<!-- 装饰线 -->
 			<div class="flex justify-center">
-				<div class="h-px w-24 bg-[#c9c9c9] shadow-[0_0_8px] shadow-[#c9c9c9]"></div>
+				<div class="h-0.5 w-24 bg-[#c9c9c9] shadow-[0_0_8px] shadow-[#c9c9c9]"></div>
 			</div>
 
 			<!-- 平台链接 -->
