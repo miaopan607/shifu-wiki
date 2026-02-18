@@ -70,15 +70,7 @@ onMounted(async () => {
 	margin-bottom: 1.5em;
 	line-height: 1.8;
 }
-.prose a {
-	color: #fca5a5;
-	text-decoration: none;
-	border-bottom: 1px solid transparent;
-	transition: all 0.3s;
-}
-.prose a:hover {
-	border-bottom-color: #fca5a5;
-}
+
 .prose blockquote {
 	border-left-color: #fca5a5;
 	background: rgba(255, 255, 255, 0.05);

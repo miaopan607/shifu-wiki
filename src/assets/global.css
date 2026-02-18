@@ -42,10 +42,56 @@
 	.content-container * {
 		color: #e0e0e0 !important;
 	}
+
+	/* Markdown rendered links - must be after .content-container * to override */
+	.prose a {
+		color: #fca5a5 !important;
+		text-decoration: none !important;
+		position: relative;
+		transition: color 0.3s ease;
+		display: inline-block;
+	}
+
+	.prose a::after {
+		content: '';
+		position: absolute;
+		left: 0;
+		bottom: 1px;
+		width: 0;
+		height: 2px;
+		background: linear-gradient(90deg, #fca5a5, #f87171);
+		transition: width 0.3s ease;
+		border-radius: 1px;
+	}
+
+	.prose a:hover {
+		color: #f87171 !important;
+	}
+
+	.prose a:hover::after {
+		width: 100%;
+	}
 }
 
 .links {
 	@apply hover:text-red-300 transition-colors cursor-pointer;
+	position: relative;
+}
+
+.links::after {
+	content: '';
+	position: absolute;
+	left: 0;
+	bottom: -1px;
+	width: 0;
+	height: 2px;
+	background: linear-gradient(90deg, #fca5a5, #f87171);
+	transition: width 0.3s ease;
+	border-radius: 1px;
+}
+
+.links:hover::after {
+	width: 100%;
 }
 
 /* Custom scrollbar matching the theme */
