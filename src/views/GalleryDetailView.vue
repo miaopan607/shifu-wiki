@@ -14,6 +14,10 @@ const getImageUrl = (record: GalleryImage, filename: string) => {
     return pb.files.getUrl(record, filename);
 };
 
+const getThumbnailUrl = (record: GalleryImage, filename: string) => {
+    return pb.files.getUrl(record, filename, { thumb: '0x1080' });
+};
+
 onMounted(async () => {
     try {
         // Fetch gallery details
@@ -67,7 +71,7 @@ onMounted(async () => {
                 <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     <div v-for="img in images" :key="img.id" class="group relative aspect-[3/4] overflow-hidden rounded-lg bg-black/20">
                         <img 
-                            :src="getImageUrl(img, img.image)" 
+                            :src="getThumbnailUrl(img, img.image)" 
                             :alt="gallery?.title"
                             class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                             loading="lazy"
