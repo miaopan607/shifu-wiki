@@ -11,7 +11,7 @@
 		"type-check": "vue-tsc --build",
 		"format": "prettier --write .",
 		"lint": "prettier --check .",
-		"deploy": "pnpm build && rsync -avz --delete ./dist/ shifu:/var/www/shifu-wiki/dist/ && ssh shifu sudo systemctl restart nginx"
+		"deploy": "pnpm build && rsync -avz --delete ./dist/ wiki:/opt/shifu-wiki/frontend/dist/"
 	},
 	"dependencies": {
 		"@tailwindcss/vite": "^4.1.18",
