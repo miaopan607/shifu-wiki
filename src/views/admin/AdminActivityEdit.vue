@@ -184,7 +184,7 @@ const handleDateInput = (e: Event) => {
                     <h2 class="text-lg font-semibold text-[#c9c9c9] border-b border-[#c9c9c9]/20 pb-3">基本信息</h2>
                     
                     <div class="space-y-2">
-                        <label class="text-sm text-[#888]">活动名称 <span class="text-red-300">*</span></label>
+                        <label class="text-sm text-[#888]">名称 <span class="text-red-300">*</span></label>
                         <div class="relative group">
                             <input
                                 v-model="activity.title"
@@ -290,7 +290,7 @@ const handleDateInput = (e: Event) => {
                         <input
                             v-model="tagInput"
                             type="text"
-                            placeholder="添加标签..."
+                            placeholder="添加标签"
                             @keyup.enter="addTag"
                             class="flex-1 px-4 py-2 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all"
                         />
@@ -303,11 +303,11 @@ const handleDateInput = (e: Event) => {
                     </div>
                 </div>
 
-                <!-- 内容详情 -->
+                <!-- 活动详情 -->
                 <div class="bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-xl p-6 space-y-4">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
-                            <h2 class="text-lg font-medium text-[#c9c9c9]">内容详情</h2>
+                            <h2 class="text-lg font-medium text-[#c9c9c9]">详情</h2>
                             <svg class="w-4 h-4 text-[#888]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0Z"/><path d="M7 15V9l2 2 2-2v6"/><path d="m14 11 2-2 2 2"/><path d="M16 9v6"/>
                             </svg>
@@ -334,7 +334,7 @@ const handleDateInput = (e: Event) => {
                         v-model="activity.content"
                         v-autosize
                         rows="1"
-                        placeholder="输入活动详情..."
+                        placeholder="活动详情"
                         class="w-full px-4 py-3 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all font-mono text-sm leading-relaxed resize-none"
                     ></textarea>
                 </div>

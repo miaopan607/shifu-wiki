@@ -663,12 +663,12 @@ onUnmounted(() => {
                     </div>
 
                     <div class="space-y-2">
-                        <label class="text-sm text-[#888]">URL 别名 (Slug)</label>
+                        <label class="text-sm text-[#888]">语义化标签</label>
                         <div class="relative group">
                             <input
                                 v-model="form.slug"
                                 type="text"
-                                placeholder="不填则自动生成"
+                                placeholder="自定义 URL 路径"
                                 class="w-full px-4 py-2.5 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all pr-10"
                             />
                             <button 
@@ -686,7 +686,7 @@ onUnmounted(() => {
                     <div class="space-y-2">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-2">
-                                <label class="text-sm text-[#888]">图集描述</label>
+                                <label class="text-sm text-[#888]">描述</label>
                                 <svg class="w-4 h-4 text-[#888]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0Z"/><path d="M7 15V9l2 2 2-2v6"/><path d="m14 11 2-2 2 2"/><path d="M16 9v6"/>
                                 </svg>
@@ -713,7 +713,7 @@ onUnmounted(() => {
                             v-model="form.description"
                             v-autosize
                             rows="1"
-                            placeholder="图集简介..."
+                            placeholder="图集描述"
                             class="w-full px-4 py-3 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all text-sm leading-relaxed resize-none"
                         ></textarea>
                     </div>
@@ -853,7 +853,7 @@ onUnmounted(() => {
                             <svg class="w-8 h-8 text-[#888] group-hover:text-red-300 mb-2 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                             </svg>
-                            <span class="text-sm text-[#888] group-hover:text-red-300 transition-colors">添加图片</span>
+                            <span class="text-sm text-[#888] group-hover:text-red-300 transition-colors">点击或拖动添加图片</span>
                         </div>
                     </div>
                 </div>

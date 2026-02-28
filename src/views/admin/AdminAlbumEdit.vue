@@ -198,12 +198,12 @@ const handleDateInput = (e: Event) => {
                     <h2 class="text-lg font-semibold text-[#c9c9c9] border-b border-[#c9c9c9]/20 pb-3">基本信息</h2>
                     
                     <div class="space-y-2">
-                        <label class="text-sm text-[#888]">专辑标题 <span class="text-red-300">*</span></label>
+                        <label class="text-sm text-[#888]">专辑名 <span class="text-red-300">*</span></label>
                         <div class="relative group">
                             <input
                                 v-model="album.title"
                                 type="text"
-                                placeholder="输入专辑名称"
+                                placeholder="专辑名"
                                 class="w-full px-4 py-2.5 bg-black/20 border rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all pr-10"
                                 :class="titleError ? 'border-red-400/70' : 'border-[#c9c9c9]/20'"
                                 @input="titleError = ''"
@@ -264,7 +264,7 @@ const handleDateInput = (e: Event) => {
                     <div class="space-y-2">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-2">
-                                <label class="text-sm text-[#888]">专辑描述</label>
+                                <label class="text-sm text-[#888]">描述</label>
                                 <svg class="w-4 h-4 text-[#888]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0Z"/><path d="M7 15V9l2 2 2-2v6"/><path d="m14 11 2-2 2 2"/><path d="M16 9v6"/>
                                 </svg>
@@ -291,7 +291,7 @@ const handleDateInput = (e: Event) => {
                             v-model="album.description"
                             v-autosize
                             rows="1"
-                            placeholder="输入专辑介绍..."
+                            placeholder="专辑描述"
                             class="w-full px-4 py-3 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all text-sm leading-relaxed resize-none"
                         ></textarea>
                     </div>
@@ -316,7 +316,7 @@ const handleDateInput = (e: Event) => {
                             <svg class="w-12 h-12 mx-auto text-[#888] mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                             </svg>
-                            <p class="text-sm text-[#888]">点击上传封面</p>
+                            <p class="text-sm text-[#888]">点击或拖动上传封面</p>
                         </div>
                         <div v-if="coverPreview" class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                             <p class="text-white text-sm">更换封面</p>

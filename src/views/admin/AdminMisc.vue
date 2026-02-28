@@ -107,16 +107,14 @@ const editMisc = (id: string) => {
             <div class="w-8 h-8 border-2 border-[#c9c9c9]/30 border-t-red-300 rounded-full animate-spin"></div>
         </div>
 
-        <div v-if="loading" class="relative z-30">
+        <div v-if="loading" class="relative z-30 space-y-6">
             <h1 class="text-2xl font-semibold text-[#c9c9c9]">杂记管理</h1>
-            <p class="text-[#888] mt-1">管理随笔、文章等内容</p>
         </div>
 
-        <div v-else class="space-y-6">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div v-else class="relative space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 <div>
                     <h1 class="text-2xl font-semibold text-[#c9c9c9]">杂记管理</h1>
-                    <p class="text-[#888] mt-1">管理随笔、文章等内容</p>
                 </div>
                 <button
                     @click="createNew"
@@ -151,7 +149,7 @@ const editMisc = (id: string) => {
                 <input
                     v-model="searchQuery"
                     type="text"
-                    placeholder="搜索杂记标题或描述..."
+                    placeholder="搜索杂记标题或描述"
                     class="w-full pl-10 pr-4 py-2.5 bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] placeholder-[#888] focus:outline-none focus:border-red-300/50 transition-all"
                 />
             </div>

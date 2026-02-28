@@ -90,16 +90,14 @@ const editActivity = (id: string) => {
             <div class="w-8 h-8 border-2 border-[#c9c9c9]/30 border-t-red-300 rounded-full animate-spin"></div>
         </div>
 
-        <div v-if="loading" class="relative z-30">
+        <div v-if="loading" class="relative z-30 space-y-6">
             <h1 class="text-2xl font-semibold text-[#c9c9c9]">活动管理</h1>
-            <p class="text-[#888] mt-1">管理所有线下活动、演出等</p>
         </div>
 
-        <div v-else class="space-y-6">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div v-else class="relative space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 <div>
                     <h1 class="text-2xl font-semibold text-[#c9c9c9]">活动管理</h1>
-                    <p class="text-[#888] mt-1">管理所有线下活动、演出等</p>
                 </div>
                 <button
                     @click="createNew"
@@ -126,7 +124,7 @@ const editActivity = (id: string) => {
                 <input
                     v-model="searchQuery"
                     type="text"
-                    placeholder="搜索活动标题、地点或标签..."
+                    placeholder="搜索活动标题、地点或标签"
                     class="w-full pl-10 pr-4 py-2.5 bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] placeholder-[#888] focus:outline-none focus:border-red-300/50 transition-all"
                 />
             </div>
@@ -140,8 +138,9 @@ const editActivity = (id: string) => {
                     <thead class="bg-white/5">
                         <tr>
                             <th class="px-4 py-3 text-sm font-medium text-[#888]">标题</th>
+                            <th class="px-4 py-3 text-sm font-medium text-[#888] w-1/3">标签</th>
                             <th class="px-4 py-3 text-sm font-medium text-[#888]">地点</th>
-                            <th class="px-4 py-3 text-sm font-medium text-[#888]">日期</th>
+                            <th class="px-4 py-3 text-sm font-medium text-[#888] w-24">日期</th>
                             <th class="px-4 py-3 text-right text-sm font-medium text-[#888]">操作</th>
                         </tr>
                     </thead>
@@ -149,10 +148,13 @@ const editActivity = (id: string) => {
                         <tr v-for="activity in filteredActivities" :key="activity.id" class="hover:bg-white/5 transition-colors">
                             <td class="px-4 py-3">
                                 <p class="font-medium text-[#c9c9c9]">{{ activity.title }}</p>
-                                <div class="flex gap-1 mt-1">
-                                    <span v-for="tag in activity.tags" :key="tag" class="text-[10px] px-1.5 py-0.5 bg-red-300/10 text-red-300 rounded">
+                            </td>
+                            <td class="px-4 py-3">
+                                <div class="flex flex-wrap gap-1.5">
+                                    <span v-for="tag in activity.tags" :key="tag" class="text-sm px-2.5 py-0.5 bg-red-300/10 text-red-300 rounded">
                                         {{ tag }}
                                     </span>
+                                    <span v-if="!activity.tags || activity.tags.length === 0" class="text-[#888] text-sm">-</span>
                                 </div>
                             </td>
                             <td class="px-4 py-3">

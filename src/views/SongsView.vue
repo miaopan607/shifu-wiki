@@ -46,14 +46,14 @@ const filteredSongs = computed(() => {
 				<input
 					v-model="searchQuery"
 					type="text"
-					placeholder="搜索歌曲或专辑..."
+					placeholder="搜索音乐标题或专辑"
 					class="w-full px-4 py-3 bg-[#c9c9c9]/10 border border-[#c9c9c9]/20 rounded text-[#c9c9c9] placeholder-[#888] focus:outline-none focus:border-red-300/50 transition-colors"
 				/>
 			</div>
 
 			<div v-if="loading" class="text-center py-20 opacity-40 italic tracking-widest text-[#c9c9c9]">加载中...</div>
 
-			<div v-else-if="filteredSongs.length === 0" class="text-center py-20 opacity-40 italic tracking-widest text-[#c9c9c9]">未找到匹配的歌曲</div>
+			<div v-else-if="filteredSongs.length === 0" class="text-center py-20 opacity-40 italic tracking-widest text-[#c9c9c9]">未找到匹配的音乐</div>
 
 			<div v-else class="space-y-10">
 				<RouterLink v-for="song in filteredSongs" :key="song.id" :to="`/songs/${song.index}`" class="group block border-b border-[#c9c9c9]/20 pb-8 hover:border-red-300/50 transition-all">

@@ -170,7 +170,7 @@ const handleDateInput = (e: Event) => {
                             <input
                                 v-model="misc.title"
                                 type="text"
-                                placeholder="杂记标题"
+                                placeholder="标题"
                                 class="w-full px-4 py-2.5 bg-black/20 border rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all pr-10"
                                 :class="titleError ? 'border-red-400/70' : 'border-[#c9c9c9]/20'"
                                 @input="titleError = ''"
@@ -229,40 +229,71 @@ const handleDateInput = (e: Event) => {
                             </div>
                         </div>
                         <div class="space-y-2">
-                            <label class="text-sm text-[#888]">Slug</label>
+                            <label class="text-sm text-[#888]">语义化标签</label>
                             <input
                                 v-model="misc.slug"
                                 type="text"
-                                placeholder="例如：my-first-post"
+                                placeholder="自定义 URL 路径"
                                 class="w-full px-4 py-2.5 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all"
                             />
                         </div>
                     </div>
 
-                    <div class="space-y-2">
-                        <div class="flex items-center justify-between">
-                            <label class="text-sm text-[#888]">描述/简述</label>
-                            <button 
-                                v-if="misc.description"
-                                @click="misc.description = ''"
-                                class="text-xs text-[#888] hover:text-red-300 transition-colors"
-                            >
-                                清空
-                            </button>
+                    <div class="flex gap-6">
+                        <div class="flex-1 space-y-2">
+                            <div class="flex items-center justify-between h-5">
+                                <label class="text-sm text-[#888]">描述</label>
+                                <button 
+                                    v-if="misc.description"
+                                    @click="misc.description = ''"
+                                    class="text-xs text-[#888] hover:text-red-300 transition-colors"
+                                >
+                                    清空
+                                </button>
+                            </div>
+                            <input
+                                v-model="misc.description"
+                                type="text"
+                                placeholder="杂记描述"
+                                class="w-full px-4 py-2.5 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all"
+                            />
                         </div>
-                        <input
-                            v-model="misc.description"
-                            type="text"
-                            placeholder="简短的描述..."
-                            class="w-full px-4 py-2.5 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all"
-                        />
+                        <div class="space-y-2 min-w-27.5">
+                            <div class="flex items-center h-5">
+                                <label class="text-sm text-[#888]">发布状态</label>
+                            </div>
+                            <div class="flex items-center h-11.5">
+                                <label class="flex items-center gap-3 cursor-pointer group">
+                                    <button
+                                        type="button"
+                                        role="switch"
+                                        :aria-checked="misc.published"
+                                        @click="misc.published = !misc.published"
+                                        :class="[
+                                            'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
+                                            misc.published ? 'bg-red-700' : 'bg-[#888]/30'
+                                        ]"
+                                    >
+                                        <span
+                                            :class="[
+                                                'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
+                                                misc.published ? 'translate-x-6' : 'translate-x-1'
+                                            ]"
+                                        />
+                                    </button>
+                                    <span class="text-[#c9c9c9] text-sm transition-colors group-hover:text-red-300 w-12">{{ misc.published ? '已发布' : '草稿' }}</span>
+                                </label>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                    <div class="space-y-2">
+                <!-- 正文内容 -->
+                <div class="bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-xl p-6 space-y-5">
+                    <div class="space-y-4">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-2">
-                                <h2 class="text-lg font-medium text-[#c9c9c9]">正文内容 <span class="text-red-300">*</span></h2>
+                                <h2 class="text-lg font-medium text-[#c9c9c9]">正文 <span class="text-red-300">*</span></h2>
                                 <svg class="w-4 h-4 text-[#888]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0Z"/><path d="M7 15V9l2 2 2-2v6"/><path d="m14 11 2-2 2 2"/><path d="M16 9v6"/>
                                 </svg>
@@ -295,29 +326,6 @@ const handleDateInput = (e: Event) => {
                             @input="contentError = ''"
                         ></textarea>
                         <p v-if="contentError" class="text-xs text-red-300">{{ contentError }}</p>
-                    </div>
-            </div>
-
-            <div class="space-y-6">
-                <!-- 发布设置 -->
-                <div class="bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-xl p-6 space-y-4">
-                    <h2 class="text-lg font-medium text-[#c9c9c9]">发布设置</h2>
-                    
-                    <div class="flex items-center justify-between py-2">
-                        <div>
-                            <p class="text-[#e0e0e0] font-medium">发布状态</p>
-                            <p class="text-xs text-[#888]">开启后将在主站显示</p>
-                        </div>
-                        <button
-                            @click="misc.published = !misc.published"
-                            class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
-                            :class="misc.published ? 'bg-red-700' : 'bg-[#c9c9c9]/20'"
-                        >
-                            <span
-                                class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-                                :class="misc.published ? 'translate-x-5' : 'translate-x-0'"
-                            />
-                        </button>
                     </div>
                 </div>
             </div>

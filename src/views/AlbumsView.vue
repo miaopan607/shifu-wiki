@@ -46,7 +46,7 @@ onMounted(async () => {
                         <div class="flex justify-between items-end">
                             <div>
                                 <h2 class="text-2xl text-[#c9c9c9] group-hover:text-red-300 transition-colors">{{ album.title }}</h2>
-                                <p class="text-[#888] mt-2 tracking-widest text-sm">{{ album.songCount }} 首歌曲 · {{ album.releaseDate }}</p>
+                                <p class="text-[#888] mt-2 tracking-widest text-sm">{{ album.songCount }} 曲音乐 · {{ album.releaseDate }}</p>
                             </div>
                             <span class="text-red-300 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">查看专辑 →</span>
                         </div>

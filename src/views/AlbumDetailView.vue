@@ -50,7 +50,7 @@ onMounted(async () => {
                     <div class="mb-12 border-b border-[#c9c9c9]/20 pb-8">
                         <h1 class="text-4xl md:text-5xl text-[#c9c9c9] mb-4 tracking-widest">{{ albumTitle }}</h1>
                         <div class="flex items-center gap-4 text-[#888] tracking-widest text-sm">
-                            <span>{{ songs.length }} 首歌曲</span>
+                            <span>{{ songs.length }} 曲音乐</span>
                             <span v-if="songs.length > 0">·</span>
                             <span v-if="songs.length > 0">发布于 {{ songs[0].releaseDate }}</span>
                         </div>

@@ -220,7 +220,7 @@ const handleDateInput = (e: Event) => {
                             <input
                                 v-model="song.title"
                                 type="text"
-                                placeholder="音乐标题"
+                                placeholder="标题"
                                 class="w-full px-4 py-2.5 bg-black/20 border rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all pr-10"
                                 :class="titleError ? 'border-red-400/70' : 'border-[#c9c9c9]/20'"
                                 @input="titleError = ''"
@@ -245,7 +245,7 @@ const handleDateInput = (e: Event) => {
                                 <input
                                     v-model="song.artist"
                                     type="text"
-                                    placeholder="演唱者"
+                                    placeholder="艺人"
                                     class="w-full px-4 py-2.5 bg-black/20 border rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all pr-10"
                                     :class="artistError ? 'border-red-400/70' : 'border-[#c9c9c9]/20'"
                                     @input="artistError = ''"
@@ -268,7 +268,7 @@ const handleDateInput = (e: Event) => {
                                 <input
                                     v-model="song.album"
                                     type="text"
-                                    placeholder="所属专辑"
+                                    placeholder="专辑"
                                     class="w-full px-4 py-2.5 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all pr-10"
                                 />
                                 <button 
@@ -291,7 +291,7 @@ const handleDateInput = (e: Event) => {
                                 <input
                                     v-model="song.lyricist"
                                     type="text"
-                                    placeholder="作词人"
+                                    placeholder="词作"
                                     class="w-full px-4 py-2.5 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all pr-10"
                                 />
                                 <button 
@@ -311,7 +311,7 @@ const handleDateInput = (e: Event) => {
                                 <input
                                     v-model="song.composer"
                                     type="text"
-                                    placeholder="作曲人"
+                                    placeholder="曲作"
                                     class="w-full px-4 py-2.5 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all pr-10"
                                 />
                                 <button 
@@ -399,7 +399,7 @@ const handleDateInput = (e: Event) => {
                         v-model="song.description"
                         v-autosize
                         rows="1"
-                        placeholder="输入歌曲描述..."
+                        placeholder="音乐描述"
                         class="w-full px-4 py-3 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all text-sm leading-relaxed resize-none"
                     ></textarea>
                 </div>
@@ -482,7 +482,7 @@ const handleDateInput = (e: Event) => {
                         v-model="song.lyrics"
                         v-autosize
                         rows="1"
-                        placeholder="输入歌词..."
+                        placeholder="歌词"
                         class="w-full px-4 py-3 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all font-mono text-sm leading-relaxed resize-none"
                     ></textarea>
                 </div>
@@ -503,7 +503,7 @@ const handleDateInput = (e: Event) => {
                         v-model="song.credits"
                         v-autosize
                         rows="1"
-                        placeholder="作词、作曲、编曲等信息..."
+                        placeholder="制作人员名单"
                         class="w-full px-4 py-3 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all font-mono text-sm leading-relaxed resize-none"
                     ></textarea>
                 </div>

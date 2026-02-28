@@ -226,7 +226,7 @@ watch(currentTheme, (newTheme) => {
 				<input
 					v-model="searchQuery"
 					type="text"
-					placeholder="搜索活动、地点或标签..."
+					placeholder="搜索活动、地点或标签"
 					class="w-full px-4 py-3 bg-current/10 border border-current/20 rounded transition-colors placeholder:opacity-50 focus:outline-none focus:border-current/50"
 					:style="{ color: currentTheme.textColor }"
 				/>

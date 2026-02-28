@@ -19,7 +19,7 @@ const collections: CollectionConfig[] = [
         key: 'songs',
         collection: 'songs',
         label: '音乐',
-        shortLabel: '歌曲',
+        shortLabel: '音乐',
         managePath: '/admin/songs',
         newPath: '/admin/songs/new',
     },
@@ -160,7 +160,6 @@ onMounted(async () => {
         <div v-if="loading" class="relative z-30 space-y-6">
             <section>
                 <h1 class="text-2xl font-semibold text-[#c9c9c9]">仪表盘</h1>
-                <p class="text-[#888] mt-1">全站内容概览与快捷操作</p>
             </section>
         </div>
 
@@ -169,7 +168,6 @@ onMounted(async () => {
                 <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <h1 class="text-2xl font-semibold text-[#c9c9c9]">仪表盘</h1>
-                        <p class="text-[#888] mt-1">全站内容概览与快捷操作</p>
                         <p class="text-xs text-[#777] mt-2" v-if="lastUpdated">
                             最近刷新：{{ formatDateTime(lastUpdated) }}
                         </p>
