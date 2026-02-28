@@ -91,11 +91,18 @@ const navigateTo = (path: string) => {
             </div>
             
             <div class="flex items-center gap-3">
+                <RouterLink
+                    to="/"
+                    class="px-3 py-1.5 rounded-lg text-sm text-[#c9c9c9] hover:text-red-300 hover:bg-white/10 transition-colors"
+                    title="返回主页"
+                >
+                    返回主页
+                </RouterLink>
                 <div class="text-sm text-[#c9c9c9]">
                     {{ user?.username || '' }}
                 </div>
-                <button 
-                    @click="handleLogout" 
+                <button
+                    @click="handleLogout"
                     class="p-2 hover:bg-white/10 rounded-lg text-[#c9c9c9] hover:text-red-300 transition-colors"
                     title="退出登录"
                 >
