@@ -74,9 +74,9 @@ const navigateTo = (path: string) => {
     <div class="admin-layout min-h-screen bg-[rgb(77,0,0)] font-serif">
         <header class="fixed top-0 left-0 right-0 h-14 bg-[rgb(60,0,0)] border-b border-[#c9c9c9]/20 flex items-center justify-between px-4 md:px-6 z-50">
             <div class="flex items-center gap-4">
-                <button 
+                <button
                     v-if="isMobile"
-                    @click="mobileMenuOpen = !mobileMenuOpen" 
+                    @click="mobileMenuOpen = !mobileMenuOpen"
                     class="p-2 hover:bg-white/10 rounded-lg text-[#c9c9c9]"
                 >
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -86,16 +86,16 @@ const navigateTo = (path: string) => {
                 <RouterLink to="/admin" class="text-lg font-semibold text-red-300 hover:text-[#fca5a5] transition-colors">
                     管理后台
                 </RouterLink>
-            </div>
-            
-            <div class="flex items-center gap-3">
                 <RouterLink
                     to="/"
-                    class="px-3 py-1.5 rounded-lg text-sm text-[#c9c9c9] hover:text-red-300 hover:bg-white/10 transition-colors"
+                    class="px-3 py-1.5 rounded-lg text-base text-[#c9c9c9] hover:text-red-300 hover:bg-white/10 transition-colors"
                     title="返回主页"
                 >
                     返回主页
                 </RouterLink>
+            </div>
+
+            <div class="flex items-center gap-3">
                 <div class="text-sm text-[#c9c9c9]">
                     {{ user?.username || '' }}
                 </div>
