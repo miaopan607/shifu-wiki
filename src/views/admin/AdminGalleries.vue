@@ -239,7 +239,7 @@ const editGallery = (id: string) => {
                                 <div class="flex items-center justify-end gap-2">
                                     <button
                                         @click="editGallery(gallery.id)"
-                                        class="p-2 text-[#888] hover:text-red-300 hover:bg-white/5 rounded-lg transition-colors"
+                                        class="p-2 text-[#888] hover:text-red-300 hover:bg-white/10 rounded-lg transition-colors"
                                         title="编辑"
                                     >
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -248,7 +248,7 @@ const editGallery = (id: string) => {
                                     </button>
                                     <button
                                         @click="confirmDelete(gallery.id)"
-                                        class="p-2 text-[#888] hover:text-red-400 hover:bg-white/5 rounded-lg transition-colors"
+                                        class="p-2 text-[#888] hover:text-red-400 hover:bg-white/10 rounded-lg transition-colors"
                                         title="删除"
                                     >
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

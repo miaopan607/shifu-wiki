@@ -160,7 +160,7 @@ const editSong = (id: string) => {
                                 <div class="flex items-center justify-end gap-2">
                                     <button
                                         @click="editSong(song.id)"
-                                        class="p-1.5 text-[#888] hover:text-red-300 transition-colors"
+                                        class="p-1.5 text-[#888] hover:text-red-300 hover:bg-white/10 rounded-lg transition-colors"
                                         title="编辑"
                                     >
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -169,7 +169,7 @@ const editSong = (id: string) => {
                                     </button>
                                     <button
                                         @click="confirmDelete(song.id)"
-                                        class="p-1.5 text-[#888] hover:text-red-500 transition-colors"
+                                        class="p-1.5 text-[#888] hover:text-red-500 hover:bg-white/10 rounded-lg transition-colors"
                                         title="删除"
                                     >
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
