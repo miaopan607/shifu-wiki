@@ -65,16 +65,11 @@ const handleLogout = async () => {
     pb.authStore.clear();
     router.push('/admin/login');
 };
-
-const navigateTo = (path: string) => {
-    router.push(path);
-    mobileMenuOpen.value = false;
-};
 </script>
 
 <template>
     <div class="admin-layout h-screen flex flex-col overflow-hidden bg-[rgb(77,0,0)] font-serif">
-        <header class="h-14 bg-[rgb(60,0,0)] border-b border-[#c9c9c9]/20 flex items-center justify-between px-4 md:px-6 z-50 flex-shrink-0">
+        <header class="h-14 bg-[rgb(60,0,0)] border-b border-[#c9c9c9]/20 flex items-center justify-between px-4 md:px-6 z-50 shrink-0">
             <div class="flex items-center gap-4">
                 <button
                     v-if="isMobile"
@@ -118,7 +113,7 @@ const navigateTo = (path: string) => {
 
             <aside 
                 :class="[
-                    'bg-[rgb(60,0,0)] border-r border-[#c9c9c9]/20 z-40 transition-all duration-300 flex-shrink-0 flex flex-col',
+                    'bg-[rgb(60,0,0)] border-r border-[#c9c9c9]/20 z-40 transition-all duration-300 shrink-0 flex flex-col',
                     isMobile ? 'fixed top-14 left-0 h-[calc(100vh-3.5rem)] w-64' : (sidebarCollapsed ? 'w-16' : 'w-56'),
                     isMobile ? (mobileMenuOpen ? 'translate-x-0' : '-translate-x-full') : 'translate-x-0'
                 ]"

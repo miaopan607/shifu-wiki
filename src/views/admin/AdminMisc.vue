@@ -102,7 +102,7 @@ const editMisc = (id: string) => {
 </script>
 
 <template>
-    <div class="relative min-h-[400px]">
+    <div class="relative min-h-100">
         <div v-if="loading" class="absolute inset-0 z-20 flex items-center justify-center bg-[rgb(77,0,0)]/90 backdrop-blur-sm">
             <div class="w-8 h-8 border-2 border-[#c9c9c9]/30 border-t-red-300 rounded-full animate-spin"></div>
         </div>
