@@ -39,6 +39,7 @@ const checkMobile = () => {
 };
 
 onMounted(() => {
+    document.documentElement.classList.add('admin-page');
     checkMobile();
     window.addEventListener('resize', checkMobile);
     
@@ -56,6 +57,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+    document.documentElement.classList.remove('admin-page');
     window.removeEventListener('resize', checkMobile);
 });
 
@@ -71,7 +73,7 @@ const navigateTo = (path: string) => {
 </script>
 
 <template>
-    <div class="admin-layout min-h-screen bg-[rgb(77,0,0)] font-serif">
+    <div class="admin-layout min-h-full bg-[rgb(77,0,0)] font-serif">
         <header class="fixed top-0 left-0 right-0 h-14 bg-[rgb(60,0,0)] border-b border-[#c9c9c9]/20 flex items-center justify-between px-4 md:px-6 z-50">
             <div class="flex items-center gap-4">
                 <button
@@ -164,7 +166,4 @@ const navigateTo = (path: string) => {
 </template>
 
 <style scoped>
-.admin-layout {
-    min-height: 100vh;
-}
 </style>

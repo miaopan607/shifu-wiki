@@ -149,7 +149,7 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div class="relative min-h-[calc(100vh-3.5rem)] space-y-6">
+    <div class="relative space-y-6">
         <div
             v-if="loading"
             class="absolute inset-0 z-20 flex items-center justify-center bg-[rgb(77,0,0)]/60 backdrop-blur-sm"

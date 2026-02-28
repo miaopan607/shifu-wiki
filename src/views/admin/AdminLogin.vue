@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { pb } from '@/lib/pocketbase';
 
@@ -13,10 +13,15 @@ const error = ref('');
 const showPassword = ref(false);
 
 onMounted(() => {
+    document.documentElement.classList.add('admin-page');
     if (pb.authStore.isValid) {
         const redirect = route.query.redirect as string || '/admin';
         router.push(redirect);
     }
+});
+
+onUnmounted(() => {
+    document.documentElement.classList.remove('admin-page');
 });
 
 const handleLogin = async () => {
@@ -55,7 +60,7 @@ const handleLogin = async () => {
 </script>
 
 <template>
-    <div class="min-h-screen bg-[rgb(77,0,0)] flex items-center justify-center p-4 font-serif">
+    <div class="min-h-full bg-[rgb(77,0,0)] flex items-center justify-center p-4 font-serif">
         <div class="w-full max-w-md">
             <div class="bg-[rgb(60,0,0)] rounded-xl border border-[#c9c9c9]/20 p-8">
                 <div class="text-center mb-8">

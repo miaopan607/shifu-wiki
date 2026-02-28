@@ -11,6 +11,6 @@ import { RouterView } from 'vue-router';
 <style>
 /* Global styles are already in global.css */
 .app-container {
-	min-height: 100vh;
+	height: 100%;
 }
 </style>
