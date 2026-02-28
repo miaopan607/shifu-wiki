@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { pb } from '@/lib/pocketbase';
+import { pb, decodeSongLinkNames, encodeSongLinkNames } from '@/lib/pocketbase';
 import { marked } from 'marked';
 import type { Song } from '@/types';
 
@@ -44,14 +44,15 @@ onMounted(async () => {
         loading.value = true;
         try {
             const record = await pb.collection('songs').getOne(route.params.id as string);
+            const decodedRecord = decodeSongLinkNames(record as Song);
             song.value = {
-                ...record,
-                releaseDate: record.releaseDate ? record.releaseDate.split(' ')[0] : '',
-                links: Array.isArray(record.links) 
-                    ? record.links.map(l => ({ ...l, name: (l.name || '').replace(/\\n/g, '\n') })) 
+                ...decodedRecord,
+                releaseDate: decodedRecord.releaseDate ? decodedRecord.releaseDate.split(' ')[0] : '',
+                links: Array.isArray(decodedRecord.links)
+                    ? decodedRecord.links
                     : song.value.links,
-                otherLinks: Array.isArray(record.otherLinks) 
-                    ? record.otherLinks.map(l => ({ ...l, name: (l.name || '').replace(/\\n/g, '\n') })) 
+                otherLinks: Array.isArray(decodedRecord.otherLinks)
+                    ? decodedRecord.otherLinks
                     : [],
             } as unknown as Song;
         } catch (error) {
@@ -104,26 +105,24 @@ const saveSong = async () => {
             name: (l.name || '').trim(),
             url: (l.url || '').trim(),
         }))
-        .filter(l => l.name && l.url)
-        .map(l => ({ ...l, name: l.name.replace(/\n/g, '\\n') }));
+        .filter(l => l.name && l.url);
 
     const normalizedOtherLinks = (song.value.otherLinks || [])
         .map(l => ({
             name: (l.name || '').trim(),
             url: (l.url || '').trim(),
         }))
-        .filter(l => l.name && l.url)
-        .map(l => ({ ...l, name: l.name.replace(/\n/g, '\\n') }));
+        .filter(l => l.name && l.url);
 
     saving.value = true;
     try {
-        const data = {
+        const data = encodeSongLinkNames({
             ...song.value,
             title: normalizedTitle,
             artist: normalizedArtist,
             links: normalizedLinks,
             otherLinks: normalizedOtherLinks,
-        };
+        });
 
         if (isEdit.value) {
             await pb.collection('songs').update(route.params.id as string, data);

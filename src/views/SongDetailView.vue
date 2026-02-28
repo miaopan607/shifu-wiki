@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter, RouterLink } from 'vue-router';
-import { pb } from '@/lib/pocketbase';
+import { pb, decodeSongLinkNames } from '@/lib/pocketbase';
 import { marked } from 'marked';
 
 const route = useRoute();
@@ -35,7 +35,7 @@ onMounted(async () => {
 	}
 
 	try {
-		song.value = await pb.collection('songs').getFirstListItem(`index="${slug}"`);
+		song.value = decodeSongLinkNames(await pb.collection('songs').getFirstListItem(`index="${slug}"`));
 		if (song.value) {
 			document.title = `${song.value.title} | 黄诗扶 Wiki`;
 		}
@@ -62,10 +62,6 @@ const renderMarkdown = (content: string | undefined) => {
 	return marked.parse(content, { async: false }) as string;
 };
 
-const formatLinkName = (name: string) => {
-	if (!name) return '';
-	return name.replace(/\\n/g, '\n');
-};
 </script>
 
 <template>
@@ -135,7 +131,7 @@ const formatLinkName = (name: string) => {
 								class="text-[#c9c9c9]/80 hover:text-red-300 transition-all duration-300 text-sm tracking-[0.2em] flex items-start group whitespace-pre-line"
 							>
 								<span class="mr-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform -translate-x-2 group-hover:translate-x-0">→</span>
-								{{ formatLinkName(link.name) }}
+								{{ link.name }}
 							</a>
 						</div>
 						<hr class="border-[#c9c9c9]/30 mt-5 mb-5" />
@@ -152,7 +148,7 @@ const formatLinkName = (name: string) => {
 								class="text-[#c9c9c9]/80 hover:text-red-300 transition-all duration-300 text-sm tracking-[0.2em] flex items-start group whitespace-pre-line"
 							>
 								<span class="mr-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform -translate-x-2 group-hover:translate-x-0">→</span>
-								{{ formatLinkName(link.name) }}
+								{{ link.name }}
 							</a>
 						</div>
 						<hr class="border-[#c9c9c9]/30 mt-5" />
