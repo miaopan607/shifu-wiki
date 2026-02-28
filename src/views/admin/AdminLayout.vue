@@ -73,8 +73,8 @@ const navigateTo = (path: string) => {
 </script>
 
 <template>
-    <div class="admin-layout min-h-full bg-[rgb(77,0,0)] font-serif">
-        <header class="fixed top-0 left-0 right-0 h-14 bg-[rgb(60,0,0)] border-b border-[#c9c9c9]/20 flex items-center justify-between px-4 md:px-6 z-50">
+    <div class="admin-layout h-screen flex flex-col overflow-hidden bg-[rgb(77,0,0)] font-serif">
+        <header class="h-14 bg-[rgb(60,0,0)] border-b border-[#c9c9c9]/20 flex items-center justify-between px-4 md:px-6 z-50 flex-shrink-0">
             <div class="flex items-center gap-4">
                 <button
                     v-if="isMobile"
@@ -113,55 +113,54 @@ const navigateTo = (path: string) => {
             </div>
         </header>
 
-        <div v-if="isMobile && mobileMenuOpen" class="fixed inset-0 bg-black/50 z-40" @click="mobileMenuOpen = false"></div>
+        <div class="flex flex-1 overflow-hidden relative">
+            <div v-if="isMobile && mobileMenuOpen" class="fixed inset-0 bg-black/50 z-40" @click="mobileMenuOpen = false"></div>
 
-        <aside 
-            :class="[
-                'fixed top-14 left-0 h-[calc(100vh-3.5rem)] bg-[rgb(60,0,0)] border-r border-[#c9c9c9]/20 z-40 transition-transform duration-300',
-                isMobile ? 'w-64' : (sidebarCollapsed ? 'w-16' : 'w-56'),
-                isMobile ? (mobileMenuOpen ? 'translate-x-0' : '-translate-x-full') : 'translate-x-0'
-            ]"
-        >
-            <nav class="p-3 space-y-1">
-                <RouterLink
-                    v-for="item in navItems"
-                    :key="item.view"
-                    :to="item.path"
-                    :class="[
-                        'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all',
-                        currentView === item.view 
-                            ? 'bg-white/10 text-red-300' 
-                            : 'text-[#c9c9c9] hover:bg-white/5 hover:text-red-300'
-                    ]"
-                    @click="mobileMenuOpen = false"
-                >
-                    <span class="text-xl">{{ item.icon }}</span>
-                    <span v-if="!sidebarCollapsed || isMobile" class="font-medium">{{ item.label }}</span>
-                </RouterLink>
-            </nav>
+            <aside 
+                :class="[
+                    'bg-[rgb(60,0,0)] border-r border-[#c9c9c9]/20 z-40 transition-all duration-300 flex-shrink-0 flex flex-col',
+                    isMobile ? 'fixed top-14 left-0 h-[calc(100vh-3.5rem)] w-64' : (sidebarCollapsed ? 'w-16' : 'w-56'),
+                    isMobile ? (mobileMenuOpen ? 'translate-x-0' : '-translate-x-full') : 'translate-x-0'
+                ]"
+            >
+                <nav class="flex-1 p-3 space-y-1 overflow-y-auto overflow-x-hidden">
+                    <RouterLink
+                        v-for="item in navItems"
+                        :key="item.view"
+                        :to="item.path"
+                        :class="[
+                            'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all',
+                            currentView === item.view 
+                                ? 'bg-white/10 text-red-300' 
+                                : 'text-[#c9c9c9] hover:bg-white/5 hover:text-red-300'
+                        ]"
+                        @click="mobileMenuOpen = false"
+                    >
+                        <span class="text-xl">{{ item.icon }}</span>
+                        <span v-if="!sidebarCollapsed || isMobile" class="font-medium whitespace-nowrap">{{ item.label }}</span>
+                    </RouterLink>
+                </nav>
 
-            <div v-if="!isMobile" class="absolute bottom-4 left-0 right-0 px-3">
-                <button
-                    @click="sidebarCollapsed = !sidebarCollapsed"
-                    class="w-full p-2 text-[#c9c9c9] hover:text-red-300 hover:bg-white/5 rounded-lg transition-colors flex items-center justify-center"
-                >
-                    <svg class="w-5 h-5 transition-transform" :class="sidebarCollapsed ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
-                    </svg>
-                </button>
-            </div>
-        </aside>
+                <div v-if="!isMobile" class="p-3 border-t border-white/5">
+                    <button
+                        @click="sidebarCollapsed = !sidebarCollapsed"
+                        class="w-full p-2 text-[#c9c9c9] hover:text-red-300 hover:bg-white/5 rounded-lg transition-colors flex items-center justify-center"
+                    >
+                        <svg class="w-5 h-5 transition-transform" :class="sidebarCollapsed ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
+                        </svg>
+                    </button>
+                </div>
+            </aside>
 
-        <main 
-            :class="[
-                'transition-all duration-300 pt-14',
-                isMobile ? 'pl-0' : (sidebarCollapsed ? 'pl-16' : 'pl-56')
-            ]"
-        >
-            <div class="p-4 md:p-6 lg:p-8">
-                <RouterView />
-            </div>
-        </main>
+            <main 
+                class="flex-1 overflow-y-auto transition-all duration-300"
+            >
+                <div class="p-4 md:p-6 lg:p-8">
+                    <RouterView />
+                </div>
+            </main>
+        </div>
     </div>
 </template>
 

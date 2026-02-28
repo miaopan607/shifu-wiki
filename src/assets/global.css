@@ -96,7 +96,9 @@
 }
 
 /* Custom scrollbar matching the theme */
-html {
+html,
+.overflow-y-auto,
+.overflow-auto {
 	--scroll-thumb: #fca5a544;
 	--scroll-track: rgb(77, 0, 0);
 	scrollbar-color: var(--scroll-thumb) var(--scroll-track);
@@ -105,4 +107,8 @@ html {
 
 html.admin-page {
 	scrollbar-gutter: auto;
+}
+
+.admin-layout main {
+	scrollbar-gutter: stable;
 }
