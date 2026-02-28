@@ -149,101 +149,110 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div class="relative space-y-6">
+    <div class="relative min-h-[400px]">
         <div
             v-if="loading"
-            class="absolute inset-0 z-20 flex items-center justify-center bg-[rgb(77,0,0)]/60 backdrop-blur-sm"
+            class="absolute inset-0 z-20 flex items-center justify-center bg-[rgb(77,0,0)]/90 backdrop-blur-sm"
         >
             <div class="w-8 h-8 border-2 border-[#c9c9c9]/30 border-t-red-300 rounded-full animate-spin"></div>
         </div>
 
-        <section>
-            <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                    <h1 class="text-2xl font-semibold text-[#c9c9c9]">仪表盘</h1>
-                    <p class="text-[#888] mt-1">全站内容概览与快捷操作</p>
-                    <p class="text-xs text-[#777] mt-2" v-if="lastUpdated">
-                        最近刷新：{{ formatDateTime(lastUpdated) }}
-                    </p>
-                </div>
+        <div v-if="loading" class="relative z-30 space-y-6">
+            <section>
+                <h1 class="text-2xl font-semibold text-[#c9c9c9]">仪表盘</h1>
+                <p class="text-[#888] mt-1">全站内容概览与快捷操作</p>
+            </section>
+        </div>
 
-                <button
-                    @click="handleRefresh"
-                    :disabled="loading || refreshing"
-                    class="inline-flex items-center gap-2 px-3 py-2 border border-[#c9c9c9]/25 text-[#c9c9c9] hover:bg-white/5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    <svg
-                        class="w-4 h-4"
-                        :class="refreshing ? 'animate-spin' : ''"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+        <div v-else class="relative space-y-6">
+            <section>
+                <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                        <h1 class="text-2xl font-semibold text-[#c9c9c9]">仪表盘</h1>
+                        <p class="text-[#888] mt-1">全站内容概览与快捷操作</p>
+                        <p class="text-xs text-[#777] mt-2" v-if="lastUpdated">
+                            最近刷新：{{ formatDateTime(lastUpdated) }}
+                        </p>
+                    </div>
+
+                    <button
+                        @click="handleRefresh"
+                        :disabled="loading || refreshing"
+                        class="inline-flex items-center gap-2 px-3 py-2 border border-[#c9c9c9]/25 text-[#c9c9c9] hover:bg-white/5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m14.834 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                    </svg>
-                    刷新
-                </button>
-            </div>
-        </section>
-
-        <section class="space-y-3">
-            <div class="flex items-center justify-between">
-                <h2 class="text-lg font-semibold text-[#c9c9c9]">概览</h2>
-                <p class="text-sm text-[#888]">总内容量：{{ totalContentCount }}</p>
-            </div>
-
-            <p v-if="statsErrors.length" class="text-sm text-red-300">
-                {{ statsErrors.join('；') }}
-            </p>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                <div
-                    v-for="item in collections"
-                    :key="`kpi-${item.key}`"
-                    class="bg-[rgb(60,0,0)] rounded-xl border border-[#c9c9c9]/20 p-4"
-                >
-                    <p class="text-[#888] text-sm">{{ item.label }}</p>
-                    <p class="text-2xl font-semibold text-[#c9c9c9] mt-1">
-                        {{ stats[item.key] ?? '—' }}
-                    </p>
+                        <svg
+                            class="w-4 h-4"
+                            :class="refreshing ? 'animate-spin' : ''"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m14.834 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        刷新
+                    </button>
                 </div>
-            </div>
+            </section>
 
-            <div
-                v-if="!hasAnyStats && !statsErrors.length"
-                class="bg-[rgb(60,0,0)] rounded-xl border border-[#c9c9c9]/20 p-6 text-center text-[#888]"
-            >
-                暂无统计数据，可先通过上方入口创建内容。
-            </div>
-        </section>
+            <section class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-semibold text-[#c9c9c9]">概览</h2>
+                    <p class="text-sm text-[#888]">总内容量：{{ totalContentCount }}</p>
+                </div>
 
-        <section class="space-y-3">
-            <h2 class="text-lg font-semibold text-[#c9c9c9]">快捷管理</h2>
+                <p v-if="statsErrors.length" class="text-sm text-red-300">
+                    {{ statsErrors.join('；') }}
+                </p>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                <div
-                    v-for="item in collections"
-                    :key="`quick-${item.key}`"
-                    class="bg-[rgb(60,0,0)] rounded-xl border border-[#c9c9c9]/20 p-4"
-                >
-                    <p class="text-[#c9c9c9] font-medium">{{ item.label }}管理</p>
-                    <div class="mt-3 flex flex-wrap gap-2">
-                        <RouterLink
-                            :to="item.managePath"
-                            class="inline-flex items-center px-3 py-1.5 text-sm text-[#c9c9c9] border border-[#c9c9c9]/25 hover:bg-white/5 hover:text-red-300 rounded-lg transition-colors"
-                        >
-                            管理入口
-                        </RouterLink>
-                        <RouterLink
-                            :to="item.newPath"
-                            class="inline-flex items-center px-3 py-1.5 text-sm text-red-300 border border-red-300/50 hover:bg-white/5 rounded-lg transition-colors"
-                        >
-                            新建{{ item.shortLabel }}
-                        </RouterLink>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                    <div
+                        v-for="item in collections"
+                        :key="`kpi-${item.key}`"
+                        class="bg-[rgb(60,0,0)] rounded-xl border border-[#c9c9c9]/20 p-4"
+                    >
+                        <p class="text-[#888] text-sm">{{ item.label }}</p>
+                        <p class="text-2xl font-semibold text-[#c9c9c9] mt-1">
+                            {{ stats[item.key] ?? '—' }}
+                        </p>
                     </div>
                 </div>
-            </div>
-        </section>
+
+                <div
+                    v-if="!hasAnyStats && !statsErrors.length"
+                    class="bg-[rgb(60,0,0)] rounded-xl border border-[#c9c9c9]/20 p-6 text-center text-[#888]"
+                >
+                    暂无统计数据，可先通过上方入口创建内容。
+                </div>
+            </section>
+
+            <section class="space-y-3">
+                <h2 class="text-lg font-semibold text-[#c9c9c9]">快捷管理</h2>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                    <div
+                        v-for="item in collections"
+                        :key="`quick-${item.key}`"
+                        class="bg-[rgb(60,0,0)] rounded-xl border border-[#c9c9c9]/20 p-4"
+                    >
+                        <p class="text-[#c9c9c9] font-medium">{{ item.label }}管理</p>
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            <RouterLink
+                                :to="item.managePath"
+                                class="inline-flex items-center px-3 py-1.5 text-sm text-[#c9c9c9] border border-[#c9c9c9]/25 hover:bg-white/5 hover:text-red-300 rounded-lg transition-colors"
+                            >
+                                管理入口
+                            </RouterLink>
+                            <RouterLink
+                                :to="item.newPath"
+                                class="inline-flex items-center px-3 py-1.5 text-sm text-red-300 border border-red-300/50 hover:bg-white/5 rounded-lg transition-colors"
+                            >
+                                新建{{ item.shortLabel }}
+                            </RouterLink>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
     </div>
 </template>
 
