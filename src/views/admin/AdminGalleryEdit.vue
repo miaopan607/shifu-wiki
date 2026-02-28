@@ -438,17 +438,13 @@ const saveGallery = async () => {
 
     try {
         if (isNew.value) {
-            const created = await pb.collection('galleries').create({
+            await pb.collection('galleries').create({
                 title: form.value.title.trim(),
                 slug: form.value.slug.trim() || undefined,
                 description: form.value.description.trim() || undefined,
                 published: form.value.published,
                 date: form.value.date,
             });
-            successMessage.value = '创建成功！';
-            setTimeout(() => {
-                router.push(`/admin/galleries/${created.id}`);
-            }, 1000);
         } else {
             if (!galleryId.value) {
                 throw new Error('Invalid gallery ID');
@@ -470,16 +466,10 @@ const saveGallery = async () => {
                 }
             }
             imagesToDelete.value = [];
-
-            successMessage.value = '保存成功！';
-            await fetchGallery();
         }
 
         hasChanges.value = false;
-
-        setTimeout(() => {
-            successMessage.value = '';
-        }, 3000);
+        router.push('/admin/galleries');
     } catch (err) {
         console.error('Failed to save gallery:', err);
         error.value = '保存失败，请重试';
