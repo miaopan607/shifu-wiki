@@ -197,11 +197,11 @@ const preloadFullImage = (imgId: string, url: string) => {
 };
 
 const getThumbnailUrl = (record: GalleryImage, filename: string) => {
-	return pb.files.getUrl(record, filename, { thumb: '0x720' });
+	return pb.files.getURL(record, filename, { thumb: '0x720' });
 };
 
 const getFullImageUrl = (record: GalleryImage, filename: string) => {
-	return pb.files.getUrl(record, filename);
+	return pb.files.getURL(record, filename);
 };
 </script>
 

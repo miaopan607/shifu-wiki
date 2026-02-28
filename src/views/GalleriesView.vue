@@ -106,7 +106,7 @@ const formatDate = (dateStr: string) => {
 };
 
 const getThumbnailUrl = (record: GalleryImage, filename: string) => {
-	return pb.files.getUrl(record, filename, { thumb: '0x720' });
+	return pb.files.getURL(record, filename, { thumb: '0x720' });
 };
 
 // 检查图片是否应该加载

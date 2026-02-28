@@ -41,7 +41,7 @@ onMounted(async () => {
             } as unknown as Album;
 
             if (record.cover) {
-                coverPreview.value = pb.files.getUrl(record, record.cover, { thumb: '400x400' });
+                coverPreview.value = pb.files.getURL(record, record.cover, { thumb: '400x400' });
             }
         }
     } catch (error) {

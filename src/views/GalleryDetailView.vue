@@ -22,11 +22,11 @@ const lightboxOpen = ref(false);
 const lightboxIndex = ref(0);
 
 const getImageUrl = (record: GalleryImage, filename: string) => {
-    return pb.files.getUrl(record, filename);
+    return pb.files.getURL(record, filename);
 };
 
 const getThumbnailUrl = (record: GalleryImage, filename: string) => {
-    return pb.files.getUrl(record, filename, { thumb: '0x1080' });
+    return pb.files.getURL(record, filename, { thumb: '0x1080' });
 };
 
 const renderMarkdown = (content: string | undefined) => {

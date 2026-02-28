@@ -84,7 +84,7 @@ const editAlbum = (id: string) => {
 
 const getImageUrl = (record: any, filename: string) => {
     if (!filename) return '';
-    return pb.files.getUrl(record, filename, { thumb: '400x400' });
+    return pb.files.getURL(record, filename, { thumb: '400x400' });
 };
 </script>
 
