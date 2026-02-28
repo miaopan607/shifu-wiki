@@ -12,19 +12,29 @@ const loading = ref(true);
 const contentHtml = ref('');
 
 onMounted(async () => {
-    const index = route.params.index as string;
-    if (!index) {
+    const slugOrId = route.params.slug as string;
+    if (!slugOrId) {
         router.replace('/404');
         return;
     }
 
     try {
-        const record = await pb.collection('misc').getFirstListItem(`index="${index}"`);
-        
+        let record: any = null;
+
+        try {
+            record = await pb.collection('misc').getFirstListItem(`slug="${slugOrId}"`);
+        } catch {
+            try {
+                record = await pb.collection('misc').getOne(slugOrId);
+            } catch {
+                console.warn('Misc item not found by slug or ID');
+            }
+        }
+
         if (record) {
             miscItem.value = record as unknown as Misc;
             document.title = `${record.title} | 黄诗扶 Wiki`;
-            
+
             // Parse Markdown content
             if (record.content) {
                 contentHtml.value = await marked(record.content);

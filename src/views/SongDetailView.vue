@@ -61,6 +61,11 @@ const renderMarkdown = (content: string | undefined) => {
 	if (!content) return '';
 	return marked.parse(content, { async: false }) as string;
 };
+
+const formatLinkName = (name: string) => {
+	if (!name) return '';
+	return name.replace(/\\n/g, '\n');
+};
 </script>
 
 <template>
@@ -114,7 +119,7 @@ const renderMarkdown = (content: string | undefined) => {
 					<hr v-if="song.description" class="border-[#c9c9c9]/30 mb-8" />
 
 					<!-- 歌词内容 -->
-					<div class="prose prose-invert mx-auto lyrics-container mt-0 text-lg whitespace-pre-line" v-html="song.lyric"></div>
+					<div class="prose prose-invert mx-auto lyrics-container mt-0 text-lg whitespace-pre-line" v-html="song.lyrics"></div>
 				</article>
 				<!-- 右侧边栏 -->
 				<aside class="w-full lg:w-56 shrink-0 mt-12 lg:mt-0 lg:absolute lg:left-[calc(100%+4rem)] lg:top-0">
@@ -130,7 +135,7 @@ const renderMarkdown = (content: string | undefined) => {
 								class="text-[#c9c9c9]/80 hover:text-red-300 transition-all duration-300 text-sm tracking-[0.2em] flex items-start group whitespace-pre-line"
 							>
 								<span class="mr-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform -translate-x-2 group-hover:translate-x-0">→</span>
-								{{ link.name }}
+								{{ formatLinkName(link.name) }}
 							</a>
 						</div>
 						<hr class="border-[#c9c9c9]/30 mt-5 mb-5" />
@@ -147,7 +152,7 @@ const renderMarkdown = (content: string | undefined) => {
 								class="text-[#c9c9c9]/80 hover:text-red-300 transition-all duration-300 text-sm tracking-[0.2em] flex items-start group whitespace-pre-line"
 							>
 								<span class="mr-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform -translate-x-2 group-hover:translate-x-0">→</span>
-								{{ link.name }}
+								{{ formatLinkName(link.name) }}
 							</a>
 						</div>
 						<hr class="border-[#c9c9c9]/30 mt-5" />

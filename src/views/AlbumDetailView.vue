@@ -2,12 +2,18 @@
 import { ref, onMounted } from 'vue';
 import { useRoute, RouterLink } from 'vue-router';
 import { pb } from '@/lib/pocketbase';
+import { marked } from 'marked';
 
 const route = useRoute();
 const albumTitle = decodeURIComponent(route.params.title as string);
 const songs = ref<any[]>([]);
 const albumInfo = ref<any>(null);
 const loading = ref(true);
+
+const renderMarkdown = (content: string | undefined) => {
+    if (!content) return '';
+    return marked.parse(content, { async: false }) as string;
+};
 
 onMounted(async () => {
     try {
@@ -50,7 +56,7 @@ onMounted(async () => {
                         </div>
                         
                         <div v-if="albumInfo?.description" class="mt-8 prose prose-invert max-w-none text-[#c9c9c9]/80 leading-relaxed tracking-wider">
-                            <div v-html="albumInfo.description"></div>
+                            <div v-html="renderMarkdown(albumInfo.description)"></div>
                         </div>
                     </div>
 

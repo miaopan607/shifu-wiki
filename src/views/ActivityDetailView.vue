@@ -2,11 +2,17 @@
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter, RouterLink } from 'vue-router';
 import { pb } from '@/lib/pocketbase';
+import { marked } from 'marked';
 
 const route = useRoute();
 const router = useRouter();
 const activity = ref<any>(null);
 const loading = ref(true);
+
+const renderMarkdown = (content: string | undefined) => {
+    if (!content) return '';
+    return marked.parse(content, { async: false }) as string;
+};
 
 const THEME_COLOR = 'rgb(77,0,0)';
 
@@ -59,7 +65,7 @@ onMounted(async () => {
 				<hr class="border-[#c9c9c9]/30 mb-8" />
 
 				<!-- 活动正文内容 -->
-				<div class="prose prose-invert mx-auto content-container text-lg leading-relaxed text-[#c9c9c9]" v-html="activity.content || activity.description || '暂无详细介绍'"></div>
+				<div class="prose prose-invert mx-auto content-container text-lg leading-relaxed text-[#c9c9c9]" v-html="renderMarkdown(activity.content || activity.description || '暂无详细介绍')"></div>
 			</article>
 		</div>
 	</main>

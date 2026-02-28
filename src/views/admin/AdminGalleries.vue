@@ -215,21 +215,15 @@ const editGallery = (id: string) => {
                                     @click="togglePublish(gallery)"
                                     :disabled="togglingPublish === gallery.id"
                                     :class="[
-                                        'relative inline-flex h-8 w-21 items-center rounded-full transition-all duration-300 focus:outline-none',
-                                        gallery.published ? 'bg-green-500/30' : 'bg-white/10',
+                                        'relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
+                                        gallery.published ? 'bg-red-700' : 'bg-[#c9c9c9]/20',
                                         togglingPublish === gallery.id ? 'opacity-50 cursor-wait' : 'cursor-pointer'
                                     ]"
                                 >
-                                    <span 
-                                        class="absolute text-sm font-bold select-none transition-all duration-300"
-                                        :class="gallery.published ? 'left-2 text-green-400' : 'right-5 text-[#888]'"
-                                    >
-                                        {{ gallery.published ? '已发布' : '草稿' }}
-                                    </span>
                                     <span
                                         :class="[
-                                            'inline-block h-6 w-6 transform rounded-full bg-white transition-transform duration-300 shadow-md',
-                                            gallery.published ? 'translate-x-13.5' : 'translate-x-1'
+                                            'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                                            gallery.published ? 'translate-x-5' : 'translate-x-0'
                                         ]"
                                     />
                                 </button>

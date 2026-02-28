@@ -38,7 +38,7 @@ onMounted(async () => {
                     <RouterLink 
                         v-for="item in miscItems" 
                         :key="item.id" 
-                        :to="`/misc/${item.index}`"
+                        :to="`/misc/${item.slug || item.id}`"
                         class="group block border-b border-[#c9c9c9]/20 pb-8 hover:border-red-300/50 transition-all"
                     >
                         <div class="flex justify-between items-end">

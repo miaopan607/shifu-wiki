@@ -19,11 +19,18 @@ const currentView = computed<AdminView>(() => {
     if (path.includes('/admin/albums')) return 'albums';
     if (path.includes('/admin/activities')) return 'activities';
     if (path.includes('/admin/misc')) return 'misc';
+    if (path.includes('/admin/settings')) return 'settings';
     return 'dashboard';
 });
 
 const navItems: { view: AdminView; label: string; icon: string; path: string }[] = [
-    { view: 'galleries', label: '图集管理', icon: '🖼', path: '/admin/galleries' },
+    { view: 'dashboard', label: '仪表盘', icon: '📊', path: '/admin' },
+    { view: 'songs', label: '音乐管理', icon: '🎵', path: '/admin/songs' },
+    { view: 'albums', label: '专辑管理', icon: '💿', path: '/admin/albums' },
+    { view: 'activities', label: '活动管理', icon: '🗓️', path: '/admin/activities' },
+    { view: 'galleries', label: '图集管理', icon: '🖼️', path: '/admin/galleries' },
+    { view: 'misc', label: '杂记管理', icon: '📝', path: '/admin/misc' },
+    { view: 'settings', label: '站点配置', icon: '⚙️', path: '/admin/settings' },
 ];
 
 const checkMobile = () => {
