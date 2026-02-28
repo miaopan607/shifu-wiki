@@ -84,10 +84,3 @@ export interface Activity {
     tags?: string[];
     content?: string;
 }
-
-export interface SiteSetting {
-    id: string;
-    key: string;
-    value: string;
-    description?: string;
-}

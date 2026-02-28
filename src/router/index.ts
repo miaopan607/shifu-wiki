@@ -190,12 +190,6 @@ const router = createRouter({
 					component: () => import('../views/admin/AdminMiscEdit.vue'),
 					meta: { title: '编辑杂记 | 管理后台' },
 				},
-				{
-					path: 'settings',
-					name: 'admin-settings',
-					component: () => import('../views/admin/AdminSettings.vue'),
-					meta: { title: '站点配置 | 管理后台' },
-				},
 			],
 		},
 		{

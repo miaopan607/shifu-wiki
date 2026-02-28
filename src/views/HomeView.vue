@@ -1,9 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
 import { RouterLink } from 'vue-router';
-import { pb } from '@/lib/pocketbase';
 
-const settings = ref<Record<string, string>>({
+const settings = {
 	home_title: '黄诗扶 Wiki',
 	home_subtitle: '开发预览',
 	home_slogan_1: '卿卿与黄',
@@ -11,20 +9,7 @@ const settings = ref<Record<string, string>>({
 	link_bilibili: 'https://space.bilibili.com/16330793',
 	link_weibo: 'https://weibo.com/u/2330621952',
 	link_music: 'https://music.163.com/#/artist?id=12308369',
-});
-
-onMounted(async () => {
-	try {
-		const records = await pb.collection('site_settings').getFullList();
-		records.forEach(r => {
-			if (r.key in settings.value) {
-				settings.value[r.key] = r.value;
-			}
-		});
-	} catch (e) {
-		console.warn('Failed to fetch site settings, using defaults');
-	}
-});
+};
 </script>
 
 <template>

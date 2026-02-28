@@ -1,27 +1,12 @@
 <script setup lang="ts">
-	import { ref, onMounted } from 'vue';
 import { RouterLink } from 'vue-router';
-import { pb } from '@/lib/pocketbase';
 
-const settings = ref<Record<string, string>>({
+const settings = {
 	about_description: '黄诗扶 Wiki 是一个由粉丝维护的非官方资料站，致力于整理和分享黄诗扶的音乐作品、活动记录等相关信息。',
 	about_github: 'https://github.com/miaopan607/shifu-wiki',
 	about_contact: 'miaopan607@foxmail.com',
 	about_disclaimer: '本站为粉丝自建非官方网站，所有资料仅供参考。如有侵权或错误，请联系项目维护者。',
-});
-
-onMounted(async () => {
-	try {
-		const records = await pb.collection('site_settings').getFullList();
-		records.forEach(r => {
-			if (r.key in settings.value) {
-				settings.value[r.key] = r.value;
-			}
-		});
-	} catch (e) {
-		console.warn('Failed to fetch site settings, using defaults');
-	}
-});
+};
 </script>
 
 <template>
