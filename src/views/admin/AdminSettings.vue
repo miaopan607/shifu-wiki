@@ -105,52 +105,59 @@ const saveAll = async () => {
 </script>
 
 <template>
-    <div class="max-w-4xl mx-auto space-y-6">
-        <div class="flex items-center justify-between">
-            <div>
-                <h1 class="text-2xl font-semibold text-[#c9c9c9]">站点配置</h1>
-                <p class="text-[#888] mt-1">管理首页、关于页面的文本和链接</p>
-            </div>
-            <button
-                @click="saveAll"
-                class="px-6 py-2 bg-red-300 text-[rgb(77,0,0)] font-semibold rounded-lg hover:bg-[#fca5a5] transition-colors flex items-center gap-2"
-                :disabled="saving !== null"
-            >
-                保存全部
-            </button>
-        </div>
-
-        <div v-if="loading" class="flex items-center justify-center py-20">
+    <div class="relative max-w-4xl mx-auto min-h-[calc(100vh-3.5rem)]">
+        <div v-if="loading" class="absolute inset-0 z-20 flex items-center justify-center bg-[rgb(77,0,0)]/60 backdrop-blur-sm">
             <div class="w-8 h-8 border-2 border-[#c9c9c9]/30 border-t-red-300 rounded-full animate-spin"></div>
         </div>
 
-        <div v-else class="space-y-8 pb-20">
-            <div v-for="group in groups" :key="group.id" class="bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-xl overflow-hidden">
-                <div class="px-6 py-4 bg-white/5 border-b border-[#c9c9c9]/10">
-                    <h2 class="text-lg font-medium text-[#c9c9c9]">{{ group.label }}</h2>
+        <div v-if="loading" class="relative z-30">
+            <h1 class="text-2xl font-semibold text-[#c9c9c9]">站点配置</h1>
+            <p class="text-[#888] mt-1">管理首页、关于页面的文本和链接</p>
+        </div>
+
+        <div v-else class="space-y-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-semibold text-[#c9c9c9]">站点配置</h1>
+                    <p class="text-[#888] mt-1">管理首页、关于页面的文本和链接</p>
                 </div>
-                <div class="p-6 space-y-6">
-                    <div v-for="key in group.keys" :key="key" class="space-y-2">
-                        <div class="flex items-center justify-between">
-                            <label class="text-sm text-[#888]">{{ labels[key] || key }}</label>
-                            <span v-if="saving === key" class="text-xs text-red-300 animate-pulse">保存中...</span>
-                        </div>
-                        <div class="flex gap-3">
-                            <textarea
-                                v-if="key.includes('description') || key.includes('disclaimer')"
-                                v-model="settingValues[key]"
-                                v-autosize
-                                rows="1"
-                                class="flex-1 px-4 py-2 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all text-sm resize-none"
-                                @blur="saveSetting(key)"
-                            ></textarea>
-                            <input
-                                v-else
-                                v-model="settingValues[key]"
-                                type="text"
-                                class="flex-1 px-4 py-2 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all text-sm"
-                                @blur="saveSetting(key)"
-                            />
+                <button
+                    @click="saveAll"
+                    class="px-6 py-2 bg-red-300 text-[rgb(77,0,0)] font-semibold rounded-lg hover:bg-[#fca5a5] transition-colors flex items-center gap-2"
+                    :disabled="saving !== null"
+                >
+                    保存全部
+                </button>
+            </div>
+
+            <div class="space-y-8 pb-20">
+                <div v-for="group in groups" :key="group.id" class="bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-xl overflow-hidden">
+                    <div class="px-6 py-4 bg-white/5 border-b border-[#c9c9c9]/10">
+                        <h2 class="text-lg font-medium text-[#c9c9c9]">{{ group.label }}</h2>
+                    </div>
+                    <div class="p-6 space-y-6">
+                        <div v-for="key in group.keys" :key="key" class="space-y-2">
+                            <div class="flex items-center justify-between">
+                                <label class="text-sm text-[#888]">{{ labels[key] || key }}</label>
+                                <span v-if="saving === key" class="text-xs text-red-300 animate-pulse">保存中...</span>
+                            </div>
+                            <div class="flex gap-3">
+                                <textarea
+                                    v-if="key.includes('description') || key.includes('disclaimer')"
+                                    v-model="settingValues[key]"
+                                    v-autosize
+                                    rows="1"
+                                    class="flex-1 px-4 py-2 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all text-sm resize-none"
+                                    @blur="saveSetting(key)"
+                                ></textarea>
+                                <input
+                                    v-else
+                                    v-model="settingValues[key]"
+                                    type="text"
+                                    class="flex-1 px-4 py-2 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all text-sm"
+                                    @blur="saveSetting(key)"
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
