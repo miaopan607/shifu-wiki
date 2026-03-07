@@ -42,7 +42,7 @@ const getImageUrl = (record: any, filename: string) => {
 
 <template>
     <main class="min-h-screen bg-[rgb(77,0,0)] p-8 md:p-20 font-serif">
-        <div class="max-w-6xl mx-auto">
+        <div class="max-w-2xl mx-auto">
             <header class="mb-16">
                 <RouterLink to="/" class="text-lg text-red-300 hover:text-[#c9c9c9] transition-colors">← 返回首页</RouterLink>
                 <SubPageNav activePage="songs" />
@@ -53,7 +53,7 @@ const getImageUrl = (record: any, filename: string) => {
 
             <div v-else>
                 <div v-if="albums.length === 0" class="text-center py-20 opacity-40 italic tracking-widest text-[#c9c9c9]">暂无专辑数据</div>
-                <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                <div v-else class="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     <RouterLink v-for="album in albums" :key="album.id" :to="`/albums/${encodeURIComponent(album.title)}`"
                         class="bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-xl overflow-hidden group hover:border-red-300/50 transition-all">
                         <div class="aspect-square relative overflow-hidden bg-black/40">
