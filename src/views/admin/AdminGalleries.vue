@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { pb } from '@/lib/pocketbase';
+import MetaIcon from '@/components/MetaIcon.vue';
 import type { AdminGallery } from '@/types/admin';
 
 const router = useRouter();
@@ -197,9 +198,24 @@ const editGallery = (id: string) => {
                 <table class="w-full">
                     <thead class="bg-white/5">
                         <tr>
-                            <th class="px-4 py-3 text-left text-sm font-medium text-[#888]">标题</th>
-                            <th class="px-4 py-3 text-left text-sm font-medium text-[#888] hidden sm:table-cell">日期</th>
-                            <th class="px-4 py-3 text-center text-sm font-medium text-[#888]">图片数</th>
+                            <th class="px-4 py-3 text-left text-sm font-medium text-[#888]">
+                                <div class="flex items-center gap-1.5">
+                                    <MetaIcon name="image" class-name="w-4 h-4 opacity-60" />
+                                    标题
+                                </div>
+                            </th>
+                            <th class="px-4 py-3 text-left text-sm font-medium text-[#888] hidden sm:table-cell">
+                                <div class="flex items-center gap-1.5">
+                                    <MetaIcon name="date" class-name="w-4 h-4 opacity-60" />
+                                    日期
+                                </div>
+                            </th>
+                            <th class="px-4 py-3 text-center text-sm font-medium text-[#888]">
+                                <div class="flex items-center justify-center gap-1.5">
+                                    <MetaIcon name="image" class-name="w-4 h-4 opacity-60" />
+                                    图片数
+                                </div>
+                            </th>
                             <th class="px-4 py-3 text-center text-sm font-medium text-[#888]">状态</th>
                             <th class="px-4 py-3 text-right text-sm font-medium text-[#888]">操作</th>
                         </tr>
@@ -212,14 +228,15 @@ const editGallery = (id: string) => {
                                     <p v-if="gallery.slug" class="text-sm text-[#888]">{{ gallery.slug }}</p>
                                 </div>
                             </td>
-                            <td class="px-4 py-3 text-[#888] hidden sm:table-cell">
-                                {{ formatDate(gallery.date) }}
+                            <td class="px-4 py-3 hidden sm:table-cell">
+                                <div class="flex items-center gap-1 text-[#888]">
+                                    <MetaIcon name="date" />
+                                    <span>{{ formatDate(gallery.date) }}</span>
+                                </div>
                             </td>
                             <td class="px-4 py-3 text-center">
                                 <span class="inline-flex items-center gap-1 text-[#c9c9c9]">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                                    </svg>
+                                    <MetaIcon name="image" />
                                     {{ gallery.imageCount ?? 0 }}
                                 </span>
                             </td>

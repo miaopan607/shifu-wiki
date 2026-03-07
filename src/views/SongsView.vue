@@ -4,6 +4,7 @@ import { RouterLink } from 'vue-router';
 import { pb } from '@/lib/pocketbase';
 import SubPageNav from '@/components/SubPageNav.vue';
 import SongsNav from '@/components/SongsNav.vue';
+import MetaIcon from '@/components/MetaIcon.vue';
 
 const allSongs = ref<any[]>([]);
 const loading = ref(true);
@@ -33,11 +34,16 @@ const filteredSongs = computed(() => {
 });
 
 // 格式化歌曲元数据
-const formatSongMeta = (song: any): string => {
-	const parts: string[] = [];
-	if (song.album) parts.push(song.album);
-	if (song.releaseDate) parts.push(song.releaseDate);
-	return parts.join(' · ');
+interface MetaPart {
+	type: 'album' | 'date';
+	value: string;
+}
+
+const getSongMetaParts = (song: any): MetaPart[] => {
+	const parts: MetaPart[] = [];
+	if (song.album) parts.push({ type: 'album', value: song.album });
+	if (song.releaseDate) parts.push({ type: 'date', value: song.releaseDate });
+	return parts;
 };
 </script>
 
@@ -65,14 +71,22 @@ const formatSongMeta = (song: any): string => {
 
 			<div v-else class="space-y-10">
 				<RouterLink v-for="song in filteredSongs" :key="song.id" :to="`/songs/${song.index}`" class="group block border-b border-[#c9c9c9]/20 pb-8 hover:border-red-300/50 transition-all">
-					<div class="flex justify-between items-end">
-						<div>
-							<h2 class="text-2xl text-[#c9c9c9] group-hover:text-red-300 transition-colors">{{ song.title }}</h2>
-							<p class="text-[#888] mt-2 tracking-widest text-sm">{{ formatSongMeta(song) }}</p>
+				<div class="flex justify-between items-end">
+					<div>
+						<h2 class="text-2xl text-[#c9c9c9] group-hover:text-red-300 transition-colors">{{ song.title }}</h2>
+						<div class="flex items-center gap-3 mt-2 tracking-widest text-sm text-[#888]">
+							<template v-for="(part, index) in getSongMetaParts(song)" :key="index">
+								<div class="flex items-center gap-1">
+									<MetaIcon :name="part.type" />
+									<span>{{ part.value }}</span>
+								</div>
+								<span v-if="index < getSongMetaParts(song).length - 1">·</span>
+							</template>
 						</div>
-						<span class="text-red-300 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">详情 →</span>
 					</div>
-				</RouterLink>
+					<span class="text-red-300 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">详情 →</span>
+				</div>
+			</RouterLink>
 			</div>
 		</div>
 	</main>

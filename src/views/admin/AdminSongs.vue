@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { pb } from '@/lib/pocketbase';
+import MetaIcon from '@/components/MetaIcon.vue';
 import type { Song } from '@/types';
 
 const router = useRouter();
@@ -136,9 +137,24 @@ const editSong = (id: string) => {
                 <table class="w-full text-left">
                     <thead class="bg-white/5">
                         <tr>
-                            <th class="px-4 py-3 text-sm font-medium text-[#888]">标题</th>
-                            <th class="px-4 py-3 text-sm font-medium text-[#888]">专辑</th>
-                            <th class="px-4 py-3 text-sm font-medium text-[#888]">发布日期</th>
+                            <th class="px-4 py-3 text-sm font-medium text-[#888]">
+                                <div class="flex items-center gap-1.5">
+                                    <MetaIcon name="music" class-name="w-4 h-4 opacity-60" />
+                                    标题
+                                </div>
+                            </th>
+                            <th class="px-4 py-3 text-sm font-medium text-[#888]">
+                                <div class="flex items-center gap-1.5">
+                                    <MetaIcon name="album" class-name="w-4 h-4 opacity-60" />
+                                    专辑
+                                </div>
+                            </th>
+                            <th class="px-4 py-3 text-sm font-medium text-[#888]">
+                                <div class="flex items-center gap-1.5">
+                                    <MetaIcon name="date" class-name="w-4 h-4 opacity-60" />
+                                    发布日期
+                                </div>
+                            </th>
                             <th class="px-4 py-3 text-right text-sm font-medium text-[#888]">操作</th>
                         </tr>
                     </thead>

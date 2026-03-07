@@ -4,16 +4,22 @@ import { RouterLink } from 'vue-router';
 import { pb } from '@/lib/pocketbase';
 import SubPageNav from '@/components/SubPageNav.vue';
 import SongsNav from '@/components/SongsNav.vue';
+import MetaIcon from '@/components/MetaIcon.vue';
 
 const albums = ref<any[]>([]);
 const loading = ref(true);
 
 // 格式化专辑元数据
-const formatAlbumMeta = (album: any): string => {
-    const parts: string[] = [];
-    if (album.songCount !== undefined) parts.push(`${album.songCount} 曲音乐`);
-    if (album.releaseDate) parts.push(album.releaseDate);
-    return parts.join(' · ');
+interface MetaPart {
+    type: 'music' | 'date';
+    value: string;
+}
+
+const getAlbumMetaParts = (album: any): MetaPart[] => {
+    const parts: MetaPart[] = [];
+    if (album.songCount !== undefined) parts.push({ type: 'music', value: `${album.songCount} 曲音乐` });
+    if (album.releaseDate) parts.push({ type: 'date', value: album.releaseDate });
+    return parts;
 };
 
 onMounted(async () => {
@@ -54,7 +60,15 @@ onMounted(async () => {
                         <div class="flex justify-between items-end">
                             <div>
                                 <h2 class="text-2xl text-[#c9c9c9] group-hover:text-red-300 transition-colors">{{ album.title }}</h2>
-                                <p class="text-[#888] mt-2 tracking-widest text-sm">{{ formatAlbumMeta(album) }}</p>
+                                <div class="flex items-center gap-3 mt-2 tracking-widest text-sm text-[#888]">
+                                    <template v-for="(part, index) in getAlbumMetaParts(album)" :key="index">
+                                        <div class="flex items-center gap-1">
+                                            <MetaIcon :name="part.type" />
+                                            <span>{{ part.value }}</span>
+                                        </div>
+                                        <span v-if="index < getAlbumMetaParts(album).length - 1">·</span>
+                                    </template>
+                                </div>
                             </div>
                             <span class="text-red-300 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">查看专辑 →</span>
                         </div>

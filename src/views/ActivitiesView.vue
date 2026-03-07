@@ -3,6 +3,7 @@ import { ref, onMounted, computed, watch, onUnmounted } from 'vue';
 import { RouterLink } from 'vue-router';
 import { pb } from '@/lib/pocketbase';
 import SubPageNav from '@/components/SubPageNav.vue';
+import MetaIcon from '@/components/MetaIcon.vue';
 
 interface Theme {
 	bgColor: string;
@@ -87,11 +88,16 @@ const currentTheme = computed<Theme>(() => {
 });
 
 // 格式化活动元数据
-const formatActivityMeta = (activity: Activity): string => {
-	const parts: string[] = [];
-	if (activity.date) parts.push(activity.date);
-	if (activity.location) parts.push(activity.location);
-	return parts.join(' · ');
+interface MetaPart {
+	type: 'date' | 'location';
+	value: string;
+}
+
+const getActivityMetaParts = (activity: Activity): MetaPart[] => {
+	const parts: MetaPart[] = [];
+	if (activity.date) parts.push({ type: 'date', value: activity.date });
+	if (activity.location) parts.push({ type: 'location', value: activity.location });
+	return parts;
 };
 
 const filteredActivities = computed(() => {
@@ -253,7 +259,15 @@ watch(currentTheme, (newTheme) => {
 						<div class="flex justify-between items-end">
 							<div>
 								<h2 class="text-2xl group-hover:text-red-300 transition-colors">{{ activity.title }}</h2>
-								<p class="opacity-60 mt-2 tracking-widest text-sm">{{ formatActivityMeta(activity) }}</p>
+								<div class="flex items-center gap-3 mt-2 tracking-widest text-sm opacity-60">
+									<template v-for="(part, index) in getActivityMetaParts(activity)" :key="index">
+										<div class="flex items-center gap-1">
+											<MetaIcon :name="part.type" />
+											<span>{{ part.value }}</span>
+										</div>
+										<span v-if="index < getActivityMetaParts(activity).length - 1">·</span>
+									</template>
+								</div>
 							</div>
 							<span class="accent-text opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">详情 →</span>
 						</div>

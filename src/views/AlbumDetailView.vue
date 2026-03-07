@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useRoute, RouterLink } from 'vue-router';
 import { pb } from '@/lib/pocketbase';
 import { marked } from 'marked';
+import MetaIcon from '@/components/MetaIcon.vue';
 
 const route = useRoute();
 const albumTitle = decodeURIComponent(route.params.title as string);
@@ -19,12 +20,13 @@ const renderMarkdown = (content: string | undefined) => {
 interface MetaItem {
 	label?: string;
 	value: string;
+	icon?: string;
 }
 
 const metaItems = computed<MetaItem[]>(() => {
 	const items: MetaItem[] = [];
-	if (songs.value.length > 0) items.push({ value: `${songs.value.length} 曲音乐` });
-	if (albumInfo.value?.releaseDate) items.push({ label: '发布于', value: albumInfo.value.releaseDate });
+	if (songs.value.length > 0) items.push({ value: `${songs.value.length} 曲音乐`, icon: 'music' });
+	if (albumInfo.value?.releaseDate) items.push({ value: albumInfo.value.releaseDate, icon: 'date' });
 	return items;
 });
 
@@ -64,8 +66,10 @@ onMounted(async () => {
                         <h1 class="text-4xl md:text-5xl text-[#c9c9c9] mb-4 tracking-widest">{{ albumTitle }}</h1>
                         <div class="flex items-center gap-4 text-[#888] tracking-widest text-sm">
                             <template v-for="(item, index) in metaItems" :key="index">
-                                <span v-if="item.label">{{ item.label }} {{ item.value }}</span>
-                                <span v-else>{{ item.value }}</span>
+                                <div class="flex items-center gap-1.5">
+                                    <MetaIcon :name="item.icon as any" />
+                                    <span>{{ item.value }}</span>
+                                </div>
                                 <span v-if="index < metaItems.length - 1">·</span>
                             </template>
                         </div>

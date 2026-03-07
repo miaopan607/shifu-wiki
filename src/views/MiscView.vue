@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue';
 import { RouterLink } from 'vue-router';
 import { pb } from '@/lib/pocketbase';
 import SubPageNav from '@/components/SubPageNav.vue';
+import MetaIcon from '@/components/MetaIcon.vue';
 import type { Misc } from '@/types';
 
 const miscItems = ref<Misc[]>([]);
@@ -44,7 +45,10 @@ onMounted(async () => {
                         <div class="flex justify-between items-end">
                             <div class="flex-1 pr-8">
                                 <h2 class="text-2xl group-hover:text-red-300 transition-colors mb-2">{{ item.title }}</h2>
-                                <p class="text-[#888] text-sm tracking-widest mb-3">{{ new Date(item.created).toLocaleDateString('zh-CN') }}</p>
+                                <div class="flex items-center gap-1 text-[#888] text-sm tracking-widest mb-3">
+                                    <MetaIcon name="date" />
+                                    <span>{{ new Date(item.created).toLocaleDateString('zh-CN') }}</span>
+                                </div>
                                 <p v-if="item.description" class="text-[#c9c9c9]/70 line-clamp-2 text-base">{{ item.description }}</p>
                             </div>
                             <span class="text-red-300 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0 shrink-0">阅读 →</span>

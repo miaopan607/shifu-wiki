@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue';
 import { useRoute, useRouter, RouterLink } from 'vue-router';
 import { pb } from '@/lib/pocketbase';
 import { marked } from 'marked';
+import MetaIcon from '@/components/MetaIcon.vue';
 import type { Misc } from '@/types';
 
 const route = useRoute();
@@ -66,11 +67,14 @@ onMounted(async () => {
 
             <article class="w-full">
                 <header class="mb-8">
-                    <h1 class="text-4xl md:text-5xl text-[#c9c9c9] tracking-[0.1em] drop-shadow-[0_0_10px_rgba(201,201,201,0.3)] mb-4">
+                    <h1 class="text-4xl md:text-5xl text-[#c9c9c9] tracking-widest drop-shadow-[0_0_10px_rgba(201,201,201,0.3)] mb-4">
                         {{ miscItem.title }}
                     </h1>
                     <div class="flex items-center gap-4 text-[#888] text-sm tracking-widest">
-                        <span>{{ new Date(miscItem.created).toLocaleDateString('zh-CN') }}</span>
+                        <div class="flex items-center gap-1.5">
+                            <MetaIcon name="date" />
+                            <span>{{ new Date(miscItem.created).toLocaleDateString('zh-CN') }}</span>
+                        </div>
                     </div>
                 </header>
                 

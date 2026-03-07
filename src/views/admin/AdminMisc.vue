@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { pb } from '@/lib/pocketbase';
+import MetaIcon from '@/components/MetaIcon.vue';
 import type { Misc } from '@/types';
 
 const router = useRouter();
@@ -162,8 +163,18 @@ const editMisc = (id: string) => {
                 <table class="w-full text-left">
                     <thead class="bg-white/5">
                         <tr>
-                            <th class="px-4 py-3 text-sm font-medium text-[#888]">标题</th>
-                            <th class="px-4 py-3 text-sm font-medium text-[#888]">发布日期</th>
+                            <th class="px-4 py-3 text-sm font-medium text-[#888]">
+                                <div class="flex items-center gap-1.5">
+                                    <MetaIcon name="file" class-name="w-4 h-4 opacity-60" />
+                                    标题
+                                </div>
+                            </th>
+                            <th class="px-4 py-3 text-sm font-medium text-[#888]">
+                                <div class="flex items-center gap-1.5">
+                                    <MetaIcon name="date" class-name="w-4 h-4 opacity-60" />
+                                    发布日期
+                                </div>
+                            </th>
                             <th class="px-4 py-3 text-center text-sm font-medium text-[#888]">状态</th>
                             <th class="px-4 py-3 text-right text-sm font-medium text-[#888]">操作</th>
                         </tr>
@@ -174,8 +185,11 @@ const editMisc = (id: string) => {
                                 <p class="font-medium text-[#c9c9c9]">{{ misc.title }}</p>
                                 <p class="text-sm text-[#888] truncate max-w-xs">{{ misc.description || '-' }}</p>
                             </td>
-                            <td class="px-4 py-3 text-sm text-[#888]">
-                                {{ formatDate(misc.date) }}
+                            <td class="px-4 py-3">
+                                <div class="flex items-center gap-1 text-sm text-[#888]">
+                                    <MetaIcon name="date" />
+                                    <span>{{ formatDate(misc.date) }}</span>
+                                </div>
                             </td>
                             <td class="px-4 py-3 text-center">
                                 <button

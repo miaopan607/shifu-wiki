@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter, RouterLink } from 'vue-router';
 import { pb, decodeSongLinkNames } from '@/lib/pocketbase';
 import { marked } from 'marked';
+import MetaIcon from '@/components/MetaIcon.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -31,15 +32,16 @@ const backText = computed(() => {
 interface MetaItem {
 	label?: string;
 	value: string;
+	icon?: string;
 }
 
 const metaItems = computed<MetaItem[]>(() => {
 	if (!song.value) return [];
 	const items: MetaItem[] = [];
-	if (song.value.lyricist) items.push({ label: '词', value: song.value.lyricist });
-	if (song.value.composer) items.push({ label: '曲', value: song.value.composer });
-	if (song.value.album) items.push({ label: '专辑', value: song.value.album });
-	if (song.value.releaseDate) items.push({ value: song.value.releaseDate });
+	if (song.value.lyricist) items.push({ label: '词', value: song.value.lyricist, icon: 'lyricist' });
+	if (song.value.composer) items.push({ label: '曲', value: song.value.composer, icon: 'composer' });
+	if (song.value.album) items.push({ label: '专辑', value: song.value.album, icon: 'album' });
+	if (song.value.releaseDate) items.push({ value: song.value.releaseDate, icon: 'date' });
 	return items;
 });
 
@@ -100,12 +102,16 @@ const renderMarkdown = (content: string | undefined) => {
 					<div class="flex flex-wrap items-center gap-y-2 text-[#888] text-sm tracking-widest mt-4">
 						<template v-for="(item, index) in metaItems" :key="index">
 							<div class="flex items-center">
-								<span v-if="item.label">{{ item.label }}：{{ item.value }}</span>
-								<span v-else>{{ item.value }}</span>
+								<div class="flex items-center gap-1.5">
+									<MetaIcon :name="item.icon as any" />
+									<span v-if="item.label">{{ item.label }}：{{ item.value }}</span>
+									<span v-else>{{ item.value }}</span>
+								</div>
 								<span v-if="index < metaItems.length - 1 || song.credits" class="mx-4 h-3 w-px bg-[#c9c9c9]/30"></span>
 							</div>
 						</template>
-						<button v-if="song.credits" @click="openModal" class="w-fit transition-all duration-300 border-b border-transparent hover:border-red-300 hover:text-red-300 text-left cursor-pointer">
+						<button v-if="song.credits" @click="openModal" class="w-fit transition-all duration-300 border-b border-transparent hover:border-red-300 hover:text-red-300 text-left cursor-pointer flex items-center gap-1.5">
+							<MetaIcon name="users" />
 							制作人员
 						</button>
 					</div>

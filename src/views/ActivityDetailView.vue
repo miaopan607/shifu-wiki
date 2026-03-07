@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter, RouterLink } from 'vue-router';
 import { pb } from '@/lib/pocketbase';
 import { marked } from 'marked';
+import MetaIcon from '@/components/MetaIcon.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -18,15 +19,16 @@ const THEME_COLOR = 'rgb(77,0,0)';
 
 // 元数据项配置
 interface MetaItem {
-	label: string;
+	label?: string;
 	value: string;
+	icon?: string;
 }
 
 const metaItems = computed<MetaItem[]>(() => {
 	if (!activity.value) return [];
 	const items: MetaItem[] = [];
-	if (activity.value.date) items.push({ label: '时间', value: activity.value.date });
-	if (activity.value.location) items.push({ label: '地点', value: activity.value.location });
+	if (activity.value.date) items.push({ value: activity.value.date, icon: 'date' });
+	if (activity.value.location) items.push({ value: activity.value.location, icon: 'location' });
 	return items;
 });
 
@@ -68,7 +70,10 @@ onMounted(async () => {
 					<div class="flex flex-wrap items-center gap-y-2 text-[#888] text-sm tracking-widest mt-4">
 						<template v-for="(item, index) in metaItems" :key="index">
 							<div class="flex items-center">
-								<span>{{ item.label }}：{{ item.value }}</span>
+								<div class="flex items-center gap-1.5">
+									<MetaIcon :name="item.icon as any" />
+									<span>{{ item.value }}</span>
+								</div>
 								<span v-if="index < metaItems.length - 1" class="mx-4 h-3 w-px bg-[#c9c9c9]/30"></span>
 							</div>
 						</template>

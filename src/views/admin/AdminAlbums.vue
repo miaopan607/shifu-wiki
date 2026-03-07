@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { pb } from '@/lib/pocketbase';
+import MetaIcon from '@/components/MetaIcon.vue';
 import type { Album } from '@/types';
 
 const router = useRouter();
@@ -178,7 +179,10 @@ const getImageUrl = (record: any, filename: string) => {
                         <div class="flex items-start justify-between gap-2">
                             <h3 class="font-medium text-[#c9c9c9] truncate" :title="album.title">{{ album.title }}</h3>
                         </div>
-                        <p class="text-xs text-[#888]">{{ formatDate(album.releaseDate) }}</p>
+                        <div class="flex items-center gap-1 text-xs text-[#888]">
+                            <MetaIcon name="date" />
+                            <span>{{ formatDate(album.releaseDate) }}</span>
+                        </div>
                     </div>
                 </div>
             </div>
