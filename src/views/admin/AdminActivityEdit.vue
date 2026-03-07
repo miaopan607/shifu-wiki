@@ -279,7 +279,7 @@ const handleDateInput = (e: Event) => {
                             class="inline-flex items-center gap-1 px-3 py-1 bg-red-300/10 text-red-300 rounded-full text-sm"
                         >
                             {{ tag }}
-                            <button @click="removeTag(tag)" class="hover:text-white transition-colors">
+                            <button @click="removeTag(tag)" class="-m-1 p-1 hover:text-white transition-colors">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                                 </svg>
