@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { RouterLink } from 'vue-router';
-import { pb } from '@/lib/pocketbase';
+import { pb, formatDateToDisplay } from '@/lib/pocketbase';
 import SubPageNav from '@/components/SubPageNav.vue';
 import MetaIcon from '@/components/MetaIcon.vue';
 import type { Misc } from '@/types';
@@ -47,7 +47,7 @@ onMounted(async () => {
                                 <h2 class="text-2xl group-hover:text-red-300 transition-colors mb-2">{{ item.title }}</h2>
                                 <div class="flex items-center gap-1 text-[#888] text-sm tracking-widest mb-3">
                                     <MetaIcon name="date" />
-                                    <span>{{ new Date(item.created).toLocaleDateString('zh-CN') }}</span>
+                                    <span>{{ formatDateToDisplay(item.created) }}</span>
                                 </div>
                                 <p v-if="item.description" class="text-[#c9c9c9]/70 line-clamp-2 text-base">{{ item.description }}</p>
                             </div>

@@ -47,13 +47,10 @@ const fetchMisc = async () => {
     }
 };
 
+import { formatDateToDisplay } from '@/lib/pocketbase';
+
 const formatDate = (dateStr: string) => {
-    if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleDateString('zh-CN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-    });
+    return formatDateToDisplay(dateStr);
 };
 
 const togglePublish = async (misc: Misc) => {
@@ -188,7 +185,7 @@ const editMisc = (id: string) => {
                             <td class="px-4 py-3">
                                 <div class="flex items-center gap-1 text-sm text-[#888]">
                                     <MetaIcon name="date" />
-                                    <span>{{ formatDate(misc.date) }}</span>
+                                    <span>{{ formatDate(misc.date || misc.created) }}</span>
                                 </div>
                             </td>
                             <td class="px-4 py-3 text-center">

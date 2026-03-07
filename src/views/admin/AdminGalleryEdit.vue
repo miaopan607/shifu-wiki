@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { pb } from '@/lib/pocketbase';
+import { pb, parseDateFromBackend, normalizeDateForStorage } from '@/lib/pocketbase';
 import { marked } from 'marked';
 import type { GalleryFormData, GalleryImageWithFile } from '@/types/admin';
 
@@ -98,8 +98,8 @@ const fetchGallery = async () => {
     try {
         const gallery = await pb.collection('galleries').getOne(galleryId.value);
         console.log('Fetched gallery:', gallery);
-        const defaultDate = new Date().toISOString().slice(0, 10);
-        const dateStr = gallery.date ? String(gallery.date).slice(0, 10) : defaultDate;
+        const defaultDate = new Date().toISOString().slice(0, 10).replace(/-/g, '/');
+        const dateStr = gallery.date ? parseDateFromBackend(String(gallery.date)) : defaultDate;
         form.value = {
             title: gallery.title || '',
             slug: gallery.slug || '',
@@ -203,7 +203,7 @@ const addFiles = async (files: File[]) => {
                 slug: form.value.slug.trim() || undefined,
                 description: form.value.description.trim() || undefined,
                 published: false,
-                date: form.value.date,
+                date: normalizeDateForStorage(form.value.date),
             });
             targetGalleryId = created.id;
             await router.replace(`/admin/galleries/${created.id}`);
@@ -443,7 +443,7 @@ const saveGallery = async () => {
                 slug: form.value.slug.trim() || undefined,
                 description: form.value.description.trim() || undefined,
                 published: form.value.published,
-                date: form.value.date,
+                date: normalizeDateForStorage(form.value.date),
             });
         } else {
             if (!galleryId.value) {
@@ -455,7 +455,7 @@ const saveGallery = async () => {
                 slug: form.value.slug.trim() || undefined,
                 description: form.value.description.trim() || undefined,
                 published: form.value.published,
-                date: form.value.date,
+                date: normalizeDateForStorage(form.value.date),
             });
 
             for (const imageId of imagesToDelete.value) {
@@ -506,14 +506,14 @@ const handleDateInput = (e: Event) => {
     const input = e.target as HTMLInputElement;
     let value = input.value.replace(/\D/g, '');
     if (value.length > 8) value = value.slice(0, 8);
-    
+
     let formatted = '';
     if (value.length > 0) {
         formatted = value.slice(0, 4);
         if (value.length > 4) {
-            formatted += '-' + value.slice(4, 6);
+            formatted += '/' + value.slice(4, 6);
             if (value.length > 6) {
-                formatted += '-' + value.slice(6, 8);
+                formatted += '/' + value.slice(6, 8);
             }
         }
     }
@@ -629,7 +629,7 @@ onUnmounted(() => {
                                 :value="form.date"
                                 @input="handleDateInput"
                                 type="text"
-                                placeholder="YYYY-MM-DD"
+                                placeholder="YYYY/MM/DD"
                                 class="w-full px-4 py-2.5 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all pr-24"
                             />
                             <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">

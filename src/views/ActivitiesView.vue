@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch, onUnmounted } from 'vue';
 import { RouterLink } from 'vue-router';
-import { pb } from '@/lib/pocketbase';
+import { pb, formatDateToDisplay } from '@/lib/pocketbase';
 import SubPageNav from '@/components/SubPageNav.vue';
 import MetaIcon from '@/components/MetaIcon.vue';
 
@@ -95,7 +95,7 @@ interface MetaPart {
 
 const getActivityMetaParts = (activity: Activity): MetaPart[] => {
 	const parts: MetaPart[] = [];
-	if (activity.date) parts.push({ type: 'date', value: activity.date });
+	if (activity.date) parts.push({ type: 'date', value: formatDateToDisplay(activity.date) });
 	if (activity.location) parts.push({ type: 'location', value: activity.location });
 	return parts;
 };

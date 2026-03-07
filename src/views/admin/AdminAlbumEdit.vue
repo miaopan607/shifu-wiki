@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { pb } from '@/lib/pocketbase';
+import { pb, parseDateFromBackend, normalizeDateForStorage } from '@/lib/pocketbase';
 import { marked } from 'marked';
 import type { Album } from '@/types';
 
@@ -37,7 +37,7 @@ onMounted(async () => {
             const record = await pb.collection('albums').getOne(route.params.id as string);
             album.value = {
                 ...record,
-                releaseDate: record.releaseDate ? record.releaseDate.split(' ')[0] : '',
+                releaseDate: record.releaseDate ? parseDateFromBackend(record.releaseDate) : '',
             } as unknown as Album;
 
             if (record.cover) {
@@ -100,7 +100,7 @@ const saveAlbum = async () => {
     try {
         const formData = new FormData();
         formData.append('title', album.value.title.trim());
-        formData.append('releaseDate', album.value.releaseDate || '');
+        formData.append('releaseDate', normalizeDateForStorage(album.value.releaseDate));
         formData.append('description', album.value.description || '');
 
         if (coverFile.value) {
@@ -143,14 +143,14 @@ const handleDateInput = (e: Event) => {
     const input = e.target as HTMLInputElement;
     let value = input.value.replace(/\D/g, '');
     if (value.length > 8) value = value.slice(0, 8);
-    
+
     let formatted = '';
     if (value.length > 0) {
         formatted = value.slice(0, 4);
         if (value.length > 4) {
-            formatted += '-' + value.slice(4, 6);
+            formatted += '/' + value.slice(4, 6);
             if (value.length > 6) {
-                formatted += '-' + value.slice(6, 8);
+                formatted += '/' + value.slice(6, 8);
             }
         }
     }
@@ -228,7 +228,7 @@ const handleDateInput = (e: Event) => {
                                 :value="album.releaseDate"
                                 @input="handleDateInput"
                                 type="text"
-                                placeholder="YYYY-MM-DD"
+                                placeholder="YYYY/MM/DD"
                                 class="w-full px-4 py-2.5 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all pr-24"
                             />
                             <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">

@@ -45,13 +45,10 @@ const fetchActivities = async () => {
     }
 };
 
+import { formatDateToDisplay } from '@/lib/pocketbase';
+
 const formatDate = (dateStr: string) => {
-    if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleDateString('zh-CN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-    });
+    return formatDateToDisplay(dateStr);
 };
 
 const confirmDelete = (id: string) => {

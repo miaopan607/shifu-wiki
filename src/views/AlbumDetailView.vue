@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useRoute, RouterLink } from 'vue-router';
-import { pb } from '@/lib/pocketbase';
+import { pb, formatDateToDisplay } from '@/lib/pocketbase';
 import { marked } from 'marked';
 import MetaIcon from '@/components/MetaIcon.vue';
 
@@ -26,7 +26,7 @@ interface MetaItem {
 const metaItems = computed<MetaItem[]>(() => {
 	const items: MetaItem[] = [];
 	if (songs.value.length > 0) items.push({ value: `${songs.value.length} 曲音乐`, icon: 'music' });
-	if (albumInfo.value?.releaseDate) items.push({ value: albumInfo.value.releaseDate, icon: 'date' });
+	if (albumInfo.value?.releaseDate) items.push({ value: formatDateToDisplay(albumInfo.value.releaseDate), icon: 'date' });
 	return items;
 });
 

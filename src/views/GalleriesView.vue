@@ -106,13 +106,10 @@ onUnmounted(() => {
 	}
 });
 
+import { formatDateToDisplay } from '@/lib/pocketbase';
+
 const formatDate = (dateStr: string) => {
-	if (!dateStr) return '';
-	return new Date(dateStr).toLocaleDateString('zh-CN', {
-		year: 'numeric',
-		month: 'long',
-		day: 'numeric',
-	});
+    return formatDateToDisplay(dateStr);
 };
 
 const getThumbnailUrl = (record: GalleryImage, filename: string) => {

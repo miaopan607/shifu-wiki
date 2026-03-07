@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter, RouterLink } from 'vue-router';
-import { pb } from '@/lib/pocketbase';
+import { pb, formatDateToDisplay } from '@/lib/pocketbase';
 import { marked } from 'marked';
 import MetaIcon from '@/components/MetaIcon.vue';
 import type { Misc } from '@/types';
@@ -73,7 +73,7 @@ onMounted(async () => {
                     <div class="flex items-center gap-4 text-[#888] text-sm tracking-widest">
                         <div class="flex items-center gap-1.5">
                             <MetaIcon name="date" />
-                            <span>{{ new Date(miscItem.created).toLocaleDateString('zh-CN') }}</span>
+                            <span>{{ formatDateToDisplay(miscItem.created) }}</span>
                         </div>
                     </div>
                 </header>

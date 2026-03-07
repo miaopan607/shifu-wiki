@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter, RouterLink } from 'vue-router';
-import { pb } from '@/lib/pocketbase';
+import { pb, formatDateToDisplay } from '@/lib/pocketbase';
 import { marked } from 'marked';
 import MetaIcon from '@/components/MetaIcon.vue';
 
@@ -27,7 +27,7 @@ interface MetaItem {
 const metaItems = computed<MetaItem[]>(() => {
 	if (!activity.value) return [];
 	const items: MetaItem[] = [];
-	if (activity.value.date) items.push({ value: activity.value.date, icon: 'date' });
+	if (activity.value.date) items.push({ value: formatDateToDisplay(activity.value.date), icon: 'date' });
 	if (activity.value.location) items.push({ value: activity.value.location, icon: 'location' });
 	return items;
 });

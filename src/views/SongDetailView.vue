@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter, RouterLink } from 'vue-router';
-import { pb, decodeSongLinkNames } from '@/lib/pocketbase';
+import { pb, decodeSongLinkNames, formatDateToDisplay } from '@/lib/pocketbase';
 import { marked } from 'marked';
 import MetaIcon from '@/components/MetaIcon.vue';
 
@@ -41,7 +41,7 @@ const metaItems = computed<MetaItem[]>(() => {
 	if (song.value.lyricist) items.push({ label: '词', value: song.value.lyricist, icon: 'lyricist' });
 	if (song.value.composer) items.push({ label: '曲', value: song.value.composer, icon: 'composer' });
 	if (song.value.album) items.push({ label: '专辑', value: song.value.album, icon: 'album' });
-	if (song.value.releaseDate) items.push({ value: song.value.releaseDate, icon: 'date' });
+	if (song.value.releaseDate) items.push({ value: formatDateToDisplay(song.value.releaseDate), icon: 'date' });
 	return items;
 });
 

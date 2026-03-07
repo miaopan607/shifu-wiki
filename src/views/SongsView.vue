@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { RouterLink } from 'vue-router';
-import { pb } from '@/lib/pocketbase';
+import { pb, formatDateToDisplay } from '@/lib/pocketbase';
 import SubPageNav from '@/components/SubPageNav.vue';
 import SongsNav from '@/components/SongsNav.vue';
 import MetaIcon from '@/components/MetaIcon.vue';
@@ -42,7 +42,7 @@ interface MetaPart {
 const getSongMetaParts = (song: any): MetaPart[] => {
 	const parts: MetaPart[] = [];
 	if (song.album) parts.push({ type: 'album', value: song.album });
-	if (song.releaseDate) parts.push({ type: 'date', value: song.releaseDate });
+	if (song.releaseDate) parts.push({ type: 'date', value: formatDateToDisplay(song.releaseDate) });
 	return parts;
 };
 </script>
