@@ -24,7 +24,7 @@ interface MetaItem {
 const metaItems = computed<MetaItem[]>(() => {
 	const items: MetaItem[] = [];
 	if (songs.value.length > 0) items.push({ value: `${songs.value.length} 曲音乐` });
-	if (songs.value.length > 0 && songs.value[0].releaseDate) items.push({ label: '发布于', value: songs.value[0].releaseDate });
+	if (albumInfo.value?.releaseDate) items.push({ label: '发布于', value: albumInfo.value.releaseDate });
 	return items;
 });
 
