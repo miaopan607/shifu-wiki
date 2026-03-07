@@ -415,7 +415,7 @@ const handleDateInput = (e: Event) => {
                         v-autosize
                         rows="1"
                         placeholder="音乐描述"
-                        class="w-full px-4 py-3 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all text-sm leading-relaxed resize-none"
+                        class="w-full px-4 py-3 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all leading-relaxed resize-none"
                     ></textarea>
                 </div>
 
@@ -432,7 +432,7 @@ const handleDateInput = (e: Event) => {
                                 v-autosize
                                 rows="1"
                                 placeholder="平台名称"
-                                class="w-1/3 px-3 py-2 bg-black/20 border border-[#c9c9c9]/20 rounded text-[#e0e0e0] text-sm resize-none"
+                                class="w-1/3 px-3 py-2 bg-black/20 border border-[#c9c9c9]/20 rounded text-[#e0e0e0] resize-none"
                             ></textarea>
                             <input
                                 v-model="link.url"
@@ -462,7 +462,7 @@ const handleDateInput = (e: Event) => {
                                 v-autosize
                                 rows="1"
                                 placeholder="链接描述"
-                                class="w-1/3 px-3 py-2 bg-black/20 border border-[#c9c9c9]/20 rounded text-[#e0e0e0] text-sm resize-none"
+                                class="w-1/3 px-3 py-2 bg-black/20 border border-[#c9c9c9]/20 rounded text-[#e0e0e0] resize-none"
                             ></textarea>
                             <input
                                 v-model="link.url"
@@ -498,7 +498,7 @@ const handleDateInput = (e: Event) => {
                         v-autosize
                         rows="1"
                         placeholder="歌词"
-                        class="w-full px-4 py-3 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all font-mono text-sm leading-relaxed resize-none"
+                        class="w-full px-4 py-3 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all font-mono leading-relaxed resize-none"
                     ></textarea>
                 </div>
 
@@ -519,7 +519,7 @@ const handleDateInput = (e: Event) => {
                         v-autosize
                         rows="1"
                         placeholder="制作人员名单"
-                        class="w-full px-4 py-3 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all font-mono text-sm leading-relaxed resize-none"
+                        class="w-full px-4 py-3 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all font-mono leading-relaxed resize-none"
                     ></textarea>
                 </div>
             </div>

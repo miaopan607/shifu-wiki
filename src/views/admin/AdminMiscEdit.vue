@@ -321,7 +321,7 @@ const handleDateInput = (e: Event) => {
                             v-autosize
                             rows="1"
                             placeholder="使用 Markdown 编写内容..."
-                            class="w-full px-4 py-3 bg-black/20 border rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all font-mono text-sm leading-relaxed resize-none"
+                            class="w-full px-4 py-3 bg-black/20 border rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all font-mono leading-relaxed resize-none"
                             :class="contentError ? 'border-red-400/70' : 'border-[#c9c9c9]/20'"
                             @input="contentError = ''"
                         ></textarea>

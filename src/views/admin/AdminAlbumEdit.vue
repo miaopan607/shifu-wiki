@@ -292,7 +292,7 @@ const handleDateInput = (e: Event) => {
                             v-autosize
                             rows="1"
                             placeholder="专辑描述"
-                            class="w-full px-4 py-3 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all text-sm leading-relaxed resize-none"
+                            class="w-full px-4 py-3 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all leading-relaxed resize-none"
                         ></textarea>
                     </div>
                 </div>
