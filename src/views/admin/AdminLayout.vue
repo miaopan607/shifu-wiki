@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { pb } from '@/lib/pocketbase';
+import AdminNavIcon from '@/components/AdminNavIcon.vue';
 import type { AdminUser, AdminView } from '@/types/admin';
 
 const router = useRouter();
@@ -23,14 +24,16 @@ const currentView = computed<AdminView>(() => {
     return 'dashboard';
 });
 
-const navItems: { view: AdminView; label: string; icon: string; path: string }[] = [
-    { view: 'dashboard', label: '仪表盘', icon: '📊', path: '/admin' },
-    { view: 'songs', label: '音乐管理', icon: '🎵', path: '/admin/songs' },
-    { view: 'albums', label: '专辑管理', icon: '💿', path: '/admin/albums' },
-    { view: 'activities', label: '活动管理', icon: '🗓️', path: '/admin/activities' },
-    { view: 'galleries', label: '图集管理', icon: '🖼️', path: '/admin/galleries' },
-    { view: 'misc', label: '杂记管理', icon: '📝', path: '/admin/misc' },
-    { view: 'profile', label: '个人介绍', icon: '👤', path: '/admin/profile' },
+type IconName = 'dashboard' | 'songs' | 'albums' | 'activities' | 'galleries' | 'misc' | 'profile';
+
+const navItems: { view: AdminView; label: string; icon: IconName; path: string }[] = [
+    { view: 'dashboard', label: '仪表盘', icon: 'dashboard', path: '/admin' },
+    { view: 'songs', label: '音乐管理', icon: 'songs', path: '/admin/songs' },
+    { view: 'albums', label: '专辑管理', icon: 'albums', path: '/admin/albums' },
+    { view: 'activities', label: '活动管理', icon: 'activities', path: '/admin/activities' },
+    { view: 'galleries', label: '图集管理', icon: 'galleries', path: '/admin/galleries' },
+    { view: 'misc', label: '杂记管理', icon: 'misc', path: '/admin/misc' },
+    { view: 'profile', label: '个人介绍', icon: 'profile', path: '/admin/profile' },
 ];
 
 const checkMobile = () => {
@@ -127,13 +130,13 @@ const handleLogout = async () => {
                         :to="item.path"
                         :class="[
                             'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all',
-                            currentView === item.view 
-                                ? 'bg-white/10 text-red-300' 
+                            currentView === item.view
+                                ? 'bg-white/10 text-red-300'
                                 : 'text-[#c9c9c9] hover:bg-white/5 hover:text-red-300'
                         ]"
                         @click="mobileMenuOpen = false"
                     >
-                        <span class="text-xl">{{ item.icon }}</span>
+                        <AdminNavIcon :name="item.icon" class-name="w-5 h-5 shrink-0" />
                         <span v-if="!sidebarCollapsed || isMobile" class="font-medium whitespace-nowrap">{{ item.label }}</span>
                     </RouterLink>
                 </nav>
