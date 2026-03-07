@@ -26,23 +26,32 @@ const imagesLoaded = ref<Set<string>>(new Set());
 
 onMounted(async () => {
 	try {
+		// 1. 获取所有已发布的图集
 		const result = await pb.collection('galleries').getFullList({
 			sort: '-date',
 			filter: 'published = true',
 		});
 		galleries.value = result as unknown as GalleryWithPreview[];
 
-		// 为每个图集获取所有图片元数据（但不加载图片文件）
-		for (const gallery of galleries.value) {
-			try {
-				// 使用 getFullList 获取所有图片
-				const imagesResult = await pb.collection('gallery_images').getFullList({
-					filter: `gallery = "${gallery.id}"`,
-					sort: 'sort',
-				});
-				gallery.previewImages = imagesResult as unknown as GalleryImage[];
-			} catch (e) {
-				gallery.previewImages = [];
+		// 2. 一次性获取所有图集的图片（使用 OR 条件组合所有 gallery ID）
+		if (galleries.value.length > 0) {
+			const galleryIds = galleries.value.map(g => `gallery = "${g.id}"`).join(' || ');
+			const imagesResult = await pb.collection('gallery_images').getFullList({
+				filter: galleryIds,
+				sort: 'sort',
+			});
+
+			// 3. 按 gallery ID 分组图片
+			const imagesByGallery = new Map<string, GalleryImage[]>();
+			for (const img of imagesResult as unknown as GalleryImage[]) {
+				const list = imagesByGallery.get(img.gallery) || [];
+				list.push(img);
+				imagesByGallery.set(img.gallery, list);
+			}
+
+			// 4. 将图片分配给对应的图集
+			for (const gallery of galleries.value) {
+				gallery.previewImages = imagesByGallery.get(gallery.id) || [];
 			}
 		}
 	} catch (error) {

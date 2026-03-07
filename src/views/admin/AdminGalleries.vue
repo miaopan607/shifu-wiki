@@ -39,17 +39,27 @@ const fetchGalleries = async () => {
         const result = await pb.collection('galleries').getFullList({
             sort: '-date',
         });
-        
+
         galleries.value = result as unknown as AdminGallery[];
-        
-        for (const gallery of galleries.value) {
-            try {
-                const count = await pb.collection('gallery_images').getList(1, 1, {
-                    filter: `gallery = "${gallery.id}"`,
-                });
-                gallery.imageCount = count.totalItems;
-            } catch {
-                gallery.imageCount = 0;
+
+        // 一次性获取所有图集的图片数量
+        if (galleries.value.length > 0) {
+            const galleryIds = galleries.value.map(g => `gallery = "${g.id}"`).join(' || ');
+            const imagesResult = await pb.collection('gallery_images').getFullList({
+                filter: galleryIds,
+                fields: 'gallery', // 只获取 gallery 字段，减少数据传输
+            });
+
+            // 按 gallery ID 统计图片数量
+            const countByGallery = new Map<string, number>();
+            for (const img of imagesResult) {
+                const galleryId = (img as unknown as { gallery: string }).gallery;
+                countByGallery.set(galleryId, (countByGallery.get(galleryId) || 0) + 1);
+            }
+
+            // 将统计结果分配给对应的图集
+            for (const gallery of galleries.value) {
+                gallery.imageCount = countByGallery.get(gallery.id) || 0;
             }
         }
     } catch (error) {
