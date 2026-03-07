@@ -69,6 +69,7 @@ export interface Album {
     releaseDate: string;
     cover?: string;
     description?: string;
+    songCount?: number;
 }
 
 export interface Activity {

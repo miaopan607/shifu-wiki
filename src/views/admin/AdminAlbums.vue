@@ -33,10 +33,14 @@ onMounted(async () => {
 const fetchAlbums = async () => {
     loading.value = true;
     try {
-        const result = await pb.collection('albums').getFullList({
-            sort: '-releaseDate',
-        });
-        albums.value = result as unknown as Album[];
+        const [albumsResult, songsResult] = await Promise.all([
+            pb.collection('albums').getFullList({ sort: '-releaseDate' }),
+            pb.collection('songs').getFullList({ fields: 'album' })
+        ]);
+        albums.value = (albumsResult as unknown as Album[]).map(album => ({
+            ...album,
+            songCount: songsResult.filter(s => s.album === album.title).length
+        }));
     } catch (error) {
         console.error('Failed to fetch albums:', error);
     } finally {
@@ -152,6 +156,11 @@ const getImageUrl = (record: any, filename: string) => {
                             <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
                             </svg>
+                        </div>
+
+                        <div class="absolute top-[3%] right-[3%] px-[0.6vw] py-[0.3vw] bg-black/40 backdrop-blur-sm rounded-full text-[clamp(10px,1vw,14px)] text-[#c9c9c9]/80 flex items-center gap-[0.3vw]">
+                            <MetaIcon name="music" className="w-[0.9em] h-[0.9em]" />
+                            <span class="text-[1.3em] leading-none -translate-y-[0.1em]">{{ album.songCount }}</span>
                         </div>
 
                         <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
