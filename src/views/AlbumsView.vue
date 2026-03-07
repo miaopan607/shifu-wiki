@@ -68,9 +68,9 @@ const getImageUrl = (record: any, filename: string) => {
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
                                 </svg>
                             </div>
-                            <div class="absolute top-[3%] right-[3%] px-[0.6vw] py-[0.3vw] bg-black/40 backdrop-blur-sm rounded-full text-[clamp(10px,1vw,14px)] text-[#c9c9c9]/80 flex items-center gap-[0.3vw]">
-                                <MetaIcon name="music" className="w-[0.9em] h-[0.9em]" />
-                                <span class="text-[1.3em] leading-none -translate-y-[0.1em]">{{ album.songCount }}</span>
+                            <div class="absolute top-[3%] right-[3%] px-[4%] py-[2%] bg-black/40 backdrop-blur-sm rounded-full text-[clamp(10px,10%,14px)] text-[#c9c9c9]/80 flex items-center gap-[0.6em]">
+                                <MetaIcon name="music" className="w-[1.4em] h-[1.4em]" />
+                                <span class="text-[2em] leading-none -translate-y-[0.1em]">{{ album.songCount }}</span>
                             </div>
                         </div>
                         <div class="p-4 space-y-2">
