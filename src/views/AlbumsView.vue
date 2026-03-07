@@ -8,6 +8,14 @@ import SongsNav from '@/components/SongsNav.vue';
 const albums = ref<any[]>([]);
 const loading = ref(true);
 
+// 格式化专辑元数据
+const formatAlbumMeta = (album: any): string => {
+    const parts: string[] = [];
+    if (album.songCount !== undefined) parts.push(`${album.songCount} 曲音乐`);
+    if (album.releaseDate) parts.push(album.releaseDate);
+    return parts.join(' · ');
+};
+
 onMounted(async () => {
     try {
         const [albumsResult, songsResult] = await Promise.all([
@@ -46,7 +54,7 @@ onMounted(async () => {
                         <div class="flex justify-between items-end">
                             <div>
                                 <h2 class="text-2xl text-[#c9c9c9] group-hover:text-red-300 transition-colors">{{ album.title }}</h2>
-                                <p class="text-[#888] mt-2 tracking-widest text-sm">{{ album.songCount }} 曲音乐 · {{ album.releaseDate }}</p>
+                                <p class="text-[#888] mt-2 tracking-widest text-sm">{{ formatAlbumMeta(album) }}</p>
                             </div>
                             <span class="text-red-300 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">查看专辑 →</span>
                         </div>

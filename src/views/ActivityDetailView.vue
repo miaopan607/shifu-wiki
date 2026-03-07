@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter, RouterLink } from 'vue-router';
 import { pb } from '@/lib/pocketbase';
 import { marked } from 'marked';
@@ -15,6 +15,20 @@ const renderMarkdown = (content: string | undefined) => {
 };
 
 const THEME_COLOR = 'rgb(77,0,0)';
+
+// 元数据项配置
+interface MetaItem {
+	label: string;
+	value: string;
+}
+
+const metaItems = computed<MetaItem[]>(() => {
+	if (!activity.value) return [];
+	const items: MetaItem[] = [];
+	if (activity.value.date) items.push({ label: '时间', value: activity.value.date });
+	if (activity.value.location) items.push({ label: '地点', value: activity.value.location });
+	return items;
+});
 
 onMounted(async () => {
 	const slug = route.params.slug;
@@ -52,14 +66,12 @@ onMounted(async () => {
 						{{ activity.title }}
 					</h1>
 					<div class="flex flex-wrap items-center gap-y-2 text-[#888] text-sm tracking-widest mt-4">
-						<div class="flex items-center">
-							<span>时间：{{ activity.date }}</span>
-							<span class="mx-4 h-3 w-px bg-[#c9c9c9]/30"></span>
-						</div>
-						<div v-if="activity.location" class="flex items-center">
-							<span>地点：{{ activity.location }}</span>
-							<span class="mx-4 h-3 w-px bg-[#c9c9c9]/30"></span>
-						</div>
+						<template v-for="(item, index) in metaItems" :key="index">
+							<div class="flex items-center">
+								<span>{{ item.label }}：{{ item.value }}</span>
+								<span v-if="index < metaItems.length - 1" class="mx-4 h-3 w-px bg-[#c9c9c9]/30"></span>
+							</div>
+						</template>
 					</div>
 				</header>
 				<hr class="border-[#c9c9c9]/30 mb-8" />

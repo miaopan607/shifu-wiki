@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRoute, RouterLink } from 'vue-router';
 import { pb } from '@/lib/pocketbase';
 import { marked } from 'marked';
@@ -14,6 +14,19 @@ const renderMarkdown = (content: string | undefined) => {
     if (!content) return '';
     return marked.parse(content, { async: false }) as string;
 };
+
+// 元数据项配置
+interface MetaItem {
+	label?: string;
+	value: string;
+}
+
+const metaItems = computed<MetaItem[]>(() => {
+	const items: MetaItem[] = [];
+	if (songs.value.length > 0) items.push({ value: `${songs.value.length} 曲音乐` });
+	if (songs.value.length > 0 && songs.value[0].releaseDate) items.push({ label: '发布于', value: songs.value[0].releaseDate });
+	return items;
+});
 
 onMounted(async () => {
     try {
@@ -50,9 +63,11 @@ onMounted(async () => {
                     <div class="mb-12 border-b border-[#c9c9c9]/20 pb-8">
                         <h1 class="text-4xl md:text-5xl text-[#c9c9c9] mb-4 tracking-widest">{{ albumTitle }}</h1>
                         <div class="flex items-center gap-4 text-[#888] tracking-widest text-sm">
-                            <span>{{ songs.length }} 曲音乐</span>
-                            <span v-if="songs.length > 0">·</span>
-                            <span v-if="songs.length > 0">发布于 {{ songs[0].releaseDate }}</span>
+                            <template v-for="(item, index) in metaItems" :key="index">
+                                <span v-if="item.label">{{ item.label }} {{ item.value }}</span>
+                                <span v-else>{{ item.value }}</span>
+                                <span v-if="index < metaItems.length - 1">·</span>
+                            </template>
                         </div>
                         
                         <div v-if="albumInfo?.description" class="mt-8 prose prose-invert max-w-none text-[#c9c9c9]/80 leading-relaxed tracking-wider">

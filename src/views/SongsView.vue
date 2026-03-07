@@ -31,6 +31,14 @@ const filteredSongs = computed(() => {
 		song.album?.toLowerCase().includes(query)
 	);
 });
+
+// 格式化歌曲元数据
+const formatSongMeta = (song: any): string => {
+	const parts: string[] = [];
+	if (song.album) parts.push(song.album);
+	if (song.releaseDate) parts.push(song.releaseDate);
+	return parts.join(' · ');
+};
 </script>
 
 <template>
@@ -60,7 +68,7 @@ const filteredSongs = computed(() => {
 					<div class="flex justify-between items-end">
 						<div>
 							<h2 class="text-2xl text-[#c9c9c9] group-hover:text-red-300 transition-colors">{{ song.title }}</h2>
-							<p class="text-[#888] mt-2 tracking-widest text-sm">{{ song.album }} · {{ song.releaseDate }}</p>
+							<p class="text-[#888] mt-2 tracking-widest text-sm">{{ formatSongMeta(song) }}</p>
 						</div>
 						<span class="text-red-300 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">详情 →</span>
 					</div>

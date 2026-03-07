@@ -27,6 +27,22 @@ const backText = computed(() => {
 	return '← 返回列表';
 });
 
+// 元数据项配置
+interface MetaItem {
+	label?: string;
+	value: string;
+}
+
+const metaItems = computed<MetaItem[]>(() => {
+	if (!song.value) return [];
+	const items: MetaItem[] = [];
+	if (song.value.lyricist) items.push({ label: '词', value: song.value.lyricist });
+	if (song.value.composer) items.push({ label: '曲', value: song.value.composer });
+	if (song.value.album) items.push({ label: '专辑', value: song.value.album });
+	if (song.value.releaseDate) items.push({ value: song.value.releaseDate });
+	return items;
+});
+
 onMounted(async () => {
 	const slug = route.params.slug;
 	if (!slug) {
@@ -81,27 +97,18 @@ const renderMarkdown = (content: string | undefined) => {
 							{{ song.title }}
 						</h1>
 						<!-- 元数据 -->
-						<div class="flex flex-wrap items-center gap-y-2 text-[#888] text-sm tracking-widest mt-4">
+					<div class="flex flex-wrap items-center gap-y-2 text-[#888] text-sm tracking-widest mt-4">
+						<template v-for="(item, index) in metaItems" :key="index">
 							<div class="flex items-center">
-								<span>词：{{ song.lyricist }}</span>
-								<span class="mx-4 h-3 w-px bg-[#c9c9c9]/30"></span>
+								<span v-if="item.label">{{ item.label }}：{{ item.value }}</span>
+								<span v-else>{{ item.value }}</span>
+								<span v-if="index < metaItems.length - 1 || song.credits" class="mx-4 h-3 w-px bg-[#c9c9c9]/30"></span>
 							</div>
-							<div class="flex items-center">
-								<span>曲：{{ song.composer }}</span>
-								<span class="mx-4 h-3 w-px bg-[#c9c9c9]/30"></span>
-							</div>
-							<div class="flex items-center">
-								<span>专辑：{{ song.album }}</span>
-								<span class="mx-4 h-3 w-px bg-[#c9c9c9]/30"></span>
-							</div>
-							<div class="flex items-center">
-								<span>{{ song.releaseDate }}</span>
-								<span class="mx-4 h-3 w-px bg-[#c9c9c9]/30"></span>
-							</div>
-							<button @click="openModal" class="w-fit transition-all duration-300 border-b border-transparent hover:border-red-300 hover:text-red-300 text-left cursor-pointer">
-								制作人员
-							</button>
-						</div>
+						</template>
+						<button v-if="song.credits" @click="openModal" class="w-fit transition-all duration-300 border-b border-transparent hover:border-red-300 hover:text-red-300 text-left cursor-pointer">
+							制作人员
+						</button>
+					</div>
 					</header>
 					<!-- 装饰线 -->
 					<hr class="border-[#c9c9c9]/30 mb-8" />

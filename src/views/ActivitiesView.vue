@@ -86,6 +86,14 @@ const currentTheme = computed<Theme>(() => {
 	return DEFAULT_THEME;
 });
 
+// 格式化活动元数据
+const formatActivityMeta = (activity: Activity): string => {
+	const parts: string[] = [];
+	if (activity.date) parts.push(activity.date);
+	if (activity.location) parts.push(activity.location);
+	return parts.join(' · ');
+};
+
 const filteredActivities = computed(() => {
 	let result = activities.value;
 
@@ -245,7 +253,7 @@ watch(currentTheme, (newTheme) => {
 						<div class="flex justify-between items-end">
 							<div>
 								<h2 class="text-2xl group-hover:text-red-300 transition-colors">{{ activity.title }}</h2>
-								<p class="opacity-60 mt-2 tracking-widest text-sm">{{ activity.date }} {{ activity.location ? `· ${activity.location}` : '' }}</p>
+								<p class="opacity-60 mt-2 tracking-widest text-sm">{{ formatActivityMeta(activity) }}</p>
 							</div>
 							<span class="accent-text opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">详情 →</span>
 						</div>
