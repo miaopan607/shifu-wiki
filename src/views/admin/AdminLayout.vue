@@ -19,6 +19,7 @@ const currentView = computed<AdminView>(() => {
     if (path.includes('/admin/albums')) return 'albums';
     if (path.includes('/admin/activities')) return 'activities';
     if (path.includes('/admin/misc')) return 'misc';
+    if (path.includes('/admin/profile')) return 'profile';
     return 'dashboard';
 });
 
@@ -29,6 +30,7 @@ const navItems: { view: AdminView; label: string; icon: string; path: string }[]
     { view: 'activities', label: '活动管理', icon: '🗓️', path: '/admin/activities' },
     { view: 'galleries', label: '图集管理', icon: '🖼️', path: '/admin/galleries' },
     { view: 'misc', label: '杂记管理', icon: '📝', path: '/admin/misc' },
+    { view: 'profile', label: '个人介绍', icon: '👤', path: '/admin/profile' },
 ];
 
 const checkMobile = () => {

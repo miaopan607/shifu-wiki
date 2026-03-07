@@ -45,4 +45,4 @@ export interface AdminGallery extends Gallery {
     images?: GalleryImage[];
 }
 
-export type AdminView = 'dashboard' | 'galleries' | 'songs' | 'albums' | 'activities' | 'misc';
+export type AdminView = 'dashboard' | 'galleries' | 'songs' | 'albums' | 'activities' | 'misc' | 'profile';
