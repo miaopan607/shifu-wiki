@@ -20,6 +20,10 @@ const renderMarkdown = (content: string | undefined) => {
     return marked.parse(content, { async: false }) as string;
 };
 
+const filterNewlines = (value: string) => {
+    return value.replace(/\r\n|\r|\n/g, ' ');
+};
+
 const song = ref<Partial<Song>>({
     title: '',
     album: '',
@@ -233,18 +237,20 @@ const handleDateInput = (e: Event) => {
                     <div class="space-y-2">
                         <label class="text-sm text-[#888]">标题 <span class="text-red-300">*</span></label>
                         <div class="relative group">
-                            <input
+                            <textarea
                                 v-model="song.title"
-                                type="text"
+                                v-autosize
+                                rows="1"
                                 placeholder="标题"
-                                class="w-full px-4 py-2.5 bg-black/20 border rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all pr-10"
+                                class="w-full px-4 py-2.5 bg-black/20 border rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all pr-10 resize-none overflow-hidden"
                                 :class="titleError ? 'border-red-400/70' : 'border-[#c9c9c9]/20'"
-                                @input="titleError = ''"
-                            />
+                                @input="titleError = ''; song.title = filterNewlines(song.title || '')"
+                                @keydown.enter.prevent
+                            ></textarea>
                             <button
                                 v-if="song.title"
                                 @click="song.title = ''; titleError = '';"
-                                class="absolute right-3 top-1/2 -translate-y-1/2 text-[#888] hover:text-red-300 transition-colors"
+                                class="absolute right-3 top-3 text-[#888] hover:text-red-300 transition-colors"
                             >
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -258,18 +264,20 @@ const handleDateInput = (e: Event) => {
                         <div class="space-y-2">
                             <label class="text-sm text-[#888]">艺人 <span class="text-red-300">*</span></label>
                             <div class="relative group">
-                                <input
+                                <textarea
                                     v-model="song.artist"
-                                    type="text"
+                                    v-autosize
+                                    rows="1"
                                     placeholder="艺人"
-                                    class="w-full px-4 py-2.5 bg-black/20 border rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all pr-10"
+                                    class="w-full px-4 py-2.5 bg-black/20 border rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all pr-10 resize-none overflow-hidden"
                                     :class="artistError ? 'border-red-400/70' : 'border-[#c9c9c9]/20'"
-                                    @input="artistError = ''"
-                                />
+                                    @input="artistError = ''; song.artist = filterNewlines(song.artist || '')"
+                                    @keydown.enter.prevent
+                                ></textarea>
                                 <button
                                     v-if="song.artist"
                                     @click="song.artist = ''; artistError = '';"
-                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-[#888] hover:text-red-300 transition-colors"
+                                    class="absolute right-3 top-3 text-[#888] hover:text-red-300 transition-colors"
                                 >
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -281,16 +289,19 @@ const handleDateInput = (e: Event) => {
                         <div class="space-y-2">
                             <label class="text-sm text-[#888]">专辑</label>
                             <div class="relative group">
-                                <input
+                                <textarea
                                     v-model="song.album"
-                                    type="text"
+                                    v-autosize
+                                    rows="1"
                                     placeholder="专辑"
-                                    class="w-full px-4 py-2.5 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all pr-10"
-                                />
-                                <button 
+                                    class="w-full px-4 py-2.5 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all pr-10 resize-none overflow-hidden"
+                                    @input="song.album = filterNewlines(song.album || '')"
+                                    @keydown.enter.prevent
+                                ></textarea>
+                                <button
                                     v-if="song.album"
                                     @click="song.album = ''"
-                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-[#888] hover:text-red-300 transition-colors"
+                                    class="absolute right-3 top-3 text-[#888] hover:text-red-300 transition-colors"
                                 >
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -304,16 +315,19 @@ const handleDateInput = (e: Event) => {
                         <div class="space-y-2">
                             <label class="text-sm text-[#888]">词作</label>
                             <div class="relative group">
-                                <input
+                                <textarea
                                     v-model="song.lyricist"
-                                    type="text"
+                                    v-autosize
+                                    rows="1"
                                     placeholder="词作"
-                                    class="w-full px-4 py-2.5 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all pr-10"
-                                />
-                                <button 
+                                    class="w-full px-4 py-2.5 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all pr-10 resize-none overflow-hidden"
+                                    @input="song.lyricist = filterNewlines(song.lyricist || '')"
+                                    @keydown.enter.prevent
+                                ></textarea>
+                                <button
                                     v-if="song.lyricist"
                                     @click="song.lyricist = ''"
-                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-[#888] hover:text-red-300 transition-colors"
+                                    class="absolute right-3 top-3 text-[#888] hover:text-red-300 transition-colors"
                                 >
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -324,16 +338,19 @@ const handleDateInput = (e: Event) => {
                         <div class="space-y-2">
                             <label class="text-sm text-[#888]">曲作</label>
                             <div class="relative group">
-                                <input
+                                <textarea
                                     v-model="song.composer"
-                                    type="text"
+                                    v-autosize
+                                    rows="1"
                                     placeholder="曲作"
-                                    class="w-full px-4 py-2.5 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all pr-10"
-                                />
-                                <button 
+                                    class="w-full px-4 py-2.5 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all pr-10 resize-none overflow-hidden"
+                                    @input="song.composer = filterNewlines(song.composer || '')"
+                                    @keydown.enter.prevent
+                                ></textarea>
+                                <button
                                     v-if="song.composer"
                                     @click="song.composer = ''"
-                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-[#888] hover:text-red-300 transition-colors"
+                                    class="absolute right-3 top-3 text-[#888] hover:text-red-300 transition-colors"
                                 >
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>

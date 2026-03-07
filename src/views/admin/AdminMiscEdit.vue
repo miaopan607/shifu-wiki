@@ -20,6 +20,10 @@ const renderMarkdown = (content: string | undefined) => {
     return marked.parse(content, { async: false }) as string;
 };
 
+const filterNewlines = (value: string) => {
+    return value.replace(/\r\n|\r|\n/g, ' ');
+};
+
 const misc = ref<Partial<Misc>>({
     title: '',
     slug: '',
@@ -168,18 +172,20 @@ const handleDateInput = (e: Event) => {
                     <div class="space-y-2">
                         <label class="text-sm text-[#888]">标题 <span class="text-red-300">*</span></label>
                         <div class="relative group">
-                            <input
+                            <textarea
                                 v-model="misc.title"
-                                type="text"
+                                v-autosize
+                                rows="1"
                                 placeholder="标题"
-                                class="w-full px-4 py-2.5 bg-black/20 border rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all pr-10"
+                                class="w-full px-4 py-2.5 bg-black/20 border rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all pr-10 resize-none overflow-hidden"
                                 :class="titleError ? 'border-red-400/70' : 'border-[#c9c9c9]/20'"
-                                @input="titleError = ''"
-                            />
+                                @input="titleError = ''; misc.title = filterNewlines(misc.title || '')"
+                                @keydown.enter.prevent
+                            ></textarea>
                             <button
                                 v-if="misc.title"
                                 @click="misc.title = ''; titleError = '';"
-                                class="absolute right-3 top-1/2 -translate-y-1/2 text-[#888] hover:text-red-300 transition-colors"
+                                class="absolute right-3 top-3 text-[#888] hover:text-red-300 transition-colors"
                             >
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -231,12 +237,15 @@ const handleDateInput = (e: Event) => {
                         </div>
                         <div class="space-y-2">
                             <label class="text-sm text-[#888]">语义化标签</label>
-                            <input
+                            <textarea
                                 v-model="misc.slug"
-                                type="text"
+                                v-autosize
+                                rows="1"
                                 placeholder="自定义 URL 路径"
-                                class="w-full px-4 py-2.5 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all"
-                            />
+                                class="w-full px-4 py-2.5 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all resize-none overflow-hidden"
+                                @input="misc.slug = filterNewlines(misc.slug || '')"
+                                @keydown.enter.prevent
+                            ></textarea>
                         </div>
                     </div>
 
@@ -244,7 +253,7 @@ const handleDateInput = (e: Event) => {
                         <div class="flex-1 space-y-2">
                             <div class="flex items-center justify-between h-5">
                                 <label class="text-sm text-[#888]">描述</label>
-                                <button 
+                                <button
                                     v-if="misc.description"
                                     @click="misc.description = ''"
                                     class="text-xs text-[#888] hover:text-red-300 transition-colors"
@@ -252,12 +261,15 @@ const handleDateInput = (e: Event) => {
                                     清空
                                 </button>
                             </div>
-                            <input
+                            <textarea
                                 v-model="misc.description"
-                                type="text"
+                                v-autosize
+                                rows="1"
                                 placeholder="杂记描述"
-                                class="w-full px-4 py-2.5 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all"
-                            />
+                                class="w-full px-4 py-2.5 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all resize-none overflow-hidden"
+                                @input="misc.description = filterNewlines(misc.description || '')"
+                                @keydown.enter.prevent
+                            ></textarea>
                         </div>
                         <div class="space-y-2 min-w-27.5">
                             <div class="flex items-center h-5">

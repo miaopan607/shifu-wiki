@@ -25,6 +25,10 @@ const renderMarkdown = (content: string | undefined) => {
     return marked.parse(content, { async: false }) as string;
 };
 
+const filterNewlines = (value: string) => {
+    return value.replace(/\r\n|\r|\n/g, ' ');
+};
+
 const coverPreview = ref<string | null>(null);
 const coverFile = ref<File | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
@@ -200,18 +204,20 @@ const handleDateInput = (e: Event) => {
                     <div class="space-y-2">
                         <label class="text-sm text-[#888]">专辑名 <span class="text-red-300">*</span></label>
                         <div class="relative group">
-                            <input
+                            <textarea
                                 v-model="album.title"
-                                type="text"
+                                v-autosize
+                                rows="1"
                                 placeholder="专辑名"
-                                class="w-full px-4 py-2.5 bg-black/20 border rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all pr-10"
+                                class="w-full px-4 py-2.5 bg-black/20 border rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all pr-10 resize-none overflow-hidden"
                                 :class="titleError ? 'border-red-400/70' : 'border-[#c9c9c9]/20'"
-                                @input="titleError = ''"
-                            />
+                                @input="titleError = ''; album.title = filterNewlines(album.title || '')"
+                                @keydown.enter.prevent
+                            ></textarea>
                             <button
                                 v-if="album.title"
                                 @click="album.title = ''"
-                                class="absolute right-3 top-1/2 -translate-y-1/2 text-[#888] hover:text-red-300 transition-colors"
+                                class="absolute right-3 top-3 text-[#888] hover:text-red-300 transition-colors"
                             >
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>

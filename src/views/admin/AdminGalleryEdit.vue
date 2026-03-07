@@ -40,6 +40,10 @@ const renderMarkdown = (content: string | undefined) => {
     return marked.parse(content, { async: false }) as string;
 };
 
+const filterNewlines = (value: string) => {
+    return value.replace(/\r\n|\r|\n/g, ' ');
+};
+
 // 图集基础信息，默认日期为今天（YYYY-MM-DD）。
 const form = ref<GalleryFormData>({
     title: '',
@@ -601,18 +605,20 @@ onUnmounted(() => {
                     <div class="space-y-2">
                         <label class="text-sm text-[#888]">标题 <span class="text-red-300">*</span></label>
                         <div class="relative group">
-                            <input
+                            <textarea
                                 v-model="form.title"
-                                type="text"
+                                v-autosize
+                                rows="1"
                                 placeholder="图集标题"
-                                class="w-full px-4 py-2.5 bg-black/20 border rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all pr-10"
+                                class="w-full px-4 py-2.5 bg-black/20 border rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all pr-10 resize-none overflow-hidden"
                                 :class="titleError ? 'border-red-400/70' : 'border-[#c9c9c9]/20'"
-                                @input="titleError = ''"
-                            />
+                                @input="titleError = ''; form.title = filterNewlines(form.title || '')"
+                                @keydown.enter.prevent
+                            ></textarea>
                             <button
                                 v-if="form.title"
                                 @click="form.title = ''; titleError = '';"
-                                class="absolute right-3 top-1/2 -translate-y-1/2 text-[#888] hover:text-red-300 transition-colors"
+                                class="absolute right-3 top-3 text-[#888] hover:text-red-300 transition-colors"
                             >
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -665,16 +671,19 @@ onUnmounted(() => {
                     <div class="space-y-2">
                         <label class="text-sm text-[#888]">语义化标签</label>
                         <div class="relative group">
-                            <input
+                            <textarea
                                 v-model="form.slug"
-                                type="text"
+                                v-autosize
+                                rows="1"
                                 placeholder="自定义 URL 路径"
-                                class="w-full px-4 py-2.5 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all pr-10"
-                            />
-                            <button 
+                                class="w-full px-4 py-2.5 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all pr-10 resize-none overflow-hidden"
+                                @input="form.slug = filterNewlines(form.slug || '')"
+                                @keydown.enter.prevent
+                            ></textarea>
+                            <button
                                 v-if="form.slug"
                                 @click="form.slug = ''"
-                                class="absolute right-3 top-1/2 -translate-y-1/2 text-[#888] hover:text-red-300 transition-colors"
+                                class="absolute right-3 top-3 text-[#888] hover:text-red-300 transition-colors"
                             >
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -871,4 +880,5 @@ onUnmounted(() => {
 .animate-spin {
     animation: spin 1s linear infinite;
 }
+
 </style>
