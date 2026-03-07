@@ -116,10 +116,25 @@ const saveSong = async () => {
 
     saving.value = true;
     try {
+        let index = song.value.index;
+        if (!isEdit.value) {
+            const records = await pb.collection('songs').getFullList({
+                sort: '-index',
+                fields: 'index',
+                requestKey: null,
+            });
+            const maxIndex = records.reduce((max, record: any) => {
+                const current = Number(record.index) || 0;
+                return Math.max(max, current);
+            }, 0);
+            index = maxIndex + 1;
+        }
+
         const data = encodeSongLinkNames({
             ...song.value,
             title: normalizedTitle,
             artist: normalizedArtist,
+            index,
             links: normalizedLinks,
             otherLinks: normalizedOtherLinks,
         });
