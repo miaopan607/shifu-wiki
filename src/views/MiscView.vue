@@ -13,7 +13,8 @@ onMounted(async () => {
     try {
         const records = await pb.collection('misc').getFullList({
             sort: '-created',
-            filter: 'published = true'
+            filter: 'published = true',
+            fields: 'id,title,slug,created,description',
         });
         miscItems.value = records as unknown as Misc[];
     } catch (e) {

@@ -132,6 +132,7 @@ onMounted(async () => {
 	try {
 		const records = await pb.collection('activities').getFullList({
 			sort: '-date',
+			fields: 'id,index,title,date,location,tags',
 		});
 		activities.value = records.map((record) => ({
 			id: record.id,

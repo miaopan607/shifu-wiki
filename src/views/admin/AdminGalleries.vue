@@ -39,6 +39,7 @@ const fetchGalleries = async () => {
     try {
         const result = await pb.collection('galleries').getFullList({
             sort: '-date',
+            fields: 'id,title,slug,date,description,published',
         });
 
         galleries.value = result as unknown as AdminGallery[];

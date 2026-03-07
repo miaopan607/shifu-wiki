@@ -14,6 +14,7 @@ onMounted(async () => {
 	try {
 		allSongs.value = await pb.collection('songs').getFullList({
 			sort: '-releaseDate',
+			fields: 'id,title,index,album,releaseDate,artist',
 		});
 	} catch (error) {
 		console.error('Failed to fetch songs:', error);

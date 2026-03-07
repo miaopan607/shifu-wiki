@@ -38,6 +38,7 @@ const fetchMisc = async () => {
     try {
         const result = await pb.collection('misc').getFullList({
             sort: '-created',
+            fields: 'id,title,slug,created,description,published',
         });
         miscItems.value = result as unknown as Misc[];
     } catch (error) {

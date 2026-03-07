@@ -12,10 +12,9 @@ const loading = ref(true);
 onMounted(async () => {
     try {
         const [albumsResult, songsResult] = await Promise.all([
-            pb.collection('albums').getFullList({ sort: '-releaseDate' }),
+            pb.collection('albums').getFullList({ sort: '-releaseDate', fields: 'id,collectionId,title,releaseDate,cover' }),
             pb.collection('songs').getFullList({ fields: 'album' })
         ]);
-
         albums.value = albumsResult.map(album => ({
             ...album,
             songCount: songsResult.filter(s => s.album === album.title).length

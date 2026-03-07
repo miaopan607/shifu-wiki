@@ -36,6 +36,7 @@ const fetchActivities = async () => {
     try {
         const result = await pb.collection('activities').getFullList({
             sort: '-date',
+            fields: 'id,index,title,date,location,tags',
         });
         activities.value = result as unknown as Activity[];
     } catch (error) {

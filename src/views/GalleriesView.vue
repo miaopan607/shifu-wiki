@@ -31,6 +31,7 @@ onMounted(async () => {
 		const result = await pb.collection('galleries').getFullList({
 			sort: '-date',
 			filter: 'published = true',
+			fields: 'id,title,slug,date,description',
 		});
 		galleries.value = result as unknown as GalleryWithPreview[];
 

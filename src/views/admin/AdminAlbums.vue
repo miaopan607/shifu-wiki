@@ -34,7 +34,7 @@ const fetchAlbums = async () => {
     loading.value = true;
     try {
         const [albumsResult, songsResult] = await Promise.all([
-            pb.collection('albums').getFullList({ sort: '-releaseDate' }),
+            pb.collection('albums').getFullList({ sort: '-releaseDate', fields: 'id,collectionId,title,releaseDate,cover' }),
             pb.collection('songs').getFullList({ fields: 'album' })
         ]);
         albums.value = (albumsResult as unknown as Album[]).map(album => ({

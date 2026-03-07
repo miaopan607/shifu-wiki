@@ -36,6 +36,7 @@ onMounted(async () => {
             pb.collection('songs').getList(1, 50, {
                 filter: `album = "${albumTitle}"`,
                 sort: '+releaseDate',
+                fields: 'id,title,index,artist',
             }),
             pb.collection('albums').getFirstListItem(`title="${albumTitle}"`).catch(() => null)
         ]); 

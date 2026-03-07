@@ -35,6 +35,7 @@ const fetchSongs = async () => {
     try {
         const result = await pb.collection('songs').getFullList({
             sort: '-releaseDate',
+            fields: 'id,title,index,album,releaseDate,artist',
         });
         songs.value = result as unknown as Song[];
     } catch (error) {
