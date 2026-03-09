@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
 import { pb } from '@/lib/pocketbase';
+import { uploadStore } from '@/stores/uploadStore';
 
 const router = createRouter({
 	history: createWebHistory(import.meta.env.BASE_URL),
@@ -196,6 +197,18 @@ const router = createRouter({
 					component: () => import('../views/admin/AdminProfile.vue'),
 					meta: { title: '个人介绍管理 | 管理后台' },
 				},
+				{
+					path: 'locks',
+					name: 'admin-locks',
+					component: () => import('../views/admin/AdminLocks.vue'),
+					meta: { title: '锁管理 | 管理后台' },
+				},
+				{
+					path: 'settings',
+					name: 'admin-settings',
+					component: () => import('../views/admin/AdminSettings.vue'),
+					meta: { title: '设置 | 管理后台' },
+				},
 			],
 		},
 		{
@@ -212,7 +225,10 @@ const router = createRouter({
 });
 
 router.beforeEach((to, _from, next) => {
-	if (to.meta.requiresAuth && !pb.authStore.isValid) {
+	if (uploadStore.hasBlockingTasks.value && (to.path === '/admin/login' || !to.path.startsWith('/admin'))) {
+		alert('仍有未完成的上传任务，请等待完成或先在上传面板中取消后再离开后台。');
+		next(false);
+	} else if (to.meta.requiresAuth && !pb.authStore.isValid) {
 		next({
 			path: '/admin/login',
 			query: { redirect: to.fullPath },

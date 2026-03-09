@@ -106,9 +106,22 @@ const deleteGallery = async (gallery: AdminGallery) => {
         const images = await pb.collection('gallery_images').getFullList({
             filter: `gallery = "${gallery.id}"`,
         });
-        
-        for (const img of images) {
-            await pb.collection('gallery_images').delete(img.id);
+
+        const deleteResults = await Promise.allSettled(
+            images.map(img => pb.collection('gallery_images').delete(img.id))
+        );
+        const failedDeletes = deleteResults
+            .map((result, index) => ({ result, imageId: images[index]?.id }))
+            .filter(item => item.result.status === 'rejected');
+
+        deleteResults.forEach((result, index) => {
+            if (result.status === 'rejected') {
+                console.warn('Failed to delete gallery image:', images[index]?.id, result.reason);
+            }
+        });
+
+        if (failedDeletes.length > 0) {
+            throw new Error('部分图片删除失败');
         }
         
         await pb.collection('galleries').delete(gallery.id);

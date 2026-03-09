@@ -1,1 +1,1 @@
-Use `pnpm`.
+@AGENTS.md

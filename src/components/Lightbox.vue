@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onUnmounted } from 'vue';
 import { pb } from '@/lib/pocketbase';
 import type { GalleryImage } from '@/types';
 
@@ -67,6 +67,18 @@ const cancelAllXhrRequests = () => {
 	imageProgressMap.value.clear();
 };
 
+const cleanup = () => {
+	document.body.style.overflow = '';
+	// 取消所有正在进行的请求，让浏览器优先加载缩略图
+	cancelAllXhrRequests();
+	// 清理 Blob URL
+	loadedImageUrls.value.forEach((url) => {
+		URL.revokeObjectURL(url);
+	});
+	loadedImageUrls.value.clear();
+	loadedImages.value.clear();
+};
+
 // 监听 modelValue 变化
 watch(
 	() => props.modelValue,
@@ -79,18 +91,14 @@ watch(
 			activeXhrRequests.value.clear();
 			document.body.style.overflow = 'hidden';
 		} else {
-			document.body.style.overflow = '';
-			// 取消所有正在进行的请求，让浏览器优先加载缩略图
-			cancelAllXhrRequests();
-			// 清理 Blob URL
-			loadedImageUrls.value.forEach((url) => {
-				URL.revokeObjectURL(url);
-			});
-			loadedImageUrls.value.clear();
-			loadedImages.value.clear();
+			cleanup();
 		}
 	}
 );
+
+onUnmounted(() => {
+	cleanup();
+});
 
 // 监听 initialIndex 变化
 watch(
