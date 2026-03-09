@@ -42,7 +42,7 @@
     try {
       const result = await pb.collection('misc').getFullList({
         sort: '-created',
-        fields: 'id,title,slug,created,description,published',
+        fields: 'id,title,index,created,description,published',
       });
       miscItems.value = result as unknown as Misc[];
     } catch (error) {
@@ -279,6 +279,7 @@
       transform: rotate(360deg);
     }
   }
+
   .animate-spin {
     animation: spin 1s linear infinite;
   }
