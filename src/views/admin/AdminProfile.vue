@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { pb } from '@/lib/pocketbase';
-import { marked } from 'marked';
+import AdminInput from '@/components/AdminInput.vue';
 
 interface Profile {
     id: string;
@@ -13,13 +13,7 @@ const router = useRouter();
 const loading = ref(true);
 const saving = ref(false);
 const saved = ref(false);
-const showContentPreview = ref(false);
 const contentError = ref('');
-
-const renderMarkdown = (content: string | undefined) => {
-    if (!content) return '';
-    return marked.parse(content, { async: false }) as string;
-};
 
 const profile = ref<Partial<Profile>>({
     content: '',
@@ -112,46 +106,18 @@ const cancel = () => {
             <div class="space-y-6">
                 <!-- 正文内容 -->
                 <div class="bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-xl p-6 space-y-5">
-                    <div class="space-y-4">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <h2 class="text-lg font-medium text-[#c9c9c9]">内容 <span class="text-red-300">*</span></h2>
-                                <svg class="w-4 h-4 text-[#888]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0Z"/><path d="M7 15V9l2 2 2-2v6"/><path d="m14 11 2-2 2 2"/><path d="M16 9v6"/>
-                                </svg>
-                            </div>
-                            <div class="flex items-center gap-3">
-                                <button
-                                    @click="showContentPreview = !showContentPreview"
-                                    class="text-xs text-red-300 hover:text-[#fca5a5] transition-colors"
-                                >
-                                    {{ showContentPreview ? '编辑模式' : '预览模式' }}
-                                </button>
-                                <button
-                                    v-if="profile.content"
-                                    @click="profile.content = ''; contentError = '';"
-                                    class="text-xs text-[#888] hover:text-red-300 transition-colors"
-                                >
-                                    清空
-                                </button>
-                            </div>
-                        </div>
-                        <div
-                            v-if="showContentPreview"
-                            class="w-full px-4 py-3 bg-black/10 border border-[#c9c9c9]/10 rounded-lg text-[#e0e0e0] min-h-50 prose prose-invert max-w-none"
-                            v-html="renderMarkdown(profile.content)"
-                        ></div>
-                        <textarea
-                            v-else
-                            v-model="profile.content"
-                            rows="20"
-                            placeholder="个人介绍内容"
-                            class="w-full px-4 py-3 bg-black/20 border rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all font-mono leading-relaxed resize-y"
-                            :class="contentError ? 'border-red-400/70' : 'border-[#c9c9c9]/20'"
-                            @input="contentError = ''; saved = false;"
-                        ></textarea>
-                        <p v-if="contentError" class="text-xs text-red-300">{{ contentError }}</p>
-                    </div>
+                    <AdminInput
+                        v-model="profile.content"
+                        label="内容"
+                        type="markdown"
+                        placeholder="个人介绍内容"
+                        required
+                        :error="contentError"
+                        :rows="20"
+                        label-size="lg"
+                        @input="saved = false;"
+                        @clear="contentError = ''; saved = false;"
+                    />
                 </div>
             </div>
         </div>

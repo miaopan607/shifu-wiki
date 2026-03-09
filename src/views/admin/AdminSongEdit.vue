@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { pb, decodeSongLinkNames, encodeSongLinkNames, parseDateFromBackend, normalizeDateForStorage } from '@/lib/pocketbase';
-import { marked } from 'marked';
+import AdminInput from '@/components/AdminInput.vue';
 import type { Song } from '@/types';
 
 const route = useRoute();
@@ -11,18 +11,8 @@ const isEdit = ref(route.params.id !== undefined);
 const loading = ref(false);
 const saving = ref(false);
 const datePicker = ref<HTMLInputElement | null>(null);
-const showDescriptionPreview = ref(false);
 const titleError = ref('');
 const artistError = ref('');
-
-const renderMarkdown = (content: string | undefined) => {
-    if (!content) return '';
-    return marked.parse(content, { async: false }) as string;
-};
-
-const filterNewlines = (value: string) => {
-    return value.replace(/\r\n|\r|\n/g, ' ');
-};
 
 const song = ref<Partial<Song>>({
     title: '',
@@ -234,130 +224,42 @@ const handleDateInput = (e: Event) => {
                 <div class="bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-xl p-6 space-y-5">
                     <h2 class="text-lg font-semibold text-[#c9c9c9] border-b border-[#c9c9c9]/20 pb-3">基本信息</h2>
                     
-                    <div class="space-y-2">
-                        <label class="text-sm text-[#888]">标题 <span class="text-red-300">*</span></label>
-                        <div class="relative group">
-                            <textarea
-                                v-model="song.title"
-                                v-autosize
-                                rows="1"
-                                placeholder="标题"
-                                class="w-full px-4 py-2.5 bg-black/20 border rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all pr-10 resize-none overflow-hidden"
-                                :class="titleError ? 'border-red-400/70' : 'border-[#c9c9c9]/20'"
-                                @input="titleError = ''; song.title = filterNewlines(song.title || '')"
-                                @keydown.enter.prevent
-                            ></textarea>
-                            <button
-                                v-if="song.title"
-                                @click="song.title = ''; titleError = '';"
-                                class="absolute right-3 top-3 text-[#888] hover:text-red-300 transition-colors"
-                            >
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                </svg>
-                            </button>
-                        </div>
-                        <p v-if="titleError" class="text-xs text-red-300">{{ titleError }}</p>
+                    <AdminInput
+                        v-model="song.title"
+                        label="标题"
+                        placeholder="标题"
+                        required
+                        :error="titleError"
+                        @clear="titleError = ''"
+                    />
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <AdminInput
+                            v-model="song.artist"
+                            label="艺人"
+                            placeholder="艺人"
+                            required
+                            :error="artistError"
+                            @clear="artistError = ''"
+                        />
+                        <AdminInput
+                            v-model="song.album"
+                            label="专辑"
+                            placeholder="专辑"
+                        />
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
-                        <div class="space-y-2">
-                            <label class="text-sm text-[#888]">艺人 <span class="text-red-300">*</span></label>
-                            <div class="relative group">
-                                <textarea
-                                    v-model="song.artist"
-                                    v-autosize
-                                    rows="1"
-                                    placeholder="艺人"
-                                    class="w-full px-4 py-2.5 bg-black/20 border rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all pr-10 resize-none overflow-hidden"
-                                    :class="artistError ? 'border-red-400/70' : 'border-[#c9c9c9]/20'"
-                                    @input="artistError = ''; song.artist = filterNewlines(song.artist || '')"
-                                    @keydown.enter.prevent
-                                ></textarea>
-                                <button
-                                    v-if="song.artist"
-                                    @click="song.artist = ''; artistError = '';"
-                                    class="absolute right-3 top-3 text-[#888] hover:text-red-300 transition-colors"
-                                >
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                    </svg>
-                                </button>
-                            </div>
-                            <p v-if="artistError" class="text-xs text-red-300">{{ artistError }}</p>
-                        </div>
-                        <div class="space-y-2">
-                            <label class="text-sm text-[#888]">专辑</label>
-                            <div class="relative group">
-                                <textarea
-                                    v-model="song.album"
-                                    v-autosize
-                                    rows="1"
-                                    placeholder="专辑"
-                                    class="w-full px-4 py-2.5 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all pr-10 resize-none overflow-hidden"
-                                    @input="song.album = filterNewlines(song.album || '')"
-                                    @keydown.enter.prevent
-                                ></textarea>
-                                <button
-                                    v-if="song.album"
-                                    @click="song.album = ''"
-                                    class="absolute right-3 top-3 text-[#888] hover:text-red-300 transition-colors"
-                                >
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="space-y-2">
-                            <label class="text-sm text-[#888]">词作</label>
-                            <div class="relative group">
-                                <textarea
-                                    v-model="song.lyricist"
-                                    v-autosize
-                                    rows="1"
-                                    placeholder="词作"
-                                    class="w-full px-4 py-2.5 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all pr-10 resize-none overflow-hidden"
-                                    @input="song.lyricist = filterNewlines(song.lyricist || '')"
-                                    @keydown.enter.prevent
-                                ></textarea>
-                                <button
-                                    v-if="song.lyricist"
-                                    @click="song.lyricist = ''"
-                                    class="absolute right-3 top-3 text-[#888] hover:text-red-300 transition-colors"
-                                >
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="space-y-2">
-                            <label class="text-sm text-[#888]">曲作</label>
-                            <div class="relative group">
-                                <textarea
-                                    v-model="song.composer"
-                                    v-autosize
-                                    rows="1"
-                                    placeholder="曲作"
-                                    class="w-full px-4 py-2.5 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all pr-10 resize-none overflow-hidden"
-                                    @input="song.composer = filterNewlines(song.composer || '')"
-                                    @keydown.enter.prevent
-                                ></textarea>
-                                <button
-                                    v-if="song.composer"
-                                    @click="song.composer = ''"
-                                    class="absolute right-3 top-3 text-[#888] hover:text-red-300 transition-colors"
-                                >
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
+                        <AdminInput
+                            v-model="song.lyricist"
+                            label="词作"
+                            placeholder="词作"
+                        />
+                        <AdminInput
+                            v-model="song.composer"
+                            label="曲作"
+                            placeholder="曲作"
+                        />
                     </div>
 
                     <div class="space-y-2">
@@ -403,38 +305,13 @@ const handleDateInput = (e: Event) => {
 
                 <!-- 描述 -->
                 <div class="bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-xl p-6 space-y-4">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <h2 class="text-lg font-medium text-[#c9c9c9]">描述</h2>
-                            <svg class="w-4 h-4 text-[#888]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0Z"/><path d="M7 15V9l2 2 2-2v6"/><path d="m14 11 2-2 2 2"/><path d="M16 9v6"/>
-                            </svg>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <button 
-                                @click="showDescriptionPreview = !showDescriptionPreview"
-                                class="text-xs text-red-300 hover:text-[#fca5a5] transition-colors"
-                            >
-                                {{ showDescriptionPreview ? '编辑模式' : '预览模式' }}
-                            </button>
-                            <button 
-                                v-if="song.description"
-                                @click="song.description = ''"
-                                class="text-xs text-[#888] hover:text-red-300 transition-colors"
-                            >
-                                清空
-                            </button>
-                        </div>
-                    </div>
-                    <div v-if="showDescriptionPreview" class="w-full px-4 py-3 bg-black/10 border border-[#c9c9c9]/10 rounded-lg text-[#e0e0e0] min-h-25 prose prose-invert prose-sm max-w-none" v-html="renderMarkdown(song.description)"></div>
-                    <textarea
-                        v-else
+                    <AdminInput
                         v-model="song.description"
-                        v-autosize
-                        rows="1"
+                        label="描述"
+                        type="markdown"
                         placeholder="音乐描述"
-                        class="w-full px-4 py-3 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all leading-relaxed resize-none"
-                    ></textarea>
+                        label-size="lg"
+                    />
                 </div>
 
                 <!-- 链接列表 -->
@@ -501,44 +378,24 @@ const handleDateInput = (e: Event) => {
             <div class="lg:col-span-4 lg:order-2 space-y-6">
                 <!-- 歌词 -->
                 <div class="bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-xl p-6 space-y-4">
-                    <div class="flex items-center justify-between">
-                        <h2 class="text-lg font-medium text-[#c9c9c9]">歌词</h2>
-                        <button
-                            v-if="song.lyrics"
-                            @click="song.lyrics = ''"
-                            class="text-xs text-[#888] hover:text-red-300 transition-colors"
-                        >
-                            清空
-                        </button>
-                    </div>
-                    <textarea
+                    <AdminInput
                         v-model="song.lyrics"
-                        v-autosize
-                        rows="1"
+                        label="歌词"
+                        type="textarea"
                         placeholder="歌词"
-                        class="w-full px-4 py-3 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all font-mono leading-relaxed resize-none"
-                    ></textarea>
+                        label-size="lg"
+                    />
                 </div>
 
                 <!-- 制作人员 (Credits) -->
                 <div class="bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-xl p-6 space-y-4">
-                    <div class="flex items-center justify-between">
-                        <h2 class="text-lg font-medium text-[#c9c9c9]">制作人员</h2>
-                        <button
-                            v-if="song.credits"
-                            @click="song.credits = ''"
-                            class="text-xs text-[#888] hover:text-red-300 transition-colors"
-                        >
-                            清空
-                        </button>
-                    </div>
-                    <textarea
+                    <AdminInput
                         v-model="song.credits"
-                        v-autosize
-                        rows="1"
+                        label="制作人员"
+                        type="textarea"
                         placeholder="制作人员名单"
-                        class="w-full px-4 py-3 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all font-mono leading-relaxed resize-none"
-                    ></textarea>
+                        label-size="lg"
+                    />
                 </div>
             </div>
         </div>

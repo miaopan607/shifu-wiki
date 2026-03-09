@@ -2,11 +2,11 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { pb, parseDateFromBackend, normalizeDateForStorage } from '@/lib/pocketbase';
-import { marked } from 'marked';
 import { acquireEditLock, findConflictingEditLock, forceAcquireEditLock, formatEditLockDateTime, releaseEditLock, type EditLockRecord } from '@/lib/editLock';
 import { uploadStore } from '@/stores/uploadStore';
 import EditLockConflictDialog from '@/components/EditLockConflictDialog.vue';
 import VersionConflictDialog from '@/components/VersionConflictDialog.vue';
+import AdminInput from '@/components/AdminInput.vue';
 import type { Album } from '@/types';
 import type { BatchUploadTask } from '@/types/upload';
 
@@ -16,7 +16,6 @@ const isEdit = ref(route.params.id !== undefined);
 const loading = ref(false);
 const saving = ref(false);
 const datePicker = ref<HTMLInputElement | null>(null);
-const showPreview = ref(false);
 const titleError = ref('');
 const error = ref('');
 const lockWarning = ref('');
@@ -28,13 +27,10 @@ const showEditLockConflictDialog = ref(false);
 const editLockConflictMessage = ref('');
 let editLockConflictResolver: ((force: boolean) => void) | null = null;
 
-// 版本控制（用于冲突检测）
 const originalUpdated = ref<string | null>(null);
 
-// 当前批量上传任务
 const currentBatchTask = ref<BatchUploadTask | null>(null);
 
-// 当前编辑锁ID
 const currentLockId = ref<string | null>(null);
 const conflictingLock = ref<EditLockRecord | null>(null);
 const takingOverLock = ref(false);
@@ -45,16 +41,6 @@ const album = ref<Partial<Album>>({
 	description: '',
 });
 
-const renderMarkdown = (content: string | undefined) => {
-	if (!content) return '';
-	return marked.parse(content, { async: false }) as string;
-};
-
-const filterNewlines = (value: string) => {
-	return value.replace(/\r\n|\r|\n/g, ' ');
-};
-
-// 封面相关
 const coverPreview = ref<string | null>(null);
 const coverFile = ref<File | null>(null);
 const originalCoverUrl = ref<string | null>(null);
@@ -622,38 +608,14 @@ const handleDateInput = (e: Event) => {
 				<div class="bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-xl p-6 space-y-5">
 					<h2 class="text-lg font-semibold text-[#c9c9c9] border-b border-[#c9c9c9]/20 pb-3">基本信息</h2>
 
-					<div class="space-y-2">
-						<label class="text-sm text-[#888]">专辑名 <span class="text-red-300">*</span></label>
-						<div class="relative group">
-							<textarea
-								v-model="album.title"
-								v-autosize
-								rows="1"
-								placeholder="专辑名"
-								class="w-full px-4 py-2.5 bg-black/20 border rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all pr-10 resize-none overflow-hidden"
-								:class="titleError ? 'border-red-400/70' : 'border-[#c9c9c9]/20'"
-								@input="
-									titleError = '';
-									album.title = filterNewlines(album.title || '');
-									markChanged();
-								"
-								@keydown.enter.prevent
-							></textarea>
-							<button
-								v-if="album.title"
-								@click="
-									album.title = '';
-									markChanged();
-								"
-								class="absolute right-3 top-3 text-[#888] hover:text-red-300 transition-colors"
-							>
-								<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-								</svg>
-							</button>
-						</div>
-						<p v-if="titleError" class="text-xs text-red-300">{{ titleError }}</p>
-					</div>
+					<AdminInput
+						v-model="album.title"
+						label="专辑名"
+						placeholder="专辑名"
+						required
+						:error="titleError"
+						@clear="titleError = ''; markChanged();"
+					/>
 
 					<div class="space-y-2">
 						<label class="text-sm text-[#888]">发布日期</label>
@@ -704,48 +666,14 @@ const handleDateInput = (e: Event) => {
 						</div>
 					</div>
 
-					<div class="space-y-2">
-						<div class="flex items-center justify-between">
-							<div class="flex items-center gap-2">
-								<label class="text-sm text-[#888]">描述</label>
-								<svg class="w-4 h-4 text-[#888]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-									<path d="M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0Z" />
-									<path d="M7 15V9l2 2 2-2v6" />
-									<path d="m14 11 2-2 2 2" />
-									<path d="M16 9v6" />
-								</svg>
-							</div>
-							<div class="flex items-center gap-3">
-								<button @click="showPreview = !showPreview" class="text-xs text-red-300 hover:text-[#fca5a5] transition-colors">
-									{{ showPreview ? '编辑模式' : '预览模式' }}
-								</button>
-								<button
-									v-if="album.description"
-									@click="
-										album.description = '';
-										markChanged();
-									"
-									class="text-xs text-[#888] hover:text-red-300 transition-colors"
-								>
-									清空
-								</button>
-							</div>
-						</div>
-						<div
-							v-if="showPreview"
-							class="w-full px-4 py-3 bg-black/10 border border-[#c9c9c9]/10 rounded-lg text-[#e0e0e0] min-h-25 prose prose-invert prose-sm max-w-none"
-							v-html="renderMarkdown(album.description)"
-						></div>
-						<textarea
-							v-else
-							v-model="album.description"
-							v-autosize
-							rows="1"
-							placeholder="专辑描述"
-							class="w-full px-4 py-3 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all leading-relaxed resize-none"
-							@input="markChanged()"
-						></textarea>
-					</div>
+					<AdminInput
+					v-model="album.description"
+					label="描述"
+					type="markdown"
+					placeholder="专辑描述"
+					@input="markChanged()"
+					@clear="markChanged()"
+				/>
 				</div>
 			</div>
 

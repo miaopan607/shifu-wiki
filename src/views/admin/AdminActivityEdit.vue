@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { pb, parseDateFromBackend, normalizeDateForStorage } from '@/lib/pocketbase';
-import { marked } from 'marked';
+import AdminInput from '@/components/AdminInput.vue';
 import type { Activity } from '@/types';
 
 const route = useRoute();
@@ -11,7 +11,6 @@ const isEdit = ref(route.params.id !== undefined);
 const loading = ref(false);
 const saving = ref(false);
 const datePicker = ref<HTMLInputElement | null>(null);
-const showPreview = ref(false);
 const titleError = ref('');
 
 const activity = ref<Partial<Activity>>({
@@ -21,15 +20,6 @@ const activity = ref<Partial<Activity>>({
     tags: [],
     content: '',
 });
-
-const renderMarkdown = (content: string | undefined) => {
-    if (!content) return '';
-    return marked.parse(content, { async: false }) as string;
-};
-
-const filterNewlines = (value: string) => {
-    return value.replace(/\r\n|\r|\n/g, ' ');
-};
 
 const tagInput = ref('');
 
@@ -188,31 +178,14 @@ const handleDateInput = (e: Event) => {
                 <div class="bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-xl p-6 space-y-5">
                     <h2 class="text-lg font-semibold text-[#c9c9c9] border-b border-[#c9c9c9]/20 pb-3">基本信息</h2>
                     
-                    <div class="space-y-2">
-                        <label class="text-sm text-[#888]">名称 <span class="text-red-300">*</span></label>
-                        <div class="relative group">
-                            <textarea
-                                v-model="activity.title"
-                                v-autosize
-                                rows="1"
-                                placeholder="活动名称"
-                                class="w-full px-4 py-2.5 bg-black/20 border rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all pr-10 resize-none overflow-hidden"
-                                :class="titleError ? 'border-red-400/70' : 'border-[#c9c9c9]/20'"
-                                @input="titleError = ''; activity.title = filterNewlines(activity.title || '')"
-                                @keydown.enter.prevent
-                            ></textarea>
-                            <button
-                                v-if="activity.title"
-                                @click="activity.title = ''"
-                                class="absolute right-3 top-3 text-[#888] hover:text-red-300 transition-colors"
-                            >
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                </svg>
-                            </button>
-                        </div>
-                        <p v-if="titleError" class="text-xs text-red-300">{{ titleError }}</p>
-                    </div>
+                    <AdminInput
+                        v-model="activity.title"
+                        label="名称"
+                        placeholder="活动名称"
+                        required
+                        :error="titleError"
+                        @clear="titleError = ''"
+                    />
 
                     <div class="space-y-2">
                         <label class="text-sm text-[#888]">日期</label>
@@ -254,29 +227,11 @@ const handleDateInput = (e: Event) => {
                         </div>
                     </div>
 
-                    <div class="space-y-2">
-                        <label class="text-sm text-[#888]">地点</label>
-                        <div class="relative group">
-                            <textarea
-                                v-model="activity.location"
-                                v-autosize
-                                rows="1"
-                                placeholder="活动地点"
-                                class="w-full px-4 py-2.5 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all pr-10 resize-none overflow-hidden"
-                                @input="activity.location = filterNewlines(activity.location || '')"
-                                @keydown.enter.prevent
-                            ></textarea>
-                            <button
-                                v-if="activity.location"
-                                @click="activity.location = ''"
-                                class="absolute right-3 top-3 text-[#888] hover:text-red-300 transition-colors"
-                            >
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
+                    <AdminInput
+                        v-model="activity.location"
+                        label="地点"
+                        placeholder="活动地点"
+                    />
                 </div>
 
                 <!-- 标签 -->
@@ -315,38 +270,13 @@ const handleDateInput = (e: Event) => {
 
                 <!-- 活动详情 -->
                 <div class="bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-xl p-6 space-y-4">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <h2 class="text-lg font-medium text-[#c9c9c9]">详情</h2>
-                            <svg class="w-4 h-4 text-[#888]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0Z"/><path d="M7 15V9l2 2 2-2v6"/><path d="m14 11 2-2 2 2"/><path d="M16 9v6"/>
-                            </svg>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <button 
-                                @click="showPreview = !showPreview"
-                                class="text-xs text-red-300 hover:text-[#fca5a5] transition-colors"
-                            >
-                                {{ showPreview ? '编辑模式' : '预览模式' }}
-                            </button>
-                            <button 
-                                v-if="activity.content"
-                                @click="activity.content = ''"
-                                class="text-xs text-[#888] hover:text-red-300 transition-colors"
-                            >
-                                清空
-                            </button>
-                        </div>
-                    </div>
-                    <div v-if="showPreview" class="w-full px-4 py-3 bg-black/10 border border-[#c9c9c9]/10 rounded-lg text-[#e0e0e0] min-h-25 prose prose-invert prose-sm max-w-none" v-html="renderMarkdown(activity.content)"></div>
-                    <textarea
-                        v-else
+                    <AdminInput
                         v-model="activity.content"
-                        v-autosize
-                        rows="1"
+                        label="详情"
+                        type="markdown"
                         placeholder="活动详情"
-                        class="w-full px-4 py-3 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all font-mono leading-relaxed resize-none"
-                    ></textarea>
+                        label-size="lg"
+                    />
                 </div>
             </div>
         </div>

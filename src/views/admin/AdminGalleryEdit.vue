@@ -2,11 +2,11 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { pb, parseDateFromBackend, normalizeDateForStorage } from '@/lib/pocketbase';
-import { marked } from 'marked';
 import { acquireEditLock, findConflictingEditLock, forceAcquireEditLock, formatEditLockDateTime, releaseEditLock, type EditLockRecord } from '@/lib/editLock';
 import { uploadStore } from '@/stores/uploadStore';
 import EditLockConflictDialog from '@/components/EditLockConflictDialog.vue';
 import VersionConflictDialog from '@/components/VersionConflictDialog.vue';
+import AdminInput from '@/components/AdminInput.vue';
 import type { GalleryFormData, GalleryImageWithFile } from '@/types/admin';
 import type { BatchUploadTask } from '@/types/upload';
 
@@ -15,15 +15,12 @@ type GalleryPreviewSlot = { type: 'image'; image: GalleryImageWithFile; original
 const router = useRouter();
 const route = useRoute();
 
-// 通过路由名判断当前页面是"新建"还是"编辑"。
 const isNew = computed(() => route.name === 'admin-gallery-new');
-// 编辑态下从路由参数提取图集 ID；新建态为空字符串。
 const galleryId = computed(() => {
 	const id = route.params.id;
 	return typeof id === 'string' ? id : '';
 });
 
-// 页面和表单全局状态。
 const loading = ref(true);
 const saving = ref(false);
 const error = ref('');
@@ -31,7 +28,6 @@ const lockWarning = ref('');
 const successMessage = ref('');
 const titleError = ref('');
 const datePicker = ref<HTMLInputElement | null>(null);
-const showPreview = ref(false);
 let isDisposed = false;
 const showVersionConflictDialog = ref(false);
 const latestConflictUpdated = ref<string | null>(null);
@@ -41,27 +37,14 @@ const showEditLockConflictDialog = ref(false);
 const editLockConflictMessage = ref('');
 let editLockConflictResolver: ((force: boolean) => void) | null = null;
 
-// 版本控制（用于冲突检测）
 const originalUpdated = ref<string | null>(null);
 
-// 当前批量上传任务（用于关联待上传文件）
 const currentBatchTask = ref<BatchUploadTask | null>(null);
 
-// 当前编辑锁ID
 const currentLockId = ref<string | null>(null);
 const conflictingLock = ref<EditLockRecord | null>(null);
 const takingOverLock = ref(false);
 
-const renderMarkdown = (content: string | undefined) => {
-	if (!content) return '';
-	return marked.parse(content, { async: false }) as string;
-};
-
-const filterNewlines = (value: string) => {
-	return value.replace(/\r\n|\r|\n/g, ' ');
-};
-
-// 图集基础信息，默认日期为今天（YYYY-MM-DD）。
 const form = ref<GalleryFormData>({
 	title: '',
 	slug: '',
@@ -1001,38 +984,14 @@ const handleDateInput = (e: Event) => {
 				<div class="bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-xl p-6 space-y-5">
 					<h2 class="text-lg font-semibold text-[#c9c9c9] border-b border-[#c9c9c9]/20 pb-3">基本信息</h2>
 
-					<div class="space-y-2">
-						<label class="text-sm text-[#888]">标题 <span class="text-red-300">*</span></label>
-						<div class="relative group">
-							<textarea
-								v-model="form.title"
-								v-autosize
-								rows="1"
-								placeholder="图集标题"
-								class="w-full px-4 py-2.5 bg-black/20 border rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all pr-10 resize-none overflow-hidden"
-								:class="titleError ? 'border-red-400/70' : 'border-[#c9c9c9]/20'"
-								@input="
-									titleError = '';
-									form.title = filterNewlines(form.title);
-									markChanged();
-								"
-								@keydown.enter.prevent
-							></textarea>
-							<button
-								v-if="form.title"
-								@click="
-									form.title = '';
-									markChanged();
-								"
-								class="absolute right-3 top-3 text-[#888] hover:text-red-300 transition-colors"
-							>
-								<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-								</svg>
-							</button>
-						</div>
-						<p v-if="titleError" class="text-xs text-red-300">{{ titleError }}</p>
-					</div>
+					<AdminInput
+						v-model="form.title"
+						label="标题"
+						placeholder="图集标题"
+						required
+						:error="titleError"
+						@clear="titleError = ''; markChanged();"
+					/>
 
 					<div class="space-y-2">
 						<label class="text-sm text-[#888]">日期</label>
@@ -1083,78 +1042,22 @@ const handleDateInput = (e: Event) => {
 						</div>
 					</div>
 
-					<div class="space-y-2">
-						<label class="text-sm text-[#888]">语义化标签</label>
-						<div class="relative group">
-							<textarea
-								v-model="form.slug"
-								v-autosize
-								rows="1"
-								placeholder="自定义 URL 路径"
-								class="w-full px-4 py-2.5 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all pr-10 resize-none overflow-hidden"
-								@input="
-									form.slug = filterNewlines(form.slug || '');
-									markChanged();
-								"
-								@keydown.enter.prevent
-							></textarea>
-							<button
-								v-if="form.slug"
-								@click="
-									form.slug = '';
-									markChanged();
-								"
-								class="absolute right-3 top-3 text-[#888] hover:text-red-300 transition-colors"
-							>
-								<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-								</svg>
-							</button>
-						</div>
-					</div>
+					<AdminInput
+						v-model="form.slug"
+						label="语义化标签"
+						placeholder="自定义 URL 路径"
+						@input="markChanged()"
+						@clear="markChanged()"
+					/>
 
-					<div class="space-y-2">
-						<div class="flex items-center justify-between">
-							<div class="flex items-center gap-2">
-								<label class="text-sm text-[#888]">描述</label>
-								<svg class="w-4 h-4 text-[#888]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-									<path d="M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0Z" />
-									<path d="M7 15V9l2 2 2-2v6" />
-									<path d="m14 11 2-2 2 2" />
-									<path d="M16 9v6" />
-								</svg>
-							</div>
-							<div class="flex items-center gap-3">
-								<button @click="showPreview = !showPreview" class="text-xs text-red-300 hover:text-[#fca5a5] transition-colors">
-									{{ showPreview ? '编辑模式' : '预览模式' }}
-								</button>
-								<button
-									v-if="form.description"
-									@click="
-										form.description = '';
-										markChanged();
-									"
-									class="text-xs text-[#888] hover:text-red-300 transition-colors"
-								>
-									清空
-								</button>
-							</div>
-						</div>
-						<div
-							v-if="showPreview"
-							class="w-full px-4 py-3 bg-black/10 border border-[#c9c9c9]/10 rounded-lg text-[#e0e0e0] min-h-25 prose prose-invert prose-sm max-w-none"
-							v-html="renderMarkdown(form.description)"
-						></div>
-						<textarea
-							v-else
-							v-model="form.description"
-							v-autosize
-							rows="1"
-							placeholder="图集描述"
-							class="w-full px-4 py-3 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all leading-relaxed resize-none"
-							@input="markChanged()"
-						></textarea>
-					</div>
+					<AdminInput
+						v-model="form.description"
+						label="描述"
+						type="markdown"
+						placeholder="图集描述"
+						@input="markChanged()"
+						@clear="markChanged()"
+					/>
 
 					<div>
 						<label class="block text-sm text-[#c9c9c9] mb-1.5">发布状态</label>
