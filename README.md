@@ -69,6 +69,7 @@ pnpm type-check
 
 - 后台有一套基于 `upload_batches` 的上传队列，用于处理图库图片和专辑封面的取消、回滚与兜底清理。
 - PocketBase 侧的部署说明见 `pocketbase/README.md`。
+- 数据库结构定义见 `PocketBaseSchema.md`。
 
 ## 开源协议
 

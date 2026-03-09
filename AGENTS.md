@@ -65,6 +65,8 @@ await releaseEditLock(lock.id);
 - `activities`, `misc`
 - `upload_batches`, `edit_locks`
 
+详见 `PocketBaseSchema.md`。
+
 ## 开发注意
 
 - **上传逻辑修改**: 确保调用 `cancelUploadBatch()`，后端钩子会清理残留
