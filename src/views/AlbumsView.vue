@@ -4,7 +4,7 @@ import { RouterLink } from 'vue-router';
 import { pb } from '@/lib/pocketbase';
 import SubPageNav from '@/components/SubPageNav.vue';
 import SongsNav from '@/components/SongsNav.vue';
-import MetaIcon from '@/components/MetaIcon.vue';
+import AppIcon from '@/components/AppIcon.vue';
 
 const albums = ref<any[]>([]);
 const loading = ref(true);
@@ -63,19 +63,17 @@ const getImageUrl = (record: any, filename: string) => {
                                 class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                             />
                             <div v-else class="w-full h-full flex items-center justify-center text-[#c9c9c9]/20">
-                                <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
-                                </svg>
+                                <AppIcon name="music-note" class-name="w-16 h-16" />
                             </div>
                             <div class="absolute top-[3%] right-[3%] px-[4%] py-[2%] bg-black/40 backdrop-blur-sm rounded-full text-[clamp(10px,10%,14px)] text-[#c9c9c9]/80 flex items-center gap-[0.6em]">
-                                <MetaIcon name="music" className="w-[1.4em] h-[1.4em]" />
+                                <AppIcon name="music" class-name="w-[1.4em] h-[1.4em]" />
                                 <span class="text-[2em] leading-none -translate-y-[0.1em]">{{ album.songCount }}</span>
                             </div>
                         </div>
                         <div class="p-4 space-y-2">
                             <h3 class="font-medium text-[#c9c9c9] truncate group-hover:text-red-300 transition-colors" :title="album.title">{{ album.title }}</h3>
                             <div class="flex items-center gap-1 text-xs text-[#888]">
-                                <MetaIcon name="date" />
+                                <AppIcon name="date" />
                                 <span>{{ formatDate(album.releaseDate) }}</span>
                             </div>
                         </div>

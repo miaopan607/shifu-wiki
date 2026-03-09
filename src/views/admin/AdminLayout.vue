@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { pb } from '@/lib/pocketbase';
-import AdminNavIcon from '@/components/AdminNavIcon.vue';
+import AppIcon from '@/components/AppIcon.vue';
 import GlobalUploadPanel from '@/components/GlobalUploadPanel.vue';
 import { uploadStore } from '@/stores/uploadStore';
 import type { AdminUser, AdminView } from '@/types/admin';
@@ -109,12 +109,17 @@ onUnmounted(() => {
 		<header class="h-14 bg-[rgb(60,0,0)] border-b border-[#c9c9c9]/20 flex items-center justify-between px-4 md:px-6 z-50 shrink-0">
 			<div class="flex items-center gap-4">
 				<button v-if="isMobile" @click="mobileMenuOpen = !mobileMenuOpen" class="p-2 hover:bg-white/10 rounded-lg text-[#c9c9c9]">
-					<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-					</svg>
+					<AppIcon name="menu" class-name="w-6 h-6" />
 				</button>
 				<RouterLink to="/admin" class="text-lg font-semibold text-red-300 hover:text-[#fca5a5] transition-colors"> 管理后台 </RouterLink>
-				<RouterLink to="/" class="px-3 py-1.5 rounded-lg text-base text-[#c9c9c9] hover:text-red-300 hover:bg-white/10 transition-colors" title="返回主页"> 返回主页 </RouterLink>
+				<RouterLink
+					to="/"
+					class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-base text-[#c9c9c9] bg-white/5 hover:text-red-300 hover:bg-white/10 transition-colors"
+					title="返回主页"
+				>
+					<AppIcon name="home" class-name="w-5 h-5" />
+					<span class="hidden md:inline">返回主页</span>
+				</RouterLink>
 			</div>
 
 			<div class="flex items-center gap-3">
@@ -123,21 +128,17 @@ onUnmounted(() => {
 				</div>
 				<button
 					@click="toggleUploadPanel"
-					class="relative flex items-center gap-2 px-3 py-1.5 bg-red-300/10 text-red-300 rounded-lg hover:bg-red-300/20 transition-colors"
+					class="relative flex items-center gap-2 px-2 md:px-3 py-1.5 bg-red-300/10 text-red-300 rounded-lg hover:bg-red-300/20 transition-colors"
 					title="查看任务列表"
 				>
-					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-					</svg>
-					<span class="text-sm">任务列表</span>
+					<AppIcon name="upload" class-name="w-5 h-5" />
+					<span class="hidden md:inline text-sm">任务列表</span>
 					<span v-if="uploadTaskCount > 0" class="inline-flex min-w-5 h-5 items-center justify-center rounded-full bg-red-300 text-[rgb(77,0,0)] text-xs font-semibold px-1">
 						{{ uploadTaskCount }}
 					</span>
 				</button>
 				<button @click="handleLogout" class="p-2 hover:bg-white/10 rounded-lg text-[#c9c9c9] hover:text-red-300 transition-colors" title="退出登录">
-					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-					</svg>
+					<AppIcon name="logout-alt" class-name="w-5 h-5" />
 				</button>
 			</div>
 		</header>
@@ -163,7 +164,7 @@ onUnmounted(() => {
 						]"
 						@click="mobileMenuOpen = false"
 					>
-						<AdminNavIcon :name="item.icon" class-name="w-5 h-5 shrink-0" />
+						<AppIcon :name="item.icon" class-name="w-5 h-5 shrink-0" />
 						<span v-if="!sidebarCollapsed || isMobile" class="font-medium whitespace-nowrap">{{ item.label }}</span>
 					</RouterLink>
 				</nav>
@@ -173,9 +174,7 @@ onUnmounted(() => {
 						@click="sidebarCollapsed = !sidebarCollapsed"
 						class="w-full p-2 text-[#c9c9c9] hover:text-red-300 hover:bg-white/5 rounded-lg transition-colors flex items-center justify-center"
 					>
-						<svg class="w-5 h-5 transition-transform" :class="sidebarCollapsed ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-						</svg>
+						<AppIcon name="chevron-double-left" :class-name="sidebarCollapsed ? 'w-5 h-5 rotate-180' : 'w-5 h-5'" />
 					</button>
 				</div>
 			</aside>

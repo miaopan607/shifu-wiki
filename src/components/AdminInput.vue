@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { marked } from 'marked';
+import AppIcon from '@/components/AppIcon.vue';
 
 type InputType = 'text' | 'textarea' | 'markdown';
 
@@ -76,21 +77,7 @@ const handleInput = (e: Event) => {
 				{{ label }}
 				<span v-if="required" class="text-red-300">*</span>
 			</label>
-				<svg
-					v-if="type === 'markdown'"
-					class="w-4 h-4 text-[#888]"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-				>
-					<path d="M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0Z" />
-					<path d="M7 15V9l2 2 2-2v6" />
-					<path d="m14 11 2-2 2 2" />
-					<path d="M16 9v6" />
-				</svg>
+				<AppIcon v-if="type === 'markdown'" name="markdown" class-name="w-4 h-4 text-[#888]" />
 			</div>
 			<div v-if="isMultiline" class="flex items-center gap-2">
 				<button
@@ -106,9 +93,7 @@ const handleInput = (e: Event) => {
 					class="p-1.5 text-[#888] bg-black/20 rounded-lg hover:bg-black/30 hover:text-red-300 transition-colors"
 					title="清空"
 				>
-					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-					</svg>
+					<AppIcon name="close" class-name="w-4 h-4" />
 				</button>
 			</div>
 		</div>
@@ -149,9 +134,7 @@ const handleInput = (e: Event) => {
 				class="absolute right-3 top-3 text-[#888] hover:text-red-300 transition-colors"
 				title="清空"
 			>
-				<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-				</svg>
+				<AppIcon name="close" class-name="w-4 h-4" />
 			</button>
 		</div>
 

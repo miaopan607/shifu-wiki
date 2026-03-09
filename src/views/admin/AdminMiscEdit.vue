@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { pb, parseDateFromBackend, normalizeDateForStorage } from '@/lib/pocketbase';
 import AdminInput from '@/components/AdminInput.vue';
+import AppIcon from '@/components/AppIcon.vue';
 import type { Misc } from '@/types';
 
 const route = useRoute();
@@ -140,10 +141,7 @@ const handleDateInput = (e: Event) => {
                     class="px-6 py-2 bg-red-300 text-[rgb(77,0,0)] font-semibold rounded-lg hover:bg-[#fca5a5] transition-colors flex items-center gap-2"
                     :disabled="saving"
                 >
-                    <svg v-if="saving" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                    </svg>
+                    <AppIcon v-if="saving" name="refresh" class-name="w-4 h-4 animate-spin" />
                     {{ saving ? '保存中...' : '保存' }}
                 </button>
             </div>
@@ -186,18 +184,14 @@ const handleDateInput = (e: Event) => {
                                         class="p-1.5 text-[#888] hover:text-red-300 transition-colors"
                                         title="清空"
                                     >
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                        </svg>
+                                        <AppIcon name="close" class-name="w-4 h-4" />
                                     </button>
                                     <button 
                                         @click="openDatePicker"
                                         class="p-1.5 text-[#888] hover:text-red-300 transition-colors"
                                         title="选择日期"
                                     >
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                                        </svg>
+                                        <AppIcon name="calendar" class-name="w-5 h-5" />
                                     </button>
                                     <input
                                         ref="datePicker"

@@ -3,7 +3,7 @@ import { ref, onMounted } from 'vue';
 import { useRoute, useRouter, RouterLink } from 'vue-router';
 import { pb, formatDateToDisplay } from '@/lib/pocketbase';
 import { marked } from 'marked';
-import MetaIcon from '@/components/MetaIcon.vue';
+import AppIcon from '@/components/AppIcon.vue';
 import type { Misc } from '@/types';
 
 const route = useRoute();
@@ -72,7 +72,7 @@ onMounted(async () => {
                     </h1>
                     <div class="flex items-center gap-4 text-[#888] text-sm tracking-widest">
                         <div class="flex items-center gap-1.5">
-                            <MetaIcon name="date" />
+                            <AppIcon name="date" />
                             <span>{{ formatDateToDisplay(miscItem.created) }}</span>
                         </div>
                     </div>

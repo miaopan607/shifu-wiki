@@ -3,7 +3,7 @@ import { ref, onMounted } from 'vue';
 import { RouterLink } from 'vue-router';
 import { pb, formatDateToDisplay } from '@/lib/pocketbase';
 import SubPageNav from '@/components/SubPageNav.vue';
-import MetaIcon from '@/components/MetaIcon.vue';
+import AppIcon from '@/components/AppIcon.vue';
 import type { Misc } from '@/types';
 
 const miscItems = ref<Misc[]>([]);
@@ -47,7 +47,7 @@ onMounted(async () => {
                             <div class="flex-1 pr-8">
                                 <h2 class="text-2xl group-hover:text-red-300 transition-colors mb-2">{{ item.title }}</h2>
                                 <div class="flex items-center gap-1 text-[#888] text-sm tracking-widest mb-3">
-                                    <MetaIcon name="date" />
+                                    <AppIcon name="date" />
                                     <span>{{ formatDateToDisplay(item.created) }}</span>
                                 </div>
                                 <p v-if="item.description" class="text-[#c9c9c9]/70 line-clamp-2 text-base">{{ item.description }}</p>

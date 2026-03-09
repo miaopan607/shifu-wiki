@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 import { getSkipSingleLockDeleteConfirmPreference, updateSkipSingleLockDeleteConfirmPreference } from '@/lib/adminPreferences';
 import { pb } from '@/lib/pocketbase';
 import { formatEditLockDateTime, type EditLockRecord } from '@/lib/editLock';
+import AppIcon from '@/components/AppIcon.vue';
 
 type ManagedEditLock = EditLockRecord & {
 	collectionLabel: string;
@@ -291,9 +292,7 @@ const openTargetRecord = (lock: ManagedEditLock) => {
 						:disabled="batchDeleting || selectedCount === 0"
 						class="inline-flex items-center gap-2 px-4 py-2 border border-yellow-400/40 text-yellow-100 hover:bg-yellow-500/10 font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 					>
-						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 7h12m-1 0-.867 12.142A2 2 0 0114.138 21H9.862a2 2 0 01-1.995-1.858L7 7m5-3v3m0 0H9m3 0h3" />
-						</svg>
+						<AppIcon name="trash" class-name="w-5 h-5" />
 						{{ selectedCount === 0 ? '删除所选' : `删除所选（${selectedCount}）` }}
 					</button>
 					<button
@@ -301,14 +300,7 @@ const openTargetRecord = (lock: ManagedEditLock) => {
 						:disabled="refreshing"
 						class="inline-flex items-center gap-2 px-4 py-2 border border-red-300/50 text-red-300 hover:bg-white/5 font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 					>
-						<svg class="w-5 h-5" :class="refreshing ? 'animate-spin' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-							/>
-						</svg>
+						<AppIcon name="refresh" :class-name="refreshing ? 'w-5 h-5 animate-spin' : 'w-5 h-5'" />
 						{{ refreshing ? '刷新中...' : '刷新列表' }}
 					</button>
 				</div>
@@ -316,14 +308,7 @@ const openTargetRecord = (lock: ManagedEditLock) => {
 
 			<div class="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg space-y-2">
 				<p class="text-yellow-400 flex items-start gap-2">
-					<svg class="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-						/>
-					</svg>
+					<AppIcon name="warning" class-name="w-5 h-5 shrink-0 mt-0.5" />
 					<span>编辑锁用于避免多人同时编辑同一条记录。只在确认原有锁已经失效时再移除它。</span>
 				</p>
 				<p class="pl-7 text-sm text-yellow-100/85">如果编辑页异常关闭、浏览器崩溃或网络中断，旧锁可能会残留。移除锁不会修改记录内容，但可能让仍在编辑中的其他人失去并发保护。</p>
@@ -353,9 +338,7 @@ const openTargetRecord = (lock: ManagedEditLock) => {
 			</div>
 
 			<div class="relative">
-				<svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#888]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-				</svg>
+				<AppIcon name="search" class-name="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#888]" />
 				<input
 					v-model="searchQuery"
 					type="text"

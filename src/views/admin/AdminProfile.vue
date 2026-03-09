@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { pb } from '@/lib/pocketbase';
 import AdminInput from '@/components/AdminInput.vue';
+import AppIcon from '@/components/AppIcon.vue';
 
 interface Profile {
     id: string;
@@ -86,13 +87,8 @@ const cancel = () => {
                     class="px-6 py-2 bg-red-300 text-[rgb(77,0,0)] font-semibold rounded-lg hover:bg-[#fca5a5] transition-colors flex items-center gap-2"
                     :disabled="saving || saved"
                 >
-                    <svg v-if="saving" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                    </svg>
-                    <svg v-else-if="saved" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                    </svg>
+                    <AppIcon v-if="saving" name="refresh" class-name="w-4 h-4 animate-spin" />
+                    <AppIcon v-else-if="saved" name="check" class-name="w-4 h-4" />
                     {{ saving ? '保存中...' : saved ? '已保存' : '保存' }}
                 </button>
             </div>

@@ -3,7 +3,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useRoute, RouterLink } from 'vue-router';
 import { pb, formatDateToDisplay } from '@/lib/pocketbase';
 import { marked } from 'marked';
-import MetaIcon from '@/components/MetaIcon.vue';
+import AppIcon from '@/components/AppIcon.vue';
 
 const route = useRoute();
 const albumTitle = decodeURIComponent(route.params.title as string);
@@ -68,7 +68,7 @@ onMounted(async () => {
                         <div class="flex items-center gap-4 text-[#888] tracking-widest text-sm">
                             <template v-for="(item, index) in metaItems" :key="index">
                                 <div class="flex items-center gap-1.5">
-                                    <MetaIcon :name="item.icon as any" />
+                                    <AppIcon :name="item.icon as any" />
                                     <span>{{ item.value }}</span>
                                 </div>
                                 <span v-if="index < metaItems.length - 1">·</span>

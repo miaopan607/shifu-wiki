@@ -72,3 +72,11 @@ await releaseEditLock(lock.id);
 - **上传逻辑修改**: 确保调用 `cancelUploadBatch()`，后端钩子会清理残留
 - **PocketBase 修改**: 复制到服务目录后执行 `pocketbase migrate up` 并重启
 - **样式**: 保持和主站设计一致。
+
+## 图标使用规范
+
+SVG 图标统一使用 `AppIcon` 组件，位于 `src/components/AppIcon.vue`。
+
+```vue
+<AppIcon name="home" class-name="w-5 h-5" />
+```

@@ -3,7 +3,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter, RouterLink } from 'vue-router';
 import { pb, formatDateToDisplay } from '@/lib/pocketbase';
 import { marked } from 'marked';
-import MetaIcon from '@/components/MetaIcon.vue';
+import AppIcon from '@/components/AppIcon.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -69,14 +69,14 @@ onMounted(async () => {
 					</h1>
 					<div class="flex flex-wrap items-center gap-y-2 text-[#888] text-sm tracking-widest mt-4">
 						<template v-for="(item, index) in metaItems" :key="index">
-							<div class="flex items-center">
-								<div class="flex items-center gap-1.5">
-									<MetaIcon :name="item.icon as any" />
-									<span>{{ item.value }}</span>
-								</div>
-								<span v-if="index < metaItems.length - 1" class="mx-4 h-3 w-px bg-[#c9c9c9]/30"></span>
+						<div class="flex items-center">
+							<div class="flex items-center gap-1.5">
+								<AppIcon :name="item.icon as any" />
+								<span>{{ item.value }}</span>
 							</div>
-						</template>
+							<span v-if="index < metaItems.length - 1" class="mx-4 h-3 w-px bg-[#c9c9c9]/30"></span>
+						</div>
+					</template>
 					</div>
 				</header>
 				<hr class="border-[#c9c9c9]/30 mb-8" />

@@ -3,6 +3,7 @@ import { computed, ref, onMounted, onUnmounted } from 'vue';
 import { uploadStore } from '@/stores/uploadStore';
 import { formatFileSize, getStatusText, getStatusColor } from '@/lib/uploadManager';
 import type { BatchTaskStatus, BatchUploadTask, FileUploadInfo } from '@/types/upload';
+import AppIcon from '@/components/AppIcon.vue';
 
 type TaskFilter = 'all' | Exclude<BatchTaskStatus, 'pending'>;
 
@@ -318,9 +319,7 @@ const getFilterButtonClass = (filter: TaskFilter, active: boolean): string => {
               @click="uploadStore.hidePanel"
               class="p-1.5 text-[#888] hover:text-[#c9c9c9] hover:bg-white/5 rounded-lg transition-colors"
             >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-              </svg>
+              <AppIcon name="close" class-name="w-5 h-5" />
             </button>
           </div>
         </div>
@@ -343,9 +342,7 @@ const getFilterButtonClass = (filter: TaskFilter, active: boolean): string => {
         <!-- 任务列表 -->
         <div class="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
           <div v-if="!hasTasks" class="text-center py-8 text-[#888]">
-            <svg class="w-12 h-12 mx-auto mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-            </svg>
+            <AppIcon name="photo" class-name="w-12 h-12 mx-auto mb-3 opacity-50" />
             <p>暂无上传任务</p>
           </div>
 
@@ -389,15 +386,10 @@ const getFilterButtonClass = (filter: TaskFilter, active: boolean): string => {
                   </span>
                   
                   <!-- 展开/折叠图标 -->
-                  <svg 
-                    class="w-4 h-4 text-[#888] transition-transform"
-                    :class="uploadStore.isTaskExpanded(task.id) ? 'rotate-180' : ''"
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                  </svg>
+                  <AppIcon 
+                    name="chevron-down"
+                    :class-name="uploadStore.isTaskExpanded(task.id) ? 'w-4 h-4 text-[#888] transition-transform rotate-180' : 'w-4 h-4 text-[#888] transition-transform'"
+                  />
                 </div>
               </div>
 
@@ -425,34 +417,10 @@ const getFilterButtonClass = (filter: TaskFilter, active: boolean): string => {
               >
                 <!-- 文件状态图标 -->
                 <div class="w-5 h-5 flex items-center justify-center">
-                  <svg 
-                    v-if="file.status === 'success'"
-                    class="w-4 h-4 text-green-400" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                  </svg>
-                  <svg 
-                    v-else-if="file.status === 'error'"
-                    class="w-4 h-4 text-red-400" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                  </svg>
-                  <svg 
-                    v-else-if="file.status === 'uploading'"
-                    class="w-4 h-4 text-blue-400 animate-spin" 
-                    fill="none" 
-                    viewBox="0 0 24 24"
-                  >
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                  </svg>
-                  <div 
+                  <AppIcon v-if="file.status === 'success'" name="check" class-name="w-4 h-4 text-green-400" />
+                  <AppIcon v-else-if="file.status === 'error'" name="close" class-name="w-4 h-4 text-red-400" />
+                  <AppIcon v-else-if="file.status === 'uploading'" name="refresh" class-name="w-4 h-4 text-blue-400 animate-spin" />
+                  <div
                     v-else
                     class="w-2 h-2 rounded-full"
                     :class="getFileStatusColor(file.status).replace('text-', 'bg-')"
@@ -482,9 +450,7 @@ const getFilterButtonClass = (filter: TaskFilter, active: boolean): string => {
 
                 <!-- 错误提示 -->
                 <div v-if="file.error" class="group relative">
-                  <svg class="w-4 h-4 text-red-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                  </svg>
+                  <AppIcon name="info" class-name="w-4 h-4 text-red-400 cursor-help" />
                   <div class="absolute right-0 bottom-full mb-2 w-48 p-2 bg-[rgb(40,0,0)] border border-red-400/30 rounded text-xs text-red-300 hidden group-hover:block z-10">
                     {{ file.error }}
                   </div>
@@ -500,20 +466,16 @@ const getFilterButtonClass = (filter: TaskFilter, active: boolean): string => {
                 @click="handlePause(task)"
                 class="px-2 py-1 text-xs text-[#888] hover:text-orange-400 hover:bg-white/5 rounded transition-colors flex items-center gap-1"
               >
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6"/>
-                </svg>
+                <AppIcon name="pause" class-name="w-3 h-3" />
                 暂停
               </button>
-              
+
               <button
                 v-if="task.status === 'paused'"
                 @click="handleResume(task)"
                 class="px-2 py-1 text-xs text-[#888] hover:text-green-400 hover:bg-white/5 rounded transition-colors flex items-center gap-1"
               >
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
-                </svg>
+                <AppIcon name="play" class-name="w-3 h-3" />
                 恢复
               </button>
               
@@ -523,9 +485,7 @@ const getFilterButtonClass = (filter: TaskFilter, active: boolean): string => {
                 @click="handleRetry(task)"
                 class="px-2 py-1 text-xs text-[#888] hover:text-blue-400 hover:bg-white/5 rounded transition-colors flex items-center gap-1"
               >
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                </svg>
+                <AppIcon name="refresh" class-name="w-3 h-3" />
                 重试
               </button>
               
@@ -535,9 +495,7 @@ const getFilterButtonClass = (filter: TaskFilter, active: boolean): string => {
                 @click="handleCancel(task)"
                 class="px-2 py-1 text-xs text-[#888] hover:text-red-400 hover:bg-white/5 rounded transition-colors flex items-center gap-1"
               >
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
+                <AppIcon name="close" class-name="w-3 h-3" />
                 取消
               </button>
             </div>

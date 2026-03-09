@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { RouterLink } from 'vue-router';
 import { pb } from '@/lib/pocketbase';
+import AppIcon from '@/components/AppIcon.vue';
 
 type DashboardKey = 'songs' | 'albums' | 'activities' | 'galleries' | 'misc';
 
@@ -178,15 +179,7 @@ onMounted(async () => {
                         :disabled="loading || refreshing"
                         class="inline-flex items-center gap-2 px-3 py-2 border border-[#c9c9c9]/25 text-[#c9c9c9] hover:bg-white/5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        <svg
-                            class="w-4 h-4"
-                            :class="refreshing ? 'animate-spin' : ''"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m14.834 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                        </svg>
+                        <AppIcon name="refresh" :class-name="refreshing ? 'w-4 h-4 animate-spin' : 'w-4 h-4'" />
                         刷新
                     </button>
                 </div>

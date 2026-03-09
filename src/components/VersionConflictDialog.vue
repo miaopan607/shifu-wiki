@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import AppIcon from '@/components/AppIcon.vue';
+
 const props = defineProps<{
 	visible: boolean;
 	title: string;
@@ -80,10 +82,7 @@ const formatDateTime = (value?: string | null): string => {
 							rel="noopener noreferrer"
 							class="mr-auto inline-flex items-center gap-2 rounded-lg border border-[#c9c9c9]/20 px-4 py-2 text-sm text-[#c9c9c9] hover:border-red-300/40 hover:text-red-300 hover:bg-white/5 transition-colors"
 						>
-							<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 3h7m0 0v7m0-7L10 14" />
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5v14h14" />
-							</svg>
+							<AppIcon name="external-link" class-name="h-4 w-4" />
 							打开最新页面
 						</a>
 

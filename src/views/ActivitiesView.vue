@@ -3,7 +3,7 @@ import { ref, onMounted, computed, watch, onUnmounted } from 'vue';
 import { RouterLink } from 'vue-router';
 import { pb, formatDateToDisplay } from '@/lib/pocketbase';
 import SubPageNav from '@/components/SubPageNav.vue';
-import MetaIcon from '@/components/MetaIcon.vue';
+import AppIcon from '@/components/AppIcon.vue';
 
 interface Theme {
 	bgColor: string;
@@ -262,12 +262,12 @@ watch(currentTheme, (newTheme) => {
 								<h2 class="text-2xl group-hover:text-red-300 transition-colors">{{ activity.title }}</h2>
 								<div class="flex items-center gap-3 mt-2 tracking-widest text-sm opacity-60">
 									<template v-for="(part, index) in getActivityMetaParts(activity)" :key="index">
-										<div class="flex items-center gap-1">
-											<MetaIcon :name="part.type" />
-											<span>{{ part.value }}</span>
-										</div>
-										<span v-if="index < getActivityMetaParts(activity).length - 1">·</span>
-									</template>
+									<div class="flex items-center gap-1">
+										<AppIcon :name="part.type" />
+										<span>{{ part.value }}</span>
+									</div>
+									<span v-if="index < getActivityMetaParts(activity).length - 1">·</span>
+								</template>
 								</div>
 							</div>
 							<span class="accent-text opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">详情 →</span>

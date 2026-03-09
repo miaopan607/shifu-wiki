@@ -4,7 +4,7 @@ import { RouterLink } from 'vue-router';
 import { pb } from '@/lib/pocketbase';
 import SubPageNav from '@/components/SubPageNav.vue';
 import Lightbox from '@/components/Lightbox.vue';
-import MetaIcon from '@/components/MetaIcon.vue';
+import AppIcon from '@/components/AppIcon.vue';
 import type { Gallery, GalleryImage } from '@/types';
 
 interface GalleryWithPreview extends Gallery {
@@ -167,9 +167,9 @@ const openLightbox = (images: GalleryImage[], startIndex: number, galleryTitle: 
 							<div>
 								<h2 class="text-2xl text-[#c9c9c9] group-hover:text-red-300 transition-colors">{{ gallery.title }}</h2>
 								<div v-if="gallery.date" class="flex items-center gap-1 text-[#888] mt-2 tracking-widest text-sm">
-									<MetaIcon name="date" />
-									<span>{{ formatDate(gallery.date) }}</span>
-								</div>
+								<AppIcon name="date" />
+								<span>{{ formatDate(gallery.date) }}</span>
+							</div>
 							</div>
 							<span class="text-red-300 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">查看图集 →</span>
 						</div>

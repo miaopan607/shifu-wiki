@@ -4,7 +4,7 @@ import { RouterLink } from 'vue-router';
 import { pb, formatDateToDisplay } from '@/lib/pocketbase';
 import SubPageNav from '@/components/SubPageNav.vue';
 import SongsNav from '@/components/SongsNav.vue';
-import MetaIcon from '@/components/MetaIcon.vue';
+import AppIcon from '@/components/AppIcon.vue';
 
 const allSongs = ref<any[]>([]);
 const loading = ref(true);
@@ -78,7 +78,7 @@ const getSongMetaParts = (song: any): MetaPart[] => {
 						<div class="flex items-center gap-3 mt-2 tracking-widest text-sm text-[#888]">
 							<template v-for="(part, index) in getSongMetaParts(song)" :key="index">
 								<div class="flex items-center gap-1">
-									<MetaIcon :name="part.type" />
+									<AppIcon :name="part.type" />
 									<span>{{ part.value }}</span>
 								</div>
 								<span v-if="index < getSongMetaParts(song).length - 1">·</span>

@@ -3,7 +3,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter, RouterLink } from 'vue-router';
 import { pb, decodeSongLinkNames, formatDateToDisplay } from '@/lib/pocketbase';
 import { marked } from 'marked';
-import MetaIcon from '@/components/MetaIcon.vue';
+import AppIcon from '@/components/AppIcon.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -101,19 +101,19 @@ const renderMarkdown = (content: string | undefined) => {
 						<!-- 元数据 -->
 					<div class="flex flex-wrap items-center gap-y-2 text-[#888] text-sm tracking-widest mt-4">
 						<template v-for="(item, index) in metaItems" :key="index">
-							<div class="flex items-center">
-								<div class="flex items-center gap-1.5">
-									<MetaIcon :name="item.icon as any" />
-									<span v-if="item.label">{{ item.label }}：{{ item.value }}</span>
-									<span v-else>{{ item.value }}</span>
-								</div>
-								<span v-if="index < metaItems.length - 1 || song.credits" class="mx-4 h-3 w-px bg-[#c9c9c9]/30"></span>
+						<div class="flex items-center">
+							<div class="flex items-center gap-1.5">
+								<AppIcon :name="item.icon as any" />
+								<span v-if="item.label">{{ item.label }}：{{ item.value }}</span>
+								<span v-else>{{ item.value }}</span>
 							</div>
-						</template>
-						<button v-if="song.credits" @click="openModal" class="w-fit transition-all duration-300 border-b border-transparent hover:border-red-300 hover:text-red-300 text-left cursor-pointer flex items-center gap-1.5">
-							<MetaIcon name="users" />
-							制作人员
-						</button>
+							<span v-if="index < metaItems.length - 1 || song.credits" class="mx-4 h-3 w-px bg-[#c9c9c9]/30"></span>
+						</div>
+					</template>
+					<button v-if="song.credits" @click="openModal" class="w-fit transition-all duration-300 border-b border-transparent hover:border-red-300 hover:text-red-300 text-left cursor-pointer flex items-center gap-1.5">
+						<AppIcon name="users" />
+						制作人员
+					</button>
 					</div>
 					</header>
 					<!-- 装饰线 -->
@@ -177,9 +177,7 @@ const renderMarkdown = (content: string | undefined) => {
 			<div class="absolute inset-0 bg-black/80 backdrop-blur-sm" @click="closeModal"></div>
 			<div class="relative bg-[rgb(60,0,0)] p-8 md:p-12 max-w-lg w-full max-h-[80vh] overflow-y-auto rounded-lg shadow-2xl border border-red-300/20 scrollbar-hide">
 				<button @click="closeModal" class="absolute top-4 right-4 text-[#c9c9c9] hover:text-red-300 transition-colors cursor-pointer">
-					<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-					</svg>
+					<AppIcon name="close" class-name="h-6 w-6" />
 				</button>
 				<div>
 					<h3 class="text-2xl text-[#c9c9c9] mb-10 tracking-widest border-b border-[#c9c9c9]/10 pb-4 inline-block">制作人员</h3>

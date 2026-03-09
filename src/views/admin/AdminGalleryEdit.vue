@@ -9,6 +9,7 @@ import VersionConflictDialog from '@/components/VersionConflictDialog.vue';
 import AdminInput from '@/components/AdminInput.vue';
 import type { GalleryFormData, GalleryImageWithFile } from '@/types/admin';
 import type { BatchUploadTask } from '@/types/upload';
+import AppIcon from '@/components/AppIcon.vue';
 
 type GalleryPreviewSlot = { type: 'image'; image: GalleryImageWithFile; originalIndex: number } | { type: 'placeholder'; key: string };
 
@@ -920,11 +921,8 @@ const handleDateInput = (e: Event) => {
 					:disabled="!canSave"
 					class="px-6 py-2 bg-red-300 text-[rgb(77,0,0)] font-semibold rounded-lg hover:bg-[#fca5a5] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
 				>
-					<svg v-if="saving" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-						<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-						<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-					</svg>
-					{{ saving ? '保存中...' : '保存' }}
+					<AppIcon v-if="saving" name="refresh" class-name="w-4 h-4 animate-spin" />
+				{{ saving ? '保存中...' : '保存' }}
 				</button>
 			</div>
 		</div>
@@ -939,14 +937,7 @@ const handleDateInput = (e: Event) => {
 
 		<div v-if="lockWarning" class="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg space-y-3">
 			<p class="text-yellow-400 flex items-center gap-2">
-				<svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-					/>
-				</svg>
+				<AppIcon name="warning" class-name="w-5 h-5 shrink-0" />
 				<span>{{ lockWarning }}</span>
 			</p>
 
@@ -1013,19 +1004,10 @@ const handleDateInput = (e: Event) => {
 									class="p-1.5 text-[#888] hover:text-red-300 transition-colors"
 									title="清空"
 								>
-									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-									</svg>
+									<AppIcon name="close" class-name="w-4 h-4" />
 								</button>
 								<button @click="openDatePicker" class="p-1.5 text-[#888] hover:text-red-300 transition-colors" title="选择日期">
-									<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											stroke-width="2"
-											d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-										/>
-									</svg>
+									<AppIcon name="calendar" class-name="w-5 h-5" />
 								</button>
 								<input
 									ref="datePicker"
@@ -1099,9 +1081,7 @@ const handleDateInput = (e: Event) => {
 						@click="triggerFileInput"
 						class="flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-[#c9c9c9]/20 rounded-lg text-sm text-[#c9c9c9] transition-colors group"
 					>
-						<svg class="w-4 h-4 text-[#888] group-hover:text-red-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-						</svg>
+						<AppIcon name="plus" class-name="w-4 h-4 text-[#888] group-hover:text-red-300" />
 						添加图片
 					</button>
 				</div>
@@ -1112,9 +1092,7 @@ const handleDateInput = (e: Event) => {
 					<Teleport to="body">
 						<div v-if="isDraggingOver" class="fixed inset-0 bg-black/80 z-10000 flex items-center justify-center pointer-events-none">
 							<div class="text-center">
-								<svg class="w-16 h-16 mx-auto text-red-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-								</svg>
+								<AppIcon name="photo" class-name="w-16 h-16 mx-auto text-red-300 mb-4" />
 								<p class="text-xl text-[#c9c9c9]">拖放图片到此处上传</p>
 							</div>
 						</div>
@@ -1126,9 +1104,7 @@ const handleDateInput = (e: Event) => {
 								@click="triggerFileInput"
 								class="aspect-square rounded-lg border-2 border-dashed border-[#c9c9c9]/30 hover:border-red-300/50 hover:bg-white/5 flex flex-col items-center justify-center cursor-pointer transition-all group"
 							>
-								<svg class="w-8 h-8 text-[#888] group-hover:text-red-300 mb-2 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-								</svg>
+								<AppIcon name="plus" class-name="w-8 h-8 text-[#888] group-hover:text-red-300 mb-2 transition-colors" />
 								<span class="text-sm text-[#888] group-hover:text-red-300 transition-colors">点击或拖动添加图片</span>
 							</div>
 						</div>
@@ -1169,14 +1145,7 @@ const handleDateInput = (e: Event) => {
 
 								<div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
 									<button @click.stop="removeImage(slot.originalIndex)" class="p-2 bg-red-500/80 hover:bg-red-500 rounded-full text-white transition-colors" title="删除">
-										<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-											<path
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												stroke-width="2"
-												d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-											/>
-										</svg>
+										<AppIcon name="trash" class-name="w-5 h-5" />
 									</button>
 								</div>
 
@@ -1193,9 +1162,7 @@ const handleDateInput = (e: Event) => {
 							@drop.prevent.stop="handleDrop"
 							class="aspect-square rounded-lg border-2 border-dashed border-[#c9c9c9]/30 hover:border-red-300/50 hover:bg-white/5 flex flex-col items-center justify-center cursor-pointer transition-all group"
 						>
-							<svg class="w-8 h-8 text-[#888] group-hover:text-red-300 mb-2 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-							</svg>
+							<AppIcon name="plus" class-name="w-8 h-8 text-[#888] group-hover:text-red-300 mb-2 transition-colors" />
 							<span class="text-sm text-[#888] group-hover:text-red-300 transition-colors">点击或拖动添加图片</span>
 						</div>
 					</div>
