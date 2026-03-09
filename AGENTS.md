@@ -1,5 +1,3 @@
-# AGENTS.md - AI 协作者指南
-
 ## 项目概述
 
 基于 **Vue 3 + Vite + PocketBase** 的黄诗扶 Wiki。
