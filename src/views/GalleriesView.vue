@@ -236,13 +236,15 @@
     overflow: hidden;
   }
 
-  /* 隐藏滚动条但保持滚动功能 */
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
+  /* 隐藏滚动条但保持滚动功能 - 仅在移动端 (同步 Tailwind md 断点 768px) */
+  @media (max-width: 768px) {
+    .scrollbar-hide {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .scrollbar-hide::-webkit-scrollbar {
+      display: none;
+    }
   }
 
   /* 加载动画 */
