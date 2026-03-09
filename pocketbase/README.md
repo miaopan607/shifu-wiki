@@ -37,11 +37,11 @@ your-pocketbase/
 - 新增一个 `upload_batches` 集合，用来追踪一次批量上传任务
 - 给 `upload_batches` 增加两个字段：`snapshotCoverName`、`snapshotFile`
 - 新增三个自定义接口：
-    - `POST /api/shifu/upload-batches`
-    - `POST /api/shifu/upload-batches/{batchId}/cancel`
-    - `POST /api/shifu/upload-batches/{batchId}/complete`
+  - `POST /api/shifu/upload-batches`
+  - `POST /api/shifu/upload-batches/{batchId}/cancel`
+  - `POST /api/shifu/upload-batches/{batchId}/complete`
 - 新增一个专辑封面上传接口：
-    - `PATCH /api/shifu/upload-batches/{batchId}/album-cover`
+  - `PATCH /api/shifu/upload-batches/{batchId}/album-cover`
 - 给 `gallery_images` 的创建请求加了校验和兜底清理
 - 给 `album_cover` 接上了同样的批次取消与回滚逻辑
 

@@ -11,8 +11,8 @@
 ## 常用命令
 
 ```bash
-# 类型检查
 pnpm type-check
+pnpm format
 ```
 
 ## 项目结构

@@ -1,257 +1,268 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
-import { useRouter } from 'vue-router';
-import { pb } from '@/lib/pocketbase';
-import AppIcon from '@/components/AppIcon.vue';
-import type { Song } from '@/types';
+  import { ref, onMounted, computed } from 'vue';
+  import { useRouter } from 'vue-router';
+  import { pb } from '@/lib/pocketbase';
+  import AppIcon from '@/components/AppIcon.vue';
+  import type { Song } from '@/types';
 
-const router = useRouter();
+  const router = useRouter();
 
-const songs = ref<Song[]>([]);
-const loading = ref(true);
-const refreshing = ref(false);
-const searchQuery = ref('');
-const deleteConfirm = ref<string | null>(null);
-const deleting = ref(false);
+  const songs = ref<Song[]>([]);
+  const loading = ref(true);
+  const refreshing = ref(false);
+  const searchQuery = ref('');
+  const deleteConfirm = ref<string | null>(null);
+  const deleting = ref(false);
 
-const filteredSongs = computed(() => {
+  const filteredSongs = computed(() => {
     if (!searchQuery.value.trim()) return songs.value;
     const query = searchQuery.value.toLowerCase();
-    return songs.value.filter(s => 
-        s.title.toLowerCase().includes(query) ||
-        (s.album?.toLowerCase().includes(query))
-    );
-});
+    return songs.value.filter(s => s.title.toLowerCase().includes(query) || s.album?.toLowerCase().includes(query));
+  });
 
-const stats = computed(() => ({
+  const stats = computed(() => ({
     total: songs.value.length,
-}));
+  }));
 
-onMounted(async () => {
+  onMounted(async () => {
     await fetchSongs();
-});
+  });
 
-const fetchSongs = async (isManualRefresh = false) => {
+  const fetchSongs = async (isManualRefresh = false) => {
     if (isManualRefresh) {
-        refreshing.value = true;
+      refreshing.value = true;
     } else {
-        loading.value = true;
+      loading.value = true;
     }
     try {
-        const result = await pb.collection('songs').getFullList({
-            sort: '-releaseDate',
-            fields: 'id,title,index,album,releaseDate,artist',
-        });
-        songs.value = result as unknown as Song[];
+      const result = await pb.collection('songs').getFullList({
+        sort: '-releaseDate',
+        fields: 'id,title,index,album,releaseDate,artist',
+      });
+      songs.value = result as unknown as Song[];
     } catch (error) {
-        console.error('Failed to fetch songs:', error);
+      console.error('Failed to fetch songs:', error);
     } finally {
-        loading.value = false;
-        refreshing.value = false;
+      loading.value = false;
+      refreshing.value = false;
     }
-};
+  };
 
-import { formatDateToDisplay } from '@/lib/pocketbase';
+  import { formatDateToDisplay } from '@/lib/pocketbase';
 
-const formatDate = (dateStr: string) => {
+  const formatDate = (dateStr: string) => {
     return formatDateToDisplay(dateStr);
-};
+  };
 
-const confirmDelete = (id: string) => {
+  const confirmDelete = (id: string) => {
     deleteConfirm.value = id;
-};
+  };
 
-const cancelDelete = () => {
+  const cancelDelete = () => {
     deleteConfirm.value = null;
-};
+  };
 
-const deleteSong = async (song: Song) => {
+  const deleteSong = async (song: Song) => {
     deleting.value = true;
     try {
-        await pb.collection('songs').delete(song.id);
-        songs.value = songs.value.filter(s => s.id !== song.id);
-        deleteConfirm.value = null;
+      await pb.collection('songs').delete(song.id);
+      songs.value = songs.value.filter(s => s.id !== song.id);
+      deleteConfirm.value = null;
     } catch (error) {
-        console.error('Failed to delete song:', error);
-        alert('删除失败，请重试');
+      console.error('Failed to delete song:', error);
+      alert('删除失败，请重试');
     } finally {
-        deleting.value = false;
+      deleting.value = false;
     }
-};
+  };
 
-const createNew = () => {
+  const createNew = () => {
     router.push('/admin/songs/new');
-};
+  };
 
-const editSong = (id: string) => {
+  const editSong = (id: string) => {
     router.push(`/admin/songs/${id}`);
-};
+  };
 </script>
 
 <template>
-    <div class="relative min-h-100">
-        <div v-if="loading" class="absolute inset-0 z-20 flex items-center justify-center bg-[rgb(77,0,0)]/90 backdrop-blur-sm">
-            <div class="w-8 h-8 border-2 border-[#c9c9c9]/30 border-t-red-300 rounded-full animate-spin"></div>
-        </div>
-
-        <div v-if="loading" class="relative z-30 space-y-6">
-            <h1 class="text-2xl font-semibold text-[#c9c9c9]">音乐管理</h1>
-        </div>
-
-        <div v-else class="relative space-y-6">
-            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                <div>
-                    <h1 class="text-2xl font-semibold text-[#c9c9c9]">音乐管理</h1>
-                </div>
-                <div class="flex flex-wrap items-center gap-3">
-                    <button
-                        @click="createNew"
-                        class="inline-flex items-center gap-2 px-4 py-2 border border-red-300/50 text-red-300 hover:bg-white/5 font-medium rounded-lg transition-colors"
-                    >
-                        <AppIcon name="plus" class-name="w-5 h-5" />
-                        新建音乐
-                    </button>
-                    <button
-                        @click="fetchSongs(true)"
-                        :disabled="refreshing"
-                        class="inline-flex items-center gap-2 px-4 py-2 border border-red-300/50 text-red-300 hover:bg-white/5 font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        <AppIcon name="refresh" :class-name="refreshing ? 'w-5 h-5 animate-spin' : 'w-5 h-5'" />
-                        {{ refreshing ? '刷新中...' : '刷新列表' }}
-                    </button>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 gap-4">
-                <div class="bg-[rgb(60,0,0)] rounded-xl border border-[#c9c9c9]/20 p-4">
-                    <p class="text-[#888] text-sm">总计</p>
-                    <p class="text-2xl font-semibold text-[#c9c9c9] mt-1">{{ stats.total }}</p>
-                </div>
-            </div>
-
-            <div class="relative">
-                <AppIcon name="search" class-name="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#888]" />
-                <input
-                    v-model="searchQuery"
-                    type="text"
-                    placeholder="搜索音乐标题或专辑"
-                    class="w-full pl-10 pr-4 py-2.5 bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] placeholder-[#888] focus:outline-none focus:border-red-300/50 transition-all"
-                />
-            </div>
-
-            <div v-if="filteredSongs.length === 0" class="text-center py-20">
-                <p class="text-[#888]">{{ searchQuery ? '没有找到匹配的音乐' : '暂无音乐，点击上方按钮创建' }}</p>
-            </div>
-
-            <div v-else class="bg-[rgb(60,0,0)] rounded-xl border border-[#c9c9c9]/20 overflow-hidden">
-                <table class="w-full text-left">
-                    <thead class="bg-white/5">
-                        <tr>
-                            <th class="px-4 py-3 text-sm font-medium text-[#888]">
-                                <div class="flex items-center gap-1.5">
-                                    <AppIcon name="music" class-name="w-4 h-4 opacity-60" />
-                                    标题
-                                </div>
-                            </th>
-                            <th class="px-4 py-3 text-sm font-medium text-[#888]">
-                                <div class="flex items-center gap-1.5">
-                                    <AppIcon name="album" class-name="w-4 h-4 opacity-60" />
-                                    专辑
-                                </div>
-                            </th>
-                            <th class="px-4 py-3 text-sm font-medium text-[#888]">
-                                <div class="flex items-center gap-1.5">
-                                    <AppIcon name="date" class-name="w-4 h-4 opacity-60" />
-                                    发布日期
-                                </div>
-                            </th>
-                            <th class="px-4 py-3 text-right text-sm font-medium text-[#888]">操作</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-[#c9c9c9]/10">
-                        <tr v-for="song in filteredSongs" :key="song.id" class="hover:bg-white/5 transition-colors">
-                            <td class="px-4 py-3">
-                                <p class="font-medium text-[#c9c9c9]">{{ song.title }}</p>
-                                <p class="text-xs text-[#888]">{{ song.artist }}</p>
-                            </td>
-                            <td class="px-4 py-3">
-                                <p class="text-sm text-[#888]">{{ song.album }}</p>
-                            </td>
-                            <td class="px-4 py-3 text-sm text-[#888]">
-                                {{ formatDate(song.releaseDate) }}
-                            </td>
-                            <td class="px-4 py-3 text-right relative">
-                                <div class="flex items-center justify-end gap-2">
-                                    <button
-                                        @click="editSong(song.id)"
-                                        class="p-1.5 text-[#888] hover:text-red-300 hover:bg-white/10 rounded-lg transition-colors"
-                                        title="编辑"
-                                    >
-                                        <AppIcon name="edit" class-name="w-5 h-5" />
-                                    </button>
-                                    <button
-                                        @click="confirmDelete(song.id)"
-                                        class="p-1.5 text-[#888] hover:text-red-500 hover:bg-white/10 rounded-lg transition-colors"
-                                        title="删除"
-                                    >
-                                        <AppIcon name="trash" class-name="w-5 h-5" />
-                                    </button>
-                                </div>
-                                <div v-if="deleteConfirm === song.id" class="absolute inset-0 bg-[rgb(60,0,0)] flex items-center justify-end px-4 gap-3 z-10">
-                                    <p class="text-sm text-[#e0e0e0]">确定要删除吗？</p>
-                                    <button
-                                        @click="cancelDelete"
-                                        class="px-3 py-1 text-[#c9c9c9] text-xs hover:bg-white/5 rounded transition-colors"
-                                    >
-                                        取消
-                                    </button>
-                                    <button
-                                        @click="deleteSong(song)"
-                                        class="px-3 py-1 bg-red-400 text-white text-xs font-semibold rounded hover:bg-red-500 transition-colors"
-                                        :disabled="deleting"
-                                    >
-                                        {{ deleting ? '删除中...' : '确认' }}
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- 删除确认模态框 -->
-            <div v-if="deleteConfirm" class="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-                <div class="bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-xl max-w-sm w-full p-6 shadow-2xl">
-                    <h3 class="text-xl font-semibold text-[#c9c9c9] mb-2">确认删除</h3>
-                    <p class="text-[#888] mb-6">确定要删除这个音乐吗？此操作不可撤销。</p>
-                    <div class="flex justify-end gap-3">
-                        <button
-                            @click="cancelDelete"
-                            class="px-4 py-2 text-[#c9c9c9] hover:bg-white/5 rounded-lg transition-colors"
-                            :disabled="deleting"
-                        >
-                            取消
-                        </button>
-                        <button
-                            @click="deleteSong(songs.find(s => s.id === deleteConfirm)!)"
-                            class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors flex items-center gap-2"
-                            :disabled="deleting"
-                        >
-                            <span v-if="deleting" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                            确认删除
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
+  <div class="relative min-h-100">
+    <div
+      v-if="loading"
+      class="absolute inset-0 z-20 flex items-center justify-center bg-[rgb(77,0,0)]/90 backdrop-blur-sm"
+    >
+      <div class="w-8 h-8 border-2 border-[#c9c9c9]/30 border-t-red-300 rounded-full animate-spin"></div>
     </div>
+
+    <div v-if="loading" class="relative z-30 space-y-6">
+      <h1 class="text-2xl font-semibold text-[#c9c9c9]">音乐管理</h1>
+    </div>
+
+    <div v-else class="relative space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div>
+          <h1 class="text-2xl font-semibold text-[#c9c9c9]">音乐管理</h1>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+          <button
+            class="inline-flex items-center gap-2 px-4 py-2 border border-red-300/50 text-red-300 hover:bg-white/5 font-medium rounded-lg transition-colors"
+            @click="createNew"
+          >
+            <AppIcon name="plus" class-name="w-5 h-5" />
+            新建音乐
+          </button>
+          <button
+            :disabled="refreshing"
+            class="inline-flex items-center gap-2 px-4 py-2 border border-red-300/50 text-red-300 hover:bg-white/5 font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            @click="fetchSongs(true)"
+          >
+            <AppIcon name="refresh" :class-name="refreshing ? 'w-5 h-5 animate-spin' : 'w-5 h-5'" />
+            {{ refreshing ? '刷新中...' : '刷新列表' }}
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 gap-4">
+        <div class="bg-[rgb(60,0,0)] rounded-xl border border-[#c9c9c9]/20 p-4">
+          <p class="text-[#888] text-sm">总计</p>
+          <p class="text-2xl font-semibold text-[#c9c9c9] mt-1">{{ stats.total }}</p>
+        </div>
+      </div>
+
+      <div class="relative">
+        <AppIcon name="search" class-name="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#888]" />
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="搜索音乐标题或专辑"
+          class="w-full pl-10 pr-4 py-2.5 bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] placeholder-[#888] focus:outline-none focus:border-red-300/50 transition-all"
+        />
+      </div>
+
+      <div v-if="filteredSongs.length === 0" class="text-center py-20">
+        <p class="text-[#888]">{{ searchQuery ? '没有找到匹配的音乐' : '暂无音乐，点击上方按钮创建' }}</p>
+      </div>
+
+      <div v-else class="bg-[rgb(60,0,0)] rounded-xl border border-[#c9c9c9]/20 overflow-hidden">
+        <table class="w-full text-left">
+          <thead class="bg-white/5">
+            <tr>
+              <th class="px-4 py-3 text-sm font-medium text-[#888]">
+                <div class="flex items-center gap-1.5">
+                  <AppIcon name="music" class-name="w-4 h-4 opacity-60" />
+                  标题
+                </div>
+              </th>
+              <th class="px-4 py-3 text-sm font-medium text-[#888]">
+                <div class="flex items-center gap-1.5">
+                  <AppIcon name="album" class-name="w-4 h-4 opacity-60" />
+                  专辑
+                </div>
+              </th>
+              <th class="px-4 py-3 text-sm font-medium text-[#888]">
+                <div class="flex items-center gap-1.5">
+                  <AppIcon name="date" class-name="w-4 h-4 opacity-60" />
+                  发布日期
+                </div>
+              </th>
+              <th class="px-4 py-3 text-right text-sm font-medium text-[#888]">操作</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#c9c9c9]/10">
+            <tr v-for="song in filteredSongs" :key="song.id" class="hover:bg-white/5 transition-colors">
+              <td class="px-4 py-3">
+                <p class="font-medium text-[#c9c9c9]">{{ song.title }}</p>
+                <p class="text-xs text-[#888]">{{ song.artist }}</p>
+              </td>
+              <td class="px-4 py-3">
+                <p class="text-sm text-[#888]">{{ song.album }}</p>
+              </td>
+              <td class="px-4 py-3 text-sm text-[#888]">
+                {{ formatDate(song.releaseDate) }}
+              </td>
+              <td class="px-4 py-3 text-right relative">
+                <div class="flex items-center justify-end gap-2">
+                  <button
+                    class="p-1.5 text-[#888] hover:text-red-300 hover:bg-white/10 rounded-lg transition-colors"
+                    title="编辑"
+                    @click="editSong(song.id)"
+                  >
+                    <AppIcon name="edit" class-name="w-5 h-5" />
+                  </button>
+                  <button
+                    class="p-1.5 text-[#888] hover:text-red-500 hover:bg-white/10 rounded-lg transition-colors"
+                    title="删除"
+                    @click="confirmDelete(song.id)"
+                  >
+                    <AppIcon name="trash" class-name="w-5 h-5" />
+                  </button>
+                </div>
+                <div
+                  v-if="deleteConfirm === song.id"
+                  class="absolute inset-0 bg-[rgb(60,0,0)] flex items-center justify-end px-4 gap-3 z-10"
+                >
+                  <p class="text-sm text-[#e0e0e0]">确定要删除吗？</p>
+                  <button
+                    class="px-3 py-1 text-[#c9c9c9] text-xs hover:bg-white/5 rounded transition-colors"
+                    @click="cancelDelete"
+                  >
+                    取消
+                  </button>
+                  <button
+                    class="px-3 py-1 bg-red-400 text-white text-xs font-semibold rounded hover:bg-red-500 transition-colors"
+                    :disabled="deleting"
+                    @click="deleteSong(song)"
+                  >
+                    {{ deleting ? '删除中...' : '确认' }}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 删除确认模态框 -->
+      <div
+        v-if="deleteConfirm"
+        class="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      >
+        <div class="bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-xl max-w-sm w-full p-6 shadow-2xl">
+          <h3 class="text-xl font-semibold text-[#c9c9c9] mb-2">确认删除</h3>
+          <p class="text-[#888] mb-6">确定要删除这个音乐吗？此操作不可撤销。</p>
+          <div class="flex justify-end gap-3">
+            <button
+              class="px-4 py-2 text-[#c9c9c9] hover:bg-white/5 rounded-lg transition-colors"
+              :disabled="deleting"
+              @click="cancelDelete"
+            >
+              取消
+            </button>
+            <button
+              class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors flex items-center gap-2"
+              :disabled="deleting"
+              @click="deleteSong(songs.find(s => s.id === deleteConfirm)!)"
+            >
+              <span
+                v-if="deleting"
+                class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"
+              ></span>
+              确认删除
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <style scoped>
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-.animate-spin {
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  .animate-spin {
     animation: spin 1s linear infinite;
-}
+  }
 </style>

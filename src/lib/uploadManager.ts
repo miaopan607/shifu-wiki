@@ -103,7 +103,12 @@ export function isTaskActive(task: BatchUploadTask): boolean {
 
 // 检查任务是否已完成
 export function isTaskCompleted(task: BatchUploadTask): boolean {
-  return task.status === 'success' || task.status === 'error' || task.status === 'partial_success' || task.status === 'cancelled';
+  return (
+    task.status === 'success' ||
+    task.status === 'error' ||
+    task.status === 'partial_success' ||
+    task.status === 'cancelled'
+  );
 }
 
 // 使用 XHR 上传文件（支持进度回调和取消）
@@ -117,14 +122,13 @@ export function uploadFileWithXHR(
   const xhr = new XMLHttpRequest();
 
   const promise = new Promise((resolve, reject) => {
-    
-    xhr.upload.addEventListener('progress', (event) => {
+    xhr.upload.addEventListener('progress', event => {
       if (event.lengthComputable) {
         const progress = Math.round((event.loaded / event.total) * 100);
         onProgress(progress);
       }
     });
-    
+
     xhr.addEventListener('load', () => {
       if (xhr.status >= 200 && xhr.status < 300) {
         try {
@@ -137,15 +141,15 @@ export function uploadFileWithXHR(
         reject(new Error(`HTTP ${xhr.status}: ${xhr.statusText}`));
       }
     });
-    
+
     xhr.addEventListener('error', () => {
       reject(new Error('网络错误'));
     });
-    
+
     xhr.addEventListener('abort', () => {
       reject(new Error('上传已取消'));
     });
-    
+
     xhr.open(method, url);
     if (authToken) {
       xhr.setRequestHeader('Authorization', authToken);
@@ -162,13 +166,13 @@ export function uploadFileWithXHR(
 // 获取状态文本
 export function getStatusText(status: FileUploadStatus | string): string {
   const statusMap: Record<string, string> = {
-    'pending': '待保存',
-    'uploading': '上传中',
-    'paused': '已暂停',
-    'success': '完成',
-    'error': '失败',
-    'cancelled': '已取消',
-    'partial_success': '部分成功',
+    pending: '待保存',
+    uploading: '上传中',
+    paused: '已暂停',
+    success: '完成',
+    error: '失败',
+    cancelled: '已取消',
+    partial_success: '部分成功',
   };
   return statusMap[status] || status;
 }
@@ -176,13 +180,13 @@ export function getStatusText(status: FileUploadStatus | string): string {
 // 获取状态颜色
 export function getStatusColor(status: FileUploadStatus | string): string {
   const colorMap: Record<string, string> = {
-    'pending': 'text-yellow-400',
-    'uploading': 'text-blue-400',
-    'paused': 'text-orange-400',
-    'success': 'text-green-400',
-    'error': 'text-red-400',
-    'cancelled': 'text-gray-400',
-    'partial_success': 'text-yellow-400',
+    pending: 'text-yellow-400',
+    uploading: 'text-blue-400',
+    paused: 'text-orange-400',
+    success: 'text-green-400',
+    error: 'text-red-400',
+    cancelled: 'text-gray-400',
+    partial_success: 'text-yellow-400',
   };
   return colorMap[status] || 'text-gray-400';
 }

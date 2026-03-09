@@ -45,6 +45,13 @@ pnpm install
 pnpm dev
 ```
 
+### 代码规范
+
+```bash
+# 格式化代码
+pnpm format
+```
+
 ### 生产构建
 
 ```bash

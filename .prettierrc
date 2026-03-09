@@ -1,6 +1,14 @@
 {
-	"printWidth": 200,
-	"singleQuote": true,
-	"tabWidth": 4,
-	"useTabs": true
+  "printWidth": 120,
+  "singleQuote": true,
+  "tabWidth": 2,
+  "useTabs": false,
+  "semi": true,
+  "trailingComma": "es5",
+  "bracketSpacing": true,
+  "arrowParens": "avoid",
+  "endOfLine": "lf",
+  "vueIndentScriptAndStyle": true,
+  "htmlWhitespaceSensitivity": "strict",
+  "proseWrap": "preserve"
 }

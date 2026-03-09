@@ -1,266 +1,279 @@
 <script setup lang="ts">
-import { computed, ref, onMounted, onUnmounted } from 'vue';
-import { uploadStore } from '@/stores/uploadStore';
-import { formatFileSize, getStatusText, getStatusColor } from '@/lib/uploadManager';
-import type { BatchTaskStatus, BatchUploadTask, FileUploadInfo } from '@/types/upload';
-import AppIcon from '@/components/AppIcon.vue';
+  import { computed, ref, onMounted, onUnmounted } from 'vue';
+  import { uploadStore } from '@/stores/uploadStore';
+  import { formatFileSize, getStatusText, getStatusColor } from '@/lib/uploadManager';
+  import type { BatchTaskStatus, BatchUploadTask, FileUploadInfo } from '@/types/upload';
+  import AppIcon from '@/components/AppIcon.vue';
 
-type TaskFilter = 'all' | Exclude<BatchTaskStatus, 'pending'>;
+  type TaskFilter = 'all' | Exclude<BatchTaskStatus, 'pending'>;
 
-const tasks = uploadStore.tasks;
-const panelState = uploadStore.panelState;
+  const tasks = uploadStore.tasks;
+  const panelState = uploadStore.panelState;
 
-const isMobile = ref(false);
-const isDragging = ref(false);
-const dragStartY = ref(0);
-const currentTranslateY = ref(0);
-const taskFilter = ref<TaskFilter>('all');
+  const isMobile = ref(false);
+  const isDragging = ref(false);
+  const dragStartY = ref(0);
+  const currentTranslateY = ref(0);
+  const taskFilter = ref<TaskFilter>('all');
 
-const listedTasks = computed(() =>
-  [...tasks.value]
-    .filter(task => task.status !== 'pending')
-    .sort((a, b) => b.createdAt - a.createdAt)
-);
+  const listedTasks = computed(() =>
+    [...tasks.value].filter(task => task.status !== 'pending').sort((a, b) => b.createdAt - a.createdAt)
+  );
 
-const taskCounts = computed(() => ({
-  all: listedTasks.value.length,
-  uploading: listedTasks.value.filter(task => task.status === 'uploading').length,
-  paused: listedTasks.value.filter(task => task.status === 'paused').length,
-  success: listedTasks.value.filter(task => task.status === 'success').length,
-  partial_success: listedTasks.value.filter(task => task.status === 'partial_success').length,
-  error: listedTasks.value.filter(task => task.status === 'error').length,
-  cancelled: listedTasks.value.filter(task => task.status === 'cancelled').length,
-}));
+  const taskCounts = computed(() => ({
+    all: listedTasks.value.length,
+    uploading: listedTasks.value.filter(task => task.status === 'uploading').length,
+    paused: listedTasks.value.filter(task => task.status === 'paused').length,
+    success: listedTasks.value.filter(task => task.status === 'success').length,
+    partial_success: listedTasks.value.filter(task => task.status === 'partial_success').length,
+    error: listedTasks.value.filter(task => task.status === 'error').length,
+    cancelled: listedTasks.value.filter(task => task.status === 'cancelled').length,
+  }));
 
-const filterOptions = computed(() => [
-  { value: 'all' as const, label: '全部', count: taskCounts.value.all },
-  { value: 'uploading' as const, label: '上传中', count: taskCounts.value.uploading },
-  { value: 'paused' as const, label: '已暂停', count: taskCounts.value.paused },
-  { value: 'success' as const, label: '已完成', count: taskCounts.value.success },
-  { value: 'partial_success' as const, label: '部分成功', count: taskCounts.value.partial_success },
-  { value: 'error' as const, label: '失败', count: taskCounts.value.error },
-  { value: 'cancelled' as const, label: '已取消', count: taskCounts.value.cancelled },
-]);
+  const filterOptions = computed(() => [
+    { value: 'all' as const, label: '全部', count: taskCounts.value.all },
+    { value: 'uploading' as const, label: '上传中', count: taskCounts.value.uploading },
+    { value: 'paused' as const, label: '已暂停', count: taskCounts.value.paused },
+    { value: 'success' as const, label: '已完成', count: taskCounts.value.success },
+    { value: 'partial_success' as const, label: '部分成功', count: taskCounts.value.partial_success },
+    { value: 'error' as const, label: '失败', count: taskCounts.value.error },
+    { value: 'cancelled' as const, label: '已取消', count: taskCounts.value.cancelled },
+  ]);
 
-const visibleTasks = computed(() => {
-  if (taskFilter.value === 'all') {
-    return listedTasks.value;
-  }
+  const visibleTasks = computed(() => {
+    if (taskFilter.value === 'all') {
+      return listedTasks.value;
+    }
 
-  return listedTasks.value.filter(task => task.status === taskFilter.value);
-});
-
-const hasTasks = computed(() => listedTasks.value.length > 0);
-const hasVisibleTasks = computed(() => visibleTasks.value.length > 0);
-const activeTaskCount = computed(() =>
-  listedTasks.value.filter(task => task.status === 'uploading' || task.status === 'paused').length
-);
-const completedTaskCount = computed(() => taskCounts.value.success);
-const partialSuccessTaskCount = computed(() => taskCounts.value.partial_success);
-const errorTaskCount = computed(() => taskCounts.value.error);
-const cancelledTaskCount = computed(() => taskCounts.value.cancelled);
-const clearableTaskCount = computed(() =>
-  listedTasks.value.filter(task => task.status === 'success' || task.status === 'error' || task.status === 'partial_success' || task.status === 'cancelled').length
-);
-
-// 检查是否是移动端
-const checkMobile = () => {
-  isMobile.value = window.innerWidth < 768;
-};
-
-onMounted(() => {
-  checkMobile();
-  window.addEventListener('resize', checkMobile);
-});
-
-onUnmounted(() => {
-  window.removeEventListener('resize', checkMobile);
-});
-
-// 任务操作
-const handlePause = (task: BatchUploadTask) => {
-  uploadStore.pauseTask(task.id);
-};
-
-const handleResume = (task: BatchUploadTask) => {
-  uploadStore.resumeTask(task.id);
-};
-
-const handleCancel = (task: BatchUploadTask) => {
-  if (confirm(`确定要取消 "${task.targetName}" 的上传吗？`)) {
-    uploadStore.cancelTask(task.id);
-  }
-};
-
-const handleRetry = (task: BatchUploadTask) => {
-  uploadStore.retryTask(task.id);
-};
-
-const handleCancelAll = () => {
-  if (confirm('确定要取消所有未完成的任务吗？')) {
-    uploadStore.cancelAllTasks();
-  }
-};
-
-const handleClearCompleted = () => {
-  uploadStore.clearCompletedTasks();
-};
-
-const handleFilterChange = (filter: TaskFilter) => {
-  taskFilter.value = filter;
-};
-
-const toggleExpand = (taskId: string) => {
-  uploadStore.toggleTaskExpanded(taskId);
-};
-
-// 移动端拖拽关闭
-const handleTouchStart = (e: TouchEvent) => {
-  if (!isMobile.value) return;
-  isDragging.value = true;
-  dragStartY.value = e.touches[0]?.clientY ?? 0;
-  currentTranslateY.value = 0;
-};
-
-const handleTouchMove = (e: TouchEvent) => {
-  if (!isDragging.value || !isMobile.value) return;
-  const touch = e.touches[0];
-  if (!touch) return;
-  const deltaY = touch.clientY - dragStartY.value;
-  if (deltaY > 0) {
-    currentTranslateY.value = deltaY;
-  }
-};
-
-const handleTouchEnd = () => {
-  if (!isDragging.value) return;
-  isDragging.value = false;
-  if (currentTranslateY.value > 100) {
-    uploadStore.hidePanel();
-  }
-  currentTranslateY.value = 0;
-};
-
-// 点击外部关闭
-const handleBackdropClick = () => {
-  uploadStore.hidePanel();
-};
-
-// 获取任务类型显示文本
-const getTaskTypeText = (task: BatchUploadTask): string => {
-  if (task.targetType === 'gallery') return '图集';
-  if (task.targetType === 'album') return '专辑';
-  return '文件';
-};
-
-// 获取进度条颜色
-const getProgressColor = (task: BatchUploadTask): string => {
-  switch (task.status) {
-    case 'success': return 'bg-green-500';
-    case 'error': return 'bg-red-500';
-    case 'partial_success': return 'bg-yellow-500';
-    case 'cancelled': return 'bg-gray-500';
-    case 'paused': return 'bg-orange-500';
-    default: return 'bg-blue-500';
-  }
-};
-
-// 获取文件状态颜色
-const getFileStatusColor = (status: string): string => {
-  switch (status) {
-    case 'success': return 'text-green-400';
-    case 'error': return 'text-red-400';
-    case 'cancelled': return 'text-gray-400';
-    case 'paused': return 'text-orange-400';
-    case 'uploading': return 'text-blue-400';
-    default: return 'text-yellow-400';
-  }
-};
-
-const getCreatedAtText = (task: BatchUploadTask): string => {
-  return new Date(task.createdAt).toLocaleString('zh-CN', {
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
+    return listedTasks.value.filter(task => task.status === taskFilter.value);
   });
-};
 
-const shouldShowFileProgressBar = (file: FileUploadInfo): boolean => {
-  return file.status === 'uploading' || file.status === 'success';
-};
+  const hasTasks = computed(() => listedTasks.value.length > 0);
+  const hasVisibleTasks = computed(() => visibleTasks.value.length > 0);
+  const activeTaskCount = computed(
+    () => listedTasks.value.filter(task => task.status === 'uploading' || task.status === 'paused').length
+  );
+  const completedTaskCount = computed(() => taskCounts.value.success);
+  const partialSuccessTaskCount = computed(() => taskCounts.value.partial_success);
+  const errorTaskCount = computed(() => taskCounts.value.error);
+  const cancelledTaskCount = computed(() => taskCounts.value.cancelled);
+  const clearableTaskCount = computed(
+    () =>
+      listedTasks.value.filter(
+        task =>
+          task.status === 'success' ||
+          task.status === 'error' ||
+          task.status === 'partial_success' ||
+          task.status === 'cancelled'
+      ).length
+  );
 
-const getFileProgressWidth = (file: FileUploadInfo): number => {
-  if (file.status === 'success') return 100;
-  if (file.status === 'uploading') return file.progress;
-  return 0;
-};
-
-const getFileProgressText = (file: FileUploadInfo): string => {
-  switch (file.status) {
-    case 'uploading':
-      return `${file.progress}%`;
-    case 'pending':
-      return '等待中';
-    case 'paused':
-      return '已暂停';
-    case 'success':
-      return '完成';
-    case 'error':
-      return '失败';
-    case 'cancelled':
-      return '已取消';
-    default:
-      return getStatusText(file.status);
-  }
-};
-
-const getFilterButtonClass = (filter: TaskFilter, active: boolean): string => {
-  const classMap: Record<TaskFilter, { active: string; inactive: string }> = {
-    all: {
-      active: 'border-[#c9c9c9]/40 bg-white/10 text-[#f3f3f3]',
-      inactive: 'border-[#c9c9c9]/10 bg-white/5 text-[#888] hover:text-[#c9c9c9]',
-    },
-    uploading: {
-      active: 'border-blue-400/40 bg-blue-400/15 text-blue-300',
-      inactive: 'border-blue-400/15 bg-blue-400/8 text-blue-200/80 hover:text-blue-200',
-    },
-    paused: {
-      active: 'border-orange-400/40 bg-orange-400/15 text-orange-300',
-      inactive: 'border-orange-400/15 bg-orange-400/8 text-orange-200/80 hover:text-orange-200',
-    },
-    success: {
-      active: 'border-green-400/40 bg-green-400/15 text-green-300',
-      inactive: 'border-green-400/15 bg-green-400/8 text-green-200/80 hover:text-green-200',
-    },
-    partial_success: {
-      active: 'border-yellow-400/40 bg-yellow-400/15 text-yellow-300',
-      inactive: 'border-yellow-400/15 bg-yellow-400/8 text-yellow-200/80 hover:text-yellow-200',
-    },
-    error: {
-      active: 'border-red-400/40 bg-red-400/15 text-red-300',
-      inactive: 'border-red-400/15 bg-red-400/8 text-red-200/80 hover:text-red-200',
-    },
-    cancelled: {
-      active: 'border-gray-300/35 bg-gray-400/15 text-gray-200',
-      inactive: 'border-gray-300/10 bg-gray-400/8 text-gray-300/80 hover:text-gray-200',
-    },
+  // 检查是否是移动端
+  const checkMobile = () => {
+    isMobile.value = window.innerWidth < 768;
   };
 
-  return active ? classMap[filter].active : classMap[filter].inactive;
-};
+  onMounted(() => {
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+  });
+
+  onUnmounted(() => {
+    window.removeEventListener('resize', checkMobile);
+  });
+
+  // 任务操作
+  const handlePause = (task: BatchUploadTask) => {
+    uploadStore.pauseTask(task.id);
+  };
+
+  const handleResume = (task: BatchUploadTask) => {
+    uploadStore.resumeTask(task.id);
+  };
+
+  const handleCancel = (task: BatchUploadTask) => {
+    if (confirm(`确定要取消 "${task.targetName}" 的上传吗？`)) {
+      uploadStore.cancelTask(task.id);
+    }
+  };
+
+  const handleRetry = (task: BatchUploadTask) => {
+    uploadStore.retryTask(task.id);
+  };
+
+  const handleCancelAll = () => {
+    if (confirm('确定要取消所有未完成的任务吗？')) {
+      uploadStore.cancelAllTasks();
+    }
+  };
+
+  const handleClearCompleted = () => {
+    uploadStore.clearCompletedTasks();
+  };
+
+  const handleFilterChange = (filter: TaskFilter) => {
+    taskFilter.value = filter;
+  };
+
+  const toggleExpand = (taskId: string) => {
+    uploadStore.toggleTaskExpanded(taskId);
+  };
+
+  // 移动端拖拽关闭
+  const handleTouchStart = (e: TouchEvent) => {
+    if (!isMobile.value) return;
+    isDragging.value = true;
+    dragStartY.value = e.touches[0]?.clientY ?? 0;
+    currentTranslateY.value = 0;
+  };
+
+  const handleTouchMove = (e: TouchEvent) => {
+    if (!isDragging.value || !isMobile.value) return;
+    const touch = e.touches[0];
+    if (!touch) return;
+    const deltaY = touch.clientY - dragStartY.value;
+    if (deltaY > 0) {
+      currentTranslateY.value = deltaY;
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!isDragging.value) return;
+    isDragging.value = false;
+    if (currentTranslateY.value > 100) {
+      uploadStore.hidePanel();
+    }
+    currentTranslateY.value = 0;
+  };
+
+  // 点击外部关闭
+  const handleBackdropClick = () => {
+    uploadStore.hidePanel();
+  };
+
+  // 获取任务类型显示文本
+  const getTaskTypeText = (task: BatchUploadTask): string => {
+    if (task.targetType === 'gallery') return '图集';
+    if (task.targetType === 'album') return '专辑';
+    return '文件';
+  };
+
+  // 获取进度条颜色
+  const getProgressColor = (task: BatchUploadTask): string => {
+    switch (task.status) {
+      case 'success':
+        return 'bg-green-500';
+      case 'error':
+        return 'bg-red-500';
+      case 'partial_success':
+        return 'bg-yellow-500';
+      case 'cancelled':
+        return 'bg-gray-500';
+      case 'paused':
+        return 'bg-orange-500';
+      default:
+        return 'bg-blue-500';
+    }
+  };
+
+  // 获取文件状态颜色
+  const getFileStatusColor = (status: string): string => {
+    switch (status) {
+      case 'success':
+        return 'text-green-400';
+      case 'error':
+        return 'text-red-400';
+      case 'cancelled':
+        return 'text-gray-400';
+      case 'paused':
+        return 'text-orange-400';
+      case 'uploading':
+        return 'text-blue-400';
+      default:
+        return 'text-yellow-400';
+    }
+  };
+
+  const getCreatedAtText = (task: BatchUploadTask): string => {
+    return new Date(task.createdAt).toLocaleString('zh-CN', {
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+  };
+
+  const shouldShowFileProgressBar = (file: FileUploadInfo): boolean => {
+    return file.status === 'uploading' || file.status === 'success';
+  };
+
+  const getFileProgressWidth = (file: FileUploadInfo): number => {
+    if (file.status === 'success') return 100;
+    if (file.status === 'uploading') return file.progress;
+    return 0;
+  };
+
+  const getFileProgressText = (file: FileUploadInfo): string => {
+    switch (file.status) {
+      case 'uploading':
+        return `${file.progress}%`;
+      case 'pending':
+        return '等待中';
+      case 'paused':
+        return '已暂停';
+      case 'success':
+        return '完成';
+      case 'error':
+        return '失败';
+      case 'cancelled':
+        return '已取消';
+      default:
+        return getStatusText(file.status);
+    }
+  };
+
+  const getFilterButtonClass = (filter: TaskFilter, active: boolean): string => {
+    const classMap: Record<TaskFilter, { active: string; inactive: string }> = {
+      all: {
+        active: 'border-[#c9c9c9]/40 bg-white/10 text-[#f3f3f3]',
+        inactive: 'border-[#c9c9c9]/10 bg-white/5 text-[#888] hover:text-[#c9c9c9]',
+      },
+      uploading: {
+        active: 'border-blue-400/40 bg-blue-400/15 text-blue-300',
+        inactive: 'border-blue-400/15 bg-blue-400/8 text-blue-200/80 hover:text-blue-200',
+      },
+      paused: {
+        active: 'border-orange-400/40 bg-orange-400/15 text-orange-300',
+        inactive: 'border-orange-400/15 bg-orange-400/8 text-orange-200/80 hover:text-orange-200',
+      },
+      success: {
+        active: 'border-green-400/40 bg-green-400/15 text-green-300',
+        inactive: 'border-green-400/15 bg-green-400/8 text-green-200/80 hover:text-green-200',
+      },
+      partial_success: {
+        active: 'border-yellow-400/40 bg-yellow-400/15 text-yellow-300',
+        inactive: 'border-yellow-400/15 bg-yellow-400/8 text-yellow-200/80 hover:text-yellow-200',
+      },
+      error: {
+        active: 'border-red-400/40 bg-red-400/15 text-red-300',
+        inactive: 'border-red-400/15 bg-red-400/8 text-red-200/80 hover:text-red-200',
+      },
+      cancelled: {
+        active: 'border-gray-300/35 bg-gray-400/15 text-gray-200',
+        inactive: 'border-gray-300/10 bg-gray-400/8 text-gray-300/80 hover:text-gray-200',
+      },
+    };
+
+    return active ? classMap[filter].active : classMap[filter].inactive;
+  };
 </script>
 
 <template>
   <!-- 遮罩层（仅移动端显示） -->
   <Teleport to="body">
     <Transition name="fade">
-      <div 
-        v-if="panelState.isVisible"
-        class="fixed inset-0 bg-black/60 z-9998"
-        @click="handleBackdropClick"
-      />
+      <div v-if="panelState.isVisible" class="fixed inset-0 bg-black/60 z-9998" @click="handleBackdropClick" />
     </Transition>
 
     <!-- 上传面板 -->
@@ -269,14 +282,14 @@ const getFilterButtonClass = (filter: TaskFilter, active: boolean): string => {
         v-if="panelState.isVisible"
         :class="[
           'fixed z-9999 bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 shadow-2xl overflow-hidden flex flex-col',
-          isMobile 
+          isMobile
             ? 'bottom-0 left-0 right-0 rounded-t-2xl h-[96vh] max-h-[96vh]'
-            : 'top-4 right-4 h-[calc(100vh-2rem)] w-[min(48rem,72vw)] rounded-2xl'
+            : 'top-4 right-4 h-[calc(100vh-2rem)] w-[min(48rem,72vw)] rounded-2xl',
         ]"
         :style="isMobile && isDragging ? { transform: `translateY(${currentTranslateY}px)` } : {}"
       >
         <!-- 头部 -->
-        <div 
+        <div
           class="flex items-center justify-between px-4 py-3 border-b border-[#c9c9c9]/20 bg-[rgb(50,0,0)]"
           :class="isMobile ? 'cursor-grab active:cursor-grabbing' : ''"
           @touchstart="handleTouchStart"
@@ -285,54 +298,58 @@ const getFilterButtonClass = (filter: TaskFilter, active: boolean): string => {
         >
           <div class="flex items-center gap-3">
             <!-- 移动端拖拽指示器 -->
-            <div v-if="isMobile" class="w-12 h-1 bg-[#c9c9c9]/30 rounded-full mx-auto absolute top-2 left-1/2 -translate-x-1/2" />
-            
+            <div
+              v-if="isMobile"
+              class="w-12 h-1 bg-[#c9c9c9]/30 rounded-full mx-auto absolute top-2 left-1/2 -translate-x-1/2"
+            />
+
             <h3 class="text-[#c9c9c9] font-semibold" :class="isMobile ? 'mt-2' : ''">
               任务列表
-              <span v-if="hasTasks" class="text-sm text-[#888] font-normal ml-2">
-                ({{ listedTasks.length }})
-              </span>
+              <span v-if="hasTasks" class="text-sm text-[#888] font-normal ml-2"> ({{ listedTasks.length }}) </span>
             </h3>
           </div>
-          
+
           <div class="flex items-center gap-2">
             <!-- 取消全部按钮 -->
             <button
               v-if="activeTaskCount > 0"
-              @click="handleCancelAll"
               class="px-2 py-1 text-xs text-red-300 hover:bg-red-300/10 rounded transition-colors"
+              @click="handleCancelAll"
             >
               取消全部
             </button>
-            
+
             <!-- 清空已完成按钮 -->
             <button
               v-if="clearableTaskCount > 0"
-              @click="handleClearCompleted"
               class="px-2 py-1 text-xs text-[#888] hover:bg-white/5 rounded transition-colors"
+              @click="handleClearCompleted"
             >
               清空
             </button>
-            
+
             <!-- 关闭按钮 -->
             <button
-              @click="uploadStore.hidePanel"
               class="p-1.5 text-[#888] hover:text-[#c9c9c9] hover:bg-white/5 rounded-lg transition-colors"
+              @click="uploadStore.hidePanel"
             >
               <AppIcon name="close" class-name="w-5 h-5" />
             </button>
           </div>
         </div>
 
-        <div v-if="hasTasks" class="flex flex-wrap items-center gap-2 px-4 py-3 border-b border-[#c9c9c9]/10 bg-black/10">
+        <div
+          v-if="hasTasks"
+          class="flex flex-wrap items-center gap-2 px-4 py-3 border-b border-[#c9c9c9]/10 bg-black/10"
+        >
           <button
             v-for="option in filterOptions"
             :key="option.value"
-            @click="handleFilterChange(option.value)"
             :class="[
               'inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs transition-colors',
-              getFilterButtonClass(option.value, taskFilter === option.value)
+              getFilterButtonClass(option.value, taskFilter === option.value),
             ]"
+            @click="handleFilterChange(option.value)"
           >
             <span>{{ option.label }}</span>
             <span class="rounded-full bg-black/20 px-1.5 py-0.5 text-[10px] text-inherit">{{ option.count }}</span>
@@ -356,10 +373,7 @@ const getFilterButtonClass = (filter: TaskFilter, active: boolean): string => {
             class="bg-[rgb(50,0,0)] rounded-lg border border-[#c9c9c9]/10 overflow-hidden"
           >
             <!-- 任务头部（可点击展开） -->
-            <div 
-              class="p-3 cursor-pointer hover:bg-white/5 transition-colors"
-              @click="toggleExpand(task.id)"
-            >
+            <div class="p-3 cursor-pointer hover:bg-white/5 transition-colors" @click="toggleExpand(task.id)">
               <div class="flex items-start justify-between mb-2">
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2">
@@ -373,22 +387,24 @@ const getFilterButtonClass = (filter: TaskFilter, active: boolean): string => {
                   <p class="text-xs text-[#888] mt-1">
                     {{ task.successCount }}/{{ task.totalCount }} 个文件
                     <span class="ml-2">创建于 {{ getCreatedAtText(task) }}</span>
-                    <span v-if="task.errorCount > 0" class="text-red-400 ml-1">
-                      ({{ task.errorCount }} 个失败)
-                    </span>
+                    <span v-if="task.errorCount > 0" class="text-red-400 ml-1"> ({{ task.errorCount }} 个失败) </span>
                   </p>
                 </div>
-                
+
                 <div class="flex items-center gap-2">
                   <!-- 状态标签 -->
                   <span :class="['text-xs font-medium', getStatusColor(task.status)]">
                     {{ getStatusText(task.status) }}
                   </span>
-                  
+
                   <!-- 展开/折叠图标 -->
-                  <AppIcon 
+                  <AppIcon
                     name="chevron-down"
-                    :class-name="uploadStore.isTaskExpanded(task.id) ? 'w-4 h-4 text-[#888] transition-transform rotate-180' : 'w-4 h-4 text-[#888] transition-transform'"
+                    :class-name="
+                      uploadStore.isTaskExpanded(task.id)
+                        ? 'w-4 h-4 text-[#888] transition-transform rotate-180'
+                        : 'w-4 h-4 text-[#888] transition-transform'
+                    "
                   />
                 </div>
               </div>
@@ -406,12 +422,9 @@ const getFilterButtonClass = (filter: TaskFilter, active: boolean): string => {
             </div>
 
             <!-- 文件详情列表（展开时显示） -->
-            <div 
-              v-if="uploadStore.isTaskExpanded(task.id)"
-              class="border-t border-[#c9c9c9]/10 bg-black/20"
-            >
-              <div 
-                v-for="file in task.files" 
+            <div v-if="uploadStore.isTaskExpanded(task.id)" class="border-t border-[#c9c9c9]/10 bg-black/20">
+              <div
+                v-for="file in task.files"
                 :key="file.id"
                 class="px-3 py-2 flex items-center gap-3 border-b border-[#c9c9c9]/5 last:border-0"
               >
@@ -419,7 +432,11 @@ const getFilterButtonClass = (filter: TaskFilter, active: boolean): string => {
                 <div class="w-5 h-5 flex items-center justify-center">
                   <AppIcon v-if="file.status === 'success'" name="check" class-name="w-4 h-4 text-green-400" />
                   <AppIcon v-else-if="file.status === 'error'" name="close" class-name="w-4 h-4 text-red-400" />
-                  <AppIcon v-else-if="file.status === 'uploading'" name="refresh" class-name="w-4 h-4 text-blue-400 animate-spin" />
+                  <AppIcon
+                    v-else-if="file.status === 'uploading'"
+                    name="refresh"
+                    class-name="w-4 h-4 text-blue-400 animate-spin"
+                  />
                   <div
                     v-else
                     class="w-2 h-2 rounded-full"
@@ -443,7 +460,10 @@ const getFilterButtonClass = (filter: TaskFilter, active: boolean): string => {
                       :style="{ width: `${getFileProgressWidth(file)}%` }"
                     />
                   </div>
-                  <p class="text-[10px] text-right mt-0.5" :class="file.status === 'uploading' ? 'text-blue-300' : 'text-[#888]'">
+                  <p
+                    class="text-[10px] text-right mt-0.5"
+                    :class="file.status === 'uploading' ? 'text-blue-300' : 'text-[#888]'"
+                  >
                     {{ getFileProgressText(file) }}
                   </p>
                 </div>
@@ -451,7 +471,9 @@ const getFilterButtonClass = (filter: TaskFilter, active: boolean): string => {
                 <!-- 错误提示 -->
                 <div v-if="file.error" class="group relative">
                   <AppIcon name="info" class-name="w-4 h-4 text-red-400 cursor-help" />
-                  <div class="absolute right-0 bottom-full mb-2 w-48 p-2 bg-[rgb(40,0,0)] border border-red-400/30 rounded text-xs text-red-300 hidden group-hover:block z-10">
+                  <div
+                    class="absolute right-0 bottom-full mb-2 w-48 p-2 bg-[rgb(40,0,0)] border border-red-400/30 rounded text-xs text-red-300 hidden group-hover:block z-10"
+                  >
                     {{ file.error }}
                   </div>
                 </div>
@@ -463,8 +485,8 @@ const getFilterButtonClass = (filter: TaskFilter, active: boolean): string => {
               <!-- 暂停/恢复按钮 -->
               <button
                 v-if="task.status === 'uploading'"
-                @click="handlePause(task)"
                 class="px-2 py-1 text-xs text-[#888] hover:text-orange-400 hover:bg-white/5 rounded transition-colors flex items-center gap-1"
+                @click="handlePause(task)"
               >
                 <AppIcon name="pause" class-name="w-3 h-3" />
                 暂停
@@ -472,28 +494,28 @@ const getFilterButtonClass = (filter: TaskFilter, active: boolean): string => {
 
               <button
                 v-if="task.status === 'paused'"
-                @click="handleResume(task)"
                 class="px-2 py-1 text-xs text-[#888] hover:text-green-400 hover:bg-white/5 rounded transition-colors flex items-center gap-1"
+                @click="handleResume(task)"
               >
                 <AppIcon name="play" class-name="w-3 h-3" />
                 恢复
               </button>
-              
+
               <!-- 重试按钮 -->
               <button
                 v-if="task.status === 'error' || task.status === 'partial_success'"
-                @click="handleRetry(task)"
                 class="px-2 py-1 text-xs text-[#888] hover:text-blue-400 hover:bg-white/5 rounded transition-colors flex items-center gap-1"
+                @click="handleRetry(task)"
               >
                 <AppIcon name="refresh" class-name="w-3 h-3" />
                 重试
               </button>
-              
+
               <!-- 取消按钮 -->
               <button
                 v-if="task.status === 'uploading' || task.status === 'paused'"
-                @click="handleCancel(task)"
                 class="px-2 py-1 text-xs text-[#888] hover:text-red-400 hover:bg-white/5 rounded transition-colors flex items-center gap-1"
+                @click="handleCancel(task)"
               >
                 <AppIcon name="close" class-name="w-3 h-3" />
                 取消
@@ -507,7 +529,9 @@ const getFilterButtonClass = (filter: TaskFilter, active: boolean): string => {
           <div class="flex items-center justify-between">
             <span>进行中: {{ activeTaskCount }}</span>
             <span class="text-green-400">成功: {{ completedTaskCount }}</span>
-            <span v-if="partialSuccessTaskCount > 0" class="text-yellow-400">部分成功: {{ partialSuccessTaskCount }}</span>
+            <span v-if="partialSuccessTaskCount > 0" class="text-yellow-400"
+              >部分成功: {{ partialSuccessTaskCount }}</span
+            >
             <span v-if="errorTaskCount > 0" class="text-red-400">失败: {{ errorTaskCount }}</span>
             <span v-if="cancelledTaskCount > 0" class="text-[#aaa]">取消: {{ cancelledTaskCount }}</span>
           </div>
@@ -518,67 +542,67 @@ const getFilterButtonClass = (filter: TaskFilter, active: boolean): string => {
 </template>
 
 <style scoped>
-/* 淡入淡出 */
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
+  /* 淡入淡出 */
+  .fade-enter-active,
+  .fade-leave-active {
+    transition: opacity 0.3s ease;
+  }
+  .fade-enter-from,
+  .fade-leave-to {
+    opacity: 0;
+  }
 
-/* 从右侧滑入（电脑端） */
-.slide-left-enter-active,
-.slide-left-leave-active {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.slide-left-enter-from {
-  opacity: 0;
-  transform: translateX(100%);
-}
-.slide-left-leave-to {
-  opacity: 0;
-  transform: translateX(100%);
-}
+  /* 从右侧滑入（电脑端） */
+  .slide-left-enter-active,
+  .slide-left-leave-active {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .slide-left-enter-from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  .slide-left-leave-to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
 
-/* 从底部滑入（手机端） */
-.slide-up-enter-active,
-.slide-up-leave-active {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.slide-up-enter-from {
-  opacity: 0;
-  transform: translateY(100%);
-}
-.slide-up-leave-to {
-  opacity: 0;
-  transform: translateY(100%);
-}
+  /* 从底部滑入（手机端） */
+  .slide-up-enter-active,
+  .slide-up-leave-active {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .slide-up-enter-from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  .slide-up-leave-to {
+    opacity: 0;
+    transform: translateY(100%);
+  }
 
-/* 缩放动画 */
-.scale-enter-active,
-.scale-leave-active {
-  transition: all 0.2s ease;
-}
-.scale-enter-from,
-.scale-leave-to {
-  opacity: 0;
-  transform: scale(0.9);
-}
+  /* 缩放动画 */
+  .scale-enter-active,
+  .scale-leave-active {
+    transition: all 0.2s ease;
+  }
+  .scale-enter-from,
+  .scale-leave-to {
+    opacity: 0;
+    transform: scale(0.9);
+  }
 
-/* 自定义滚动条 */
-.custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
-}
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(201, 201, 201, 0.1);
-  border-radius: 10px;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(201, 201, 201, 0.2);
-}
+  /* 自定义滚动条 */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(201, 201, 201, 0.1);
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(201, 201, 201, 0.2);
+  }
 </style>
