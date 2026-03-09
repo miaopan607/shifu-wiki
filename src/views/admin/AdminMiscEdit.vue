@@ -132,8 +132,9 @@ const handleDateInput = (e: Event) => {
             <div class="flex gap-3">
                 <button
                     @click="cancel"
-                    class="px-4 py-2 text-[#c9c9c9] hover:bg-white/5 rounded-lg transition-colors"
+                    class="px-4 py-2 text-[#c9c9c9] hover:bg-white/5 rounded-lg transition-colors inline-flex items-center gap-2"
                 >
+                    <AppIcon name="close" class-name="w-4 h-4" />
                     取消
                 </button>
                 <button
@@ -155,7 +156,10 @@ const handleDateInput = (e: Event) => {
             <div class="space-y-6">
                 <!-- 基本信息 -->
                 <div class="bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-xl p-6 space-y-5">
-                    <h2 class="text-lg font-semibold text-[#c9c9c9] border-b border-[#c9c9c9]/20 pb-3">基本信息</h2>
+                    <h2 class="text-lg font-semibold text-[#c9c9c9] border-b border-[#c9c9c9]/20 pb-3 flex items-center gap-2">
+                        <AppIcon name="info" class-name="w-5 h-5 text-red-300" />
+                        基本信息
+                    </h2>
                     
                     <AdminInput
                         v-model="misc.title"
@@ -251,6 +255,7 @@ const handleDateInput = (e: Event) => {
                     <AdminInput
                         v-model="misc.content"
                         label="正文"
+                        icon="file"
                         type="markdown"
                         placeholder="使用 Markdown 编写内容..."
                         required

@@ -542,7 +542,10 @@ const handleDateInput = (e: Event) => {
 				</h1>
 			</div>
 			<div class="flex gap-3">
-				<button @click="cancel" class="px-4 py-2 text-[#c9c9c9] hover:bg-white/5 rounded-lg transition-colors">取消</button>
+				<button @click="cancel" class="px-4 py-2 text-[#c9c9c9] hover:bg-white/5 rounded-lg transition-colors inline-flex items-center gap-2">
+				<AppIcon name="close" class-name="w-4 h-4" />
+				取消
+			</button>
 				<button
 					@click="saveAlbum"
 					:disabled="!canSave"
@@ -597,7 +600,10 @@ const handleDateInput = (e: Event) => {
 			<div class="lg:col-span-2 space-y-6">
 				<!-- 基本信息 -->
 				<div class="bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-xl p-6 space-y-5">
-					<h2 class="text-lg font-semibold text-[#c9c9c9] border-b border-[#c9c9c9]/20 pb-3">基本信息</h2>
+					<h2 class="text-lg font-semibold text-[#c9c9c9] border-b border-[#c9c9c9]/20 pb-3 flex items-center gap-2">
+						<AppIcon name="info" class-name="w-5 h-5 text-red-300" />
+						基本信息
+					</h2>
 
 					<AdminInput
 						v-model="album.title"
@@ -662,7 +668,10 @@ const handleDateInput = (e: Event) => {
 			<div class="space-y-6">
 				<!-- 封面图 -->
 				<div class="bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-xl p-6 space-y-4">
-					<h2 class="text-lg font-medium text-[#c9c9c9]">专辑封面</h2>
+					<h2 class="text-lg font-medium text-[#c9c9c9] flex items-center gap-2">
+						<AppIcon name="image" class-name="w-5 h-5 text-red-300" />
+						专辑封面
+					</h2>
 					<div
 						class="aspect-square rounded-lg border-2 border-dashed border-[#c9c9c9]/20 flex flex-col items-center justify-center relative overflow-hidden group cursor-pointer hover:border-red-300/50 transition-colors"
 						:class="[isCoverDragOver ? 'border-red-300 bg-red-300/10' : '', coverMarkedForDeletion ? 'border-red-500/50 bg-red-500/10' : '']"

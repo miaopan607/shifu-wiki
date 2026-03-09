@@ -5,10 +5,63 @@ import AppIcon from '@/components/AppIcon.vue';
 
 type InputType = 'text' | 'textarea' | 'markdown';
 
+type IconName =
+	| 'dashboard'
+	| 'songs'
+	| 'albums'
+	| 'activities'
+	| 'galleries'
+	| 'misc'
+	| 'locks'
+	| 'profile'
+	| 'settings'
+	| 'home'
+	| 'upload'
+	| 'logout'
+	| 'menu'
+	| 'chevron-left'
+	| 'chevron-double-left'
+	| 'lyricist'
+	| 'composer'
+	| 'album'
+	| 'date'
+	| 'location'
+	| 'music'
+	| 'users'
+	| 'tag'
+	| 'image'
+	| 'file'
+	| 'plus'
+	| 'refresh'
+	| 'search'
+	| 'edit'
+	| 'trash'
+	| 'close'
+	| 'calendar'
+	| 'warning'
+	| 'check'
+	| 'eye'
+	| 'eye-off'
+	| 'cloud-upload'
+	| 'github'
+	| 'logout-alt'
+	| 'music-note'
+	| 'photo'
+	| 'image-placeholder'
+	| 'x-circle'
+	| 'info'
+	| 'markdown'
+	| 'chevron-down'
+	| 'external-link'
+	| 'pause'
+	| 'play'
+	| 'link';
+
 const props = withDefaults(
 	defineProps<{
 		modelValue?: string;
 		label?: string;
+		icon?: IconName;
 		type?: InputType;
 		placeholder?: string;
 		required?: boolean;
@@ -73,6 +126,7 @@ const handleInput = (e: Event) => {
 	<div class="space-y-2">
 		<div v-if="label || isMultiline" class="flex items-center justify-between">
 			<div class="flex items-center gap-2">
+				<AppIcon v-if="icon" :name="icon" :class-name="labelSize === 'lg' ? 'w-5 h-5 text-red-300' : 'w-4 h-4 text-[#888]'" />
 				<label v-if="label" :class="labelSize === 'lg' ? 'text-lg font-medium text-[#c9c9c9]' : 'text-sm text-[#888]'">
 				{{ label }}
 				<span v-if="required" class="text-red-300">*</span>

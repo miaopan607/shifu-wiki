@@ -915,7 +915,10 @@ const handleDateInput = (e: Event) => {
 				</h1>
 			</div>
 			<div class="flex gap-3">
-				<button @click="cancelEdit" class="px-4 py-2 text-[#c9c9c9] hover:bg-white/5 rounded-lg transition-colors">取消</button>
+				<button @click="cancelEdit" class="px-4 py-2 text-[#c9c9c9] hover:bg-white/5 rounded-lg transition-colors inline-flex items-center gap-2">
+				<AppIcon name="close" class-name="w-4 h-4" />
+				取消
+			</button>
 				<button
 					@click="saveGallery"
 					:disabled="!canSave"
@@ -973,7 +976,10 @@ const handleDateInput = (e: Event) => {
 		<div v-else class="grid grid-cols-1 lg:grid-cols-12 gap-8">
 			<div class="lg:col-span-4 lg:order-2 space-y-6 lg:self-start">
 				<div class="bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-xl p-6 space-y-5">
-					<h2 class="text-lg font-semibold text-[#c9c9c9] border-b border-[#c9c9c9]/20 pb-3">基本信息</h2>
+					<h2 class="text-lg font-semibold text-[#c9c9c9] border-b border-[#c9c9c9]/20 pb-3 flex items-center gap-2">
+						<AppIcon name="info" class-name="w-5 h-5 text-red-300" />
+						基本信息
+					</h2>
 
 					<AdminInput
 						v-model="form.title"
@@ -1062,7 +1068,10 @@ const handleDateInput = (e: Event) => {
 				</div>
 
 				<div class="bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-xl p-6">
-					<h3 class="text-base font-semibold text-[#c9c9c9] mb-3">使用提示</h3>
+					<h3 class="text-base font-semibold text-[#c9c9c9] mb-3 flex items-center gap-2">
+						<AppIcon name="info" class-name="w-4 h-4 text-red-300" />
+						使用提示
+					</h3>
 					<ul class="text-base text-[#888] space-y-2.5 list-disc list-inside leading-7">
 						<li>可以拖拽图片调整顺序</li>
 						<li>可以从外部拖放图片到页面</li>
@@ -1074,7 +1083,10 @@ const handleDateInput = (e: Event) => {
 			<div class="relative lg:col-span-8 lg:order-1 lg:self-start bg-[rgb(60,0,0)] rounded-xl border border-[#c9c9c9]/20 flex flex-col overflow-hidden">
 				<div class="relative z-10 bg-[rgb(60,0,0)] flex items-center justify-between border-b border-[#c9c9c9]/20 p-6">
 					<div class="flex items-center gap-4">
-						<h2 class="text-lg font-semibold text-[#c9c9c9]">图片管理</h2>
+						<h2 class="text-lg font-semibold text-[#c9c9c9] flex items-center gap-2">
+							<AppIcon name="image" class-name="w-5 h-5 text-red-300" />
+							图片管理
+						</h2>
 						<span class="text-sm text-[#888]">{{ images.length }} 张图片</span>
 					</div>
 					<button

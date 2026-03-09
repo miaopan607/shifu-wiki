@@ -53,7 +53,8 @@ defineProps<{
 		| 'chevron-down'
 		| 'external-link'
 		| 'pause'
-		| 'play';
+		| 'play'
+		| 'link';
 	className?: string;
 }>();
 </script>
@@ -345,5 +346,11 @@ defineProps<{
 	<!-- 播放 -->
 	<svg v-else-if="name === 'play'" :class="className || 'w-5 h-5'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 		<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+	</svg>
+
+	<!-- 链接 -->
+	<svg v-else-if="name === 'link'" :class="className || 'w-5 h-5'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+		<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+		<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
 	</svg>
 </template>

@@ -201,7 +201,10 @@ onMounted(async () => {
                         :key="`kpi-${item.key}`"
                         class="bg-[rgb(60,0,0)] rounded-xl border border-[#c9c9c9]/20 p-4"
                     >
-                        <p class="text-[#888] text-sm">{{ item.label }}</p>
+                        <div class="flex items-center gap-2">
+                            <AppIcon :name="item.key" class-name="w-4 h-4 text-[#888]" />
+                            <p class="text-[#888] text-sm">{{ item.label }}</p>
+                        </div>
                         <p class="text-2xl font-semibold text-[#c9c9c9] mt-1">
                             {{ stats[item.key] ?? '—' }}
                         </p>
@@ -225,18 +228,23 @@ onMounted(async () => {
                         :key="`quick-${item.key}`"
                         class="bg-[rgb(60,0,0)] rounded-xl border border-[#c9c9c9]/20 p-4"
                     >
-                        <p class="text-[#c9c9c9] font-medium">{{ item.label }}管理</p>
+                        <div class="flex items-center gap-2">
+                            <AppIcon :name="item.key" class-name="w-4 h-4 text-red-300" />
+                            <p class="text-[#c9c9c9] font-medium">{{ item.label }}管理</p>
+                        </div>
                         <div class="mt-3 flex flex-wrap gap-2">
                             <RouterLink
                                 :to="item.managePath"
-                                class="inline-flex items-center px-3 py-1.5 text-sm text-[#c9c9c9] border border-[#c9c9c9]/25 hover:bg-white/5 hover:text-red-300 rounded-lg transition-colors"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-[#c9c9c9] border border-[#c9c9c9]/25 hover:bg-white/5 hover:text-red-300 rounded-lg transition-colors"
                             >
+                                <AppIcon name="edit" class-name="w-3.5 h-3.5" />
                                 管理入口
                             </RouterLink>
                             <RouterLink
                                 :to="item.newPath"
-                                class="inline-flex items-center px-3 py-1.5 text-sm text-red-300 border border-red-300/50 hover:bg-white/5 rounded-lg transition-colors"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-red-300 border border-red-300/50 hover:bg-white/5 rounded-lg transition-colors"
                             >
+                                <AppIcon name="plus" class-name="w-3.5 h-3.5" />
                                 新建{{ item.shortLabel }}
                             </RouterLink>
                         </div>

@@ -151,8 +151,9 @@ const handleDateInput = (e: Event) => {
             <div class="flex gap-3">
                 <button
                     @click="cancel"
-                    class="px-4 py-2 text-[#c9c9c9] hover:bg-white/5 rounded-lg transition-colors"
+                    class="px-4 py-2 text-[#c9c9c9] hover:bg-white/5 rounded-lg transition-colors inline-flex items-center gap-2"
                 >
+                    <AppIcon name="close" class-name="w-4 h-4" />
                     取消
                 </button>
                 <button
@@ -174,7 +175,10 @@ const handleDateInput = (e: Event) => {
             <div class="space-y-6">
                 <!-- 基本信息 -->
                 <div class="bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-xl p-6 space-y-5">
-                    <h2 class="text-lg font-semibold text-[#c9c9c9] border-b border-[#c9c9c9]/20 pb-3">基本信息</h2>
+                    <h2 class="text-lg font-semibold text-[#c9c9c9] border-b border-[#c9c9c9]/20 pb-3 flex items-center gap-2">
+                        <AppIcon name="info" class-name="w-5 h-5 text-red-300" />
+                        基本信息
+                    </h2>
                     
                     <AdminInput
                         v-model="activity.title"
@@ -230,7 +234,10 @@ const handleDateInput = (e: Event) => {
 
                 <!-- 标签 -->
                 <div class="bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-xl p-6 space-y-4">
-                    <h2 class="text-lg font-medium text-[#c9c9c9]">标签</h2>
+                    <h2 class="text-lg font-medium text-[#c9c9c9] flex items-center gap-2">
+                        <AppIcon name="tag" class-name="w-5 h-5 text-red-300" />
+                        标签
+                    </h2>
                     <div class="flex flex-wrap gap-2 mb-2">
                         <span 
                             v-for="tag in activity.tags" 
@@ -253,8 +260,9 @@ const handleDateInput = (e: Event) => {
                         />
                         <button
                             @click="addTag"
-                            class="px-4 py-2 bg-white/5 text-[#c9c9c9] rounded-lg hover:bg-white/10 transition-colors"
+                            class="px-4 py-2 bg-white/5 text-[#c9c9c9] rounded-lg hover:bg-white/10 transition-colors inline-flex items-center gap-1"
                         >
+                            <AppIcon name="plus" class-name="w-4 h-4" />
                             添加
                         </button>
                     </div>
@@ -265,6 +273,7 @@ const handleDateInput = (e: Event) => {
                     <AdminInput
                         v-model="activity.content"
                         label="详情"
+                        icon="info"
                         type="markdown"
                         placeholder="活动详情"
                         label-size="lg"
