@@ -151,6 +151,7 @@
           @click="saveMisc"
         >
           <AppIcon v-if="saving" name="refresh" class-name="w-4 h-4 animate-spin" />
+          <AppIcon v-else name="save" class-name="w-4 h-4" />
           {{ saving ? '保存中...' : '保存' }}
         </button>
       </div>

@@ -5,6 +5,7 @@
     updateSkipSingleLockDeleteConfirmPreference,
   } from '@/lib/adminPreferences';
   import { uploadStore } from '@/stores/uploadStore';
+  import AppIcon from '@/components/AppIcon.vue';
 
   const saved = ref(false);
   const error = ref('');
@@ -90,10 +91,12 @@
         </label>
 
         <button
-          class="px-5 py-3 bg-red-300 text-[rgb(77,0,0)] font-semibold rounded-lg hover:bg-[#fca5a5] transition-colors"
+          class="px-4 py-3 bg-red-300 text-[rgb(77,0,0)] font-semibold rounded-lg hover:bg-[#fca5a5] transition-colors flex items-center gap-2 w-fit"
           @click="saveSettings"
-          >保存设置</button
         >
+          <AppIcon name="save" class-name="w-4 h-4" />
+          保存设置
+        </button>
       </div>
 
       <p class="text-sm text-[#888]">当前生效值：{{ uploadStore.maxConcurrentUploads }}，允许范围：1 ~ 50。</p>
@@ -130,10 +133,12 @@
         </label>
 
         <button
-          class="px-5 py-3 bg-red-300 text-[rgb(77,0,0)] font-semibold rounded-lg hover:bg-[#fca5a5] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          class="px-5 py-3 bg-red-300 text-[rgb(77,0,0)] font-semibold rounded-lg hover:bg-[#fca5a5] transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
           :disabled="lockSettingsSaving"
           @click="saveLockSettings"
         >
+          <AppIcon v-if="lockSettingsSaving" name="refresh" class-name="w-4 h-4 animate-spin" />
+          <AppIcon v-else name="save" class-name="w-4 h-4" />
           {{ lockSettingsSaving ? '保存中...' : '保存锁设置' }}
         </button>
       </div>

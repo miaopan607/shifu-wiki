@@ -83,6 +83,7 @@
         >
           <AppIcon v-if="saving" name="refresh" class-name="w-4 h-4 animate-spin" />
           <AppIcon v-else-if="saved" name="check" class-name="w-4 h-4" />
+          <AppIcon v-else name="save" class-name="w-4 h-4" />
           {{ saving ? '保存中...' : saved ? '已保存' : '保存' }}
         </button>
       </div>
