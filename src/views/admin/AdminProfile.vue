@@ -82,8 +82,8 @@ const cancel = () => {
 
 <template>
     <div class="max-w-4xl mx-auto space-y-6">
-        <div class="flex items-center justify-between">
-            <div class="flex-1">
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div>
                 <h1 class="text-2xl font-semibold text-[#c9c9c9]">个人介绍管理</h1>
             </div>
             <div class="flex gap-3">
