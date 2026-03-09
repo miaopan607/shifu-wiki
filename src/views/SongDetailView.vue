@@ -13,10 +13,10 @@
 
   const backLink = computed(() => {
     const from = route.query.from;
-    const albumTitle = route.query.albumTitle as string;
+    const albumIndex = route.query.albumIndex as string;
 
-    if (from === 'album' && albumTitle) {
-      return `/albums/${albumTitle}`;
+    if (from === 'album' && albumIndex) {
+      return `/albums/${albumIndex}`;
     }
     return '/songs';
   });

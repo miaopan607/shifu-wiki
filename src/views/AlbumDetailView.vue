@@ -108,7 +108,7 @@
             <RouterLink
               v-for="(song, index) in songs"
               :key="song.id"
-              :to="`/songs/${song.index}?from=album&albumTitle=${encodeURIComponent(albumTitle)}`"
+              :to="`/songs/${song.index}?from=album&albumIndex=${albumInfo?.index || ''}`"
               class="block group p-4 -mx-4 hover:bg-[#c9c9c9]/5 rounded-lg transition-colors border border-transparent hover:border-[#c9c9c9]/10"
             >
               <div class="flex items-center gap-6">
