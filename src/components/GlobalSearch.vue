@@ -248,71 +248,73 @@
     <Transition name="fade">
       <div
         v-if="isOpen"
-        class="fixed inset-0 bg-[rgb(77,0,0)]/90 backdrop-blur-xl z-50 flex flex-col items-center pt-24 md:pt-32 px-4 transition-all duration-300 font-serif overflow-y-auto"
+        class="fixed inset-0 bg-[rgb(77,0,0)]/90 backdrop-blur-xl z-50 flex flex-col items-center pt-12 sm:pt-16 px-3 sm:px-4 transition-all duration-300 font-serif overflow-y-auto"
         @click.self="closeSearch"
       >
         <!-- Search Header -->
         <div class="w-full max-w-3xl relative">
-          <AppIcon name="search" class="absolute left-6 top-1/2 -translate-y-1/2 w-8 h-8 text-[#888]" />
+          <AppIcon name="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 text-[#888]" />
           <input
             ref="searchInput"
             v-model="searchQuery"
             type="text"
             placeholder="全站搜索 (Ctrl+K)"
-            class="w-full bg-[#c9c9c9]/10 border border-[#c9c9c9]/30 rounded-2xl py-6 pl-20 pr-16 text-2xl text-[#c9c9c9] placeholder-[#888] focus:outline-none focus:border-red-300/60 focus:bg-[#c9c9c9]/15 shadow-[0_0_30px_rgba(162,50,62,0.1)] transition-all"
+            class="w-full bg-[#c9c9c9]/10 border border-[#c9c9c9]/30 rounded-2xl py-4 pl-12 pr-12 text-lg sm:text-xl text-[#c9c9c9] placeholder-[#888] focus:outline-none focus:border-red-300/60 focus:bg-[#c9c9c9]/15 shadow-[0_0_30px_rgba(162,50,62,0.1)] transition-all"
             @keydown.esc="closeSearch"
           />
           <button
             @click="closeSearch"
-            class="absolute right-6 top-1/2 -translate-y-1/2 text-[#888] hover:text-red-300 transition-colors p-2"
+            class="absolute right-4 top-1/2 -translate-y-1/2 text-[#888] hover:text-red-300 transition-colors p-1"
           >
-            <AppIcon name="close" class="w-6 h-6" />
+            <AppIcon name="close" class="w-5 h-5" />
           </button>
         </div>
 
         <!-- Search Results area -->
-        <div class="w-full max-w-3xl mt-8 pb-20">
-          <div v-if="loading" class="text-center py-16 text-[#888] tracking-widest animate-pulse"> 搜索中... </div>
+        <div class="w-full max-w-3xl mt-4 pb-8">
+          <div v-if="loading" class="text-center py-8 text-[#888] tracking-widest animate-pulse"> 搜索中... </div>
 
           <div
             v-else-if="results && !Object.values(results).some(arr => arr.length > 0)"
-            class="text-center py-16 text-[#888] tracking-widest italic"
+            class="text-center py-8 text-[#888] tracking-widest italic"
           >
             未找到匹配的内容
           </div>
 
-          <div v-else-if="results" class="space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-500">
+          <div v-else-if="results" class="space-y-2 animate-in fade-in slide-in-from-bottom-8 duration-500">
             <!-- Songs -->
             <section v-if="results.songs.length > 0">
-              <h3 class="text-red-300 mb-4 tracking-widest flex items-center gap-2 border-b border-[#c9c9c9]/10 pb-2">
-                <AppIcon name="music" class="w-5 h-5 opacity-70" /> 音乐单曲
+              <h3
+                class="text-red-300 mb-1 tracking-widest flex items-center gap-2 border-b border-[#c9c9c9]/10 pb-1 text-sm"
+              >
+                <AppIcon name="music" class="w-4 h-4 opacity-70" /> 音乐单曲
               </h3>
-              <div class="space-y-2">
+              <div class="space-y-0.5">
                 <button
                   v-for="(song, idx) in results.songs"
                   :key="song.id"
                   @click="navigateTo(`/songs/${song.index}`)"
                   :class="[
-                    'search-result-item w-full text-left p-4 rounded-xl transition-colors group flex justify-between items-center',
+                    'search-result-item w-full text-left p-2.5 sm:p-3 rounded-lg transition-colors group flex justify-between items-center',
                     isSelected('songs', idx) ? 'bg-[#c9c9c9]/20 selected' : 'hover:bg-[#c9c9c9]/10',
                   ]"
                 >
                   <div>
                     <div
                       :class="[
-                        'text-xl transition-colors',
+                        'text-base transition-colors',
                         isSelected('songs', idx) ? 'text-red-300' : 'text-[#c9c9c9] group-hover:text-red-300',
                       ]"
                       >{{ song.title }}</div
                     >
-                    <div class="text-sm text-[#888] mt-1"
+                    <div class="text-xs text-[#888] mt-0.5"
                       >{{ song.album }} <span v-if="song.artist">· {{ song.artist }}</span></div
                     >
                   </div>
                   <AppIcon
                     name="chevron-right"
                     :class="[
-                      'w-5 h-5 transition-all',
+                      'w-4 h-4 transition-all',
                       isSelected('songs', idx)
                         ? 'text-red-300 opacity-100 translate-x-0'
                         : 'text-[#888] opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0',
@@ -324,35 +326,37 @@
 
             <!-- Albums -->
             <section v-if="results.albums.length > 0">
-              <h3 class="text-red-300 mb-4 tracking-widest flex items-center gap-2 border-b border-[#c9c9c9]/10 pb-2">
-                <AppIcon name="album" class="w-5 h-5 opacity-70" /> 音乐专辑
+              <h3
+                class="text-red-300 mb-1 tracking-widest flex items-center gap-2 border-b border-[#c9c9c9]/10 pb-1 text-sm"
+              >
+                <AppIcon name="album" class="w-4 h-4 opacity-70" /> 音乐专辑
               </h3>
-              <div class="space-y-2">
+              <div class="space-y-0.5">
                 <button
                   v-for="(album, idx) in results.albums"
                   :key="album.id"
                   @click="navigateTo(`/albums/${album.index}`)"
                   :class="[
-                    'search-result-item w-full text-left p-4 rounded-xl transition-colors group flex justify-between items-center',
+                    'search-result-item w-full text-left p-2.5 sm:p-3 rounded-lg transition-colors group flex justify-between items-center',
                     isSelected('albums', idx) ? 'bg-[#c9c9c9]/20 selected' : 'hover:bg-[#c9c9c9]/10',
                   ]"
                 >
                   <div>
                     <div
                       :class="[
-                        'text-xl transition-colors',
+                        'text-base transition-colors',
                         isSelected('albums', idx) ? 'text-red-300' : 'text-[#c9c9c9] group-hover:text-red-300',
                       ]"
                       >{{ album.title }}</div
                     >
-                    <div v-if="album.releaseDate" class="text-sm text-[#888] mt-1">{{
+                    <div v-if="album.releaseDate" class="text-xs text-[#888] mt-0.5">{{
                       formatDateToDisplay(album.releaseDate)
                     }}</div>
                   </div>
                   <AppIcon
                     name="chevron-right"
                     :class="[
-                      'w-5 h-5 transition-all',
+                      'w-4 h-4 transition-all',
                       isSelected('albums', idx)
                         ? 'text-red-300 opacity-100 translate-x-0'
                         : 'text-[#888] opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0',
@@ -364,28 +368,30 @@
 
             <!-- Activities -->
             <section v-if="results.activities.length > 0">
-              <h3 class="text-red-300 mb-4 tracking-widest flex items-center gap-2 border-b border-[#c9c9c9]/10 pb-2">
-                <AppIcon name="activities" class="w-5 h-5 opacity-70" /> 活动
+              <h3
+                class="text-red-300 mb-1 tracking-widest flex items-center gap-2 border-b border-[#c9c9c9]/10 pb-1 text-sm"
+              >
+                <AppIcon name="activities" class="w-4 h-4 opacity-70" /> 活动
               </h3>
-              <div class="space-y-2">
+              <div class="space-y-0.5">
                 <button
                   v-for="(activity, idx) in results.activities"
                   :key="activity.id"
                   @click="navigateTo(`/activities/${activity.index}`)"
                   :class="[
-                    'search-result-item w-full text-left p-4 rounded-xl transition-colors group flex justify-between items-center',
+                    'search-result-item w-full text-left p-2.5 sm:p-3 rounded-lg transition-colors group flex justify-between items-center',
                     isSelected('activities', idx) ? 'bg-[#c9c9c9]/20 selected' : 'hover:bg-[#c9c9c9]/10',
                   ]"
                 >
                   <div>
                     <div
                       :class="[
-                        'text-xl transition-colors',
+                        'text-base transition-colors',
                         isSelected('activities', idx) ? 'text-red-300' : 'text-[#c9c9c9] group-hover:text-red-300',
                       ]"
                       >{{ activity.title }}</div
                     >
-                    <div class="text-sm text-[#888] mt-1">
+                    <div class="text-xs text-[#888] mt-0.5">
                       {{ formatDateToDisplay(activity.date) }}
                       <span v-if="activity.location">· {{ activity.location }}</span>
                     </div>
@@ -393,7 +399,7 @@
                   <AppIcon
                     name="chevron-right"
                     :class="[
-                      'w-5 h-5 transition-all',
+                      'w-4 h-4 transition-all',
                       isSelected('activities', idx)
                         ? 'text-red-300 opacity-100 translate-x-0'
                         : 'text-[#888] opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0',
@@ -405,35 +411,37 @@
 
             <!-- Galleries -->
             <section v-if="results.galleries.length > 0">
-              <h3 class="text-red-300 mb-4 tracking-widest flex items-center gap-2 border-b border-[#c9c9c9]/10 pb-2">
-                <AppIcon name="image" class="w-5 h-5 opacity-70" /> 图集
+              <h3
+                class="text-red-300 mb-1 tracking-widest flex items-center gap-2 border-b border-[#c9c9c9]/10 pb-1 text-sm"
+              >
+                <AppIcon name="image" class="w-4 h-4 opacity-70" /> 图集
               </h3>
-              <div class="space-y-2">
+              <div class="space-y-0.5">
                 <button
                   v-for="(gallery, idx) in results.galleries"
                   :key="gallery.id"
                   @click="navigateTo(`/galleries/${gallery.index}`)"
                   :class="[
-                    'search-result-item w-full text-left p-4 rounded-xl transition-colors group flex justify-between items-center',
+                    'search-result-item w-full text-left p-2.5 sm:p-3 rounded-lg transition-colors group flex justify-between items-center',
                     isSelected('galleries', idx) ? 'bg-[#c9c9c9]/20 selected' : 'hover:bg-[#c9c9c9]/10',
                   ]"
                 >
                   <div>
                     <div
                       :class="[
-                        'text-xl transition-colors',
+                        'text-base transition-colors',
                         isSelected('galleries', idx) ? 'text-red-300' : 'text-[#c9c9c9] group-hover:text-red-300',
                       ]"
                       >{{ gallery.title }}</div
                     >
-                    <div v-if="gallery.date" class="text-sm text-[#888] mt-1">{{
+                    <div v-if="gallery.date" class="text-xs text-[#888] mt-0.5">{{
                       formatDateToDisplay(gallery.date)
                     }}</div>
                   </div>
                   <AppIcon
                     name="chevron-right"
                     :class="[
-                      'w-5 h-5 transition-all',
+                      'w-4 h-4 transition-all',
                       isSelected('galleries', idx)
                         ? 'text-red-300 opacity-100 translate-x-0'
                         : 'text-[#888] opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0',
@@ -445,33 +453,35 @@
 
             <!-- Misc -->
             <section v-if="results.misc.length > 0">
-              <h3 class="text-red-300 mb-4 tracking-widest flex items-center gap-2 border-b border-[#c9c9c9]/10 pb-2">
-                <AppIcon name="misc" class="w-5 h-5 opacity-70" /> 杂记
+              <h3
+                class="text-red-300 mb-1 tracking-widest flex items-center gap-2 border-b border-[#c9c9c9]/10 pb-1 text-sm"
+              >
+                <AppIcon name="misc" class="w-4 h-4 opacity-70" /> 杂记
               </h3>
-              <div class="space-y-2">
+              <div class="space-y-0.5">
                 <button
                   v-for="(item, idx) in results.misc"
                   :key="item.id"
                   @click="navigateTo(`/misc/${item.index}`)"
                   :class="[
-                    'search-result-item w-full text-left p-4 rounded-xl transition-colors group flex justify-between items-center',
+                    'search-result-item w-full text-left p-2.5 sm:p-3 rounded-lg transition-colors group flex justify-between items-center',
                     isSelected('misc', idx) ? 'bg-[#c9c9c9]/20 selected' : 'hover:bg-[#c9c9c9]/10',
                   ]"
                 >
                   <div>
                     <div
                       :class="[
-                        'text-xl transition-colors',
+                        'text-base transition-colors',
                         isSelected('misc', idx) ? 'text-red-300' : 'text-[#c9c9c9] group-hover:text-red-300',
                       ]"
                       >{{ item.title }}</div
                     >
-                    <div v-if="item.date" class="text-sm text-[#888] mt-1">{{ formatDateToDisplay(item.date) }}</div>
+                    <div v-if="item.date" class="text-xs text-[#888] mt-0.5">{{ formatDateToDisplay(item.date) }}</div>
                   </div>
                   <AppIcon
                     name="chevron-right"
                     :class="[
-                      'w-5 h-5 transition-all',
+                      'w-4 h-4 transition-all',
                       isSelected('misc', idx)
                         ? 'text-red-300 opacity-100 translate-x-0'
                         : 'text-[#888] opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0',
