@@ -57,12 +57,14 @@ const filterNewlines = (value: string) => {
 // 封面相关
 const coverPreview = ref<string | null>(null);
 const coverFile = ref<File | null>(null);
+const originalCoverUrl = ref<string | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
 const isCoverDragOver = ref(false);
 const hasChanges = ref(false);
+const coverMarkedForDeletion = ref(false);
 
 // 是否有未保存的封面
-const hasUnsavedCover = computed(() => coverFile.value !== null);
+const hasUnsavedCover = computed(() => coverFile.value !== null || coverMarkedForDeletion.value);
 
 // 保存按钮可用条件
 const canSave = computed(() => {
@@ -165,7 +167,9 @@ onMounted(async () => {
 			} as unknown as Album;
 
 			if (record.cover) {
-				coverPreview.value = pb.files.getURL(record, record.cover, { thumb: '400x400' });
+				const url = pb.files.getURL(record, record.cover, { thumb: '400x400' });
+				coverPreview.value = url;
+				originalCoverUrl.value = url;
 			}
 		}
 	} catch (err) {
@@ -196,6 +200,7 @@ const setCoverFile = (file: File) => {
 
 	coverFile.value = file;
 	coverPreview.value = URL.createObjectURL(file);
+	coverMarkedForDeletion.value = false;
 	markChanged();
 
 	if (currentBatchTask.value) {
@@ -212,6 +217,26 @@ const setCoverFile = (file: File) => {
 		targetName: album.value.title || '新建专辑',
 		files: [file],
 	});
+};
+
+const removeCover = () => {
+	if (coverPreview.value && coverPreview.value.startsWith('blob:')) {
+		URL.revokeObjectURL(coverPreview.value);
+	}
+	coverFile.value = null;
+	coverMarkedForDeletion.value = true;
+	markChanged();
+
+	if (currentBatchTask.value) {
+		uploadStore.discardTask(currentBatchTask.value.id);
+		currentBatchTask.value = null;
+	}
+};
+
+const cancelRemoveCover = () => {
+	coverMarkedForDeletion.value = false;
+	coverPreview.value = originalCoverUrl.value;
+	markChanged();
 };
 
 const handleCoverChange = (event: Event) => {
@@ -400,6 +425,11 @@ const saveAlbum = async () => {
 		formData.append('releaseDate', normalizeDateForStorage(album.value.releaseDate));
 		formData.append('description', album.value.description || '');
 
+		// 处理封面删除（仅编辑模式）
+		if (isEdit.value && coverMarkedForDeletion.value) {
+			formData.append('cover', '');
+		}
+
 		let targetAlbumId: string;
 
 		if (isEdit.value) {
@@ -426,6 +456,7 @@ const saveAlbum = async () => {
 		}
 
 		coverFile.value = null;
+		coverMarkedForDeletion.value = false;
 		hasChanges.value = false;
 
 		// 6. 立即跳转回列表页
@@ -724,14 +755,14 @@ const handleDateInput = (e: Event) => {
 					<h2 class="text-lg font-medium text-[#c9c9c9]">专辑封面</h2>
 					<div
 						class="aspect-square rounded-lg border-2 border-dashed border-[#c9c9c9]/20 flex flex-col items-center justify-center relative overflow-hidden group cursor-pointer hover:border-red-300/50 transition-colors"
-						:class="[isCoverDragOver ? 'border-red-300 bg-red-300/10' : '']"
+						:class="[isCoverDragOver ? 'border-red-300 bg-red-300/10' : '', coverMarkedForDeletion ? 'border-red-500/50 bg-red-500/10' : '']"
 						@click="fileInput?.click()"
 						@dragenter.prevent="handleCoverDragEnter"
 						@dragover.prevent="handleCoverDragEnter"
 						@dragleave.prevent="handleCoverDragLeave"
 						@drop.prevent="handleCoverDrop"
 					>
-						<img v-if="coverPreview" :src="coverPreview" class="w-full h-full object-cover" />
+						<img v-if="coverPreview && !coverMarkedForDeletion" :src="coverPreview" class="w-full h-full object-cover" />
 						<div v-else class="text-center p-4">
 							<svg class="w-12 h-12 mx-auto text-[#888] mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 								<path
@@ -741,13 +772,35 @@ const handleDateInput = (e: Event) => {
 									d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
 								/>
 							</svg>
-							<p class="text-sm text-[#888]">点击或拖动上传封面</p>
+							<p class="text-sm text-[#888]">{{ coverMarkedForDeletion ? '封面将被删除' : '点击或拖动上传封面' }}</p>
 						</div>
-						<div v-if="coverPreview" class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+						<div v-if="coverPreview && !coverMarkedForDeletion" class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
 							<p class="text-white text-sm">更换封面</p>
 						</div>
 
 						<input ref="fileInput" type="file" accept="image/*" class="hidden" @change="handleCoverChange" />
+					</div>
+					<div v-if="isEdit && (coverPreview || coverMarkedForDeletion)" class="flex justify-end">
+						<button
+							v-if="!coverMarkedForDeletion"
+							@click="removeCover"
+							class="text-sm text-red-300 hover:text-red-200 transition-colors flex items-center gap-1"
+						>
+							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+							</svg>
+							删除封面
+						</button>
+						<button
+							v-else
+							@click="cancelRemoveCover"
+							class="text-sm text-[#888] hover:text-red-300 transition-colors flex items-center gap-1"
+						>
+							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+							</svg>
+							取消删除
+						</button>
 					</div>
 				</div>
 			</div>
