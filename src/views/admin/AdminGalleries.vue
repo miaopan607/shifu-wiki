@@ -9,6 +9,7 @@ const router = useRouter();
 
 const galleries = ref<AdminGallery[]>([]);
 const loading = ref(true);
+const refreshing = ref(false);
 const searchQuery = ref('');
 const deleteConfirm = ref<string | null>(null);
 const deleting = ref(false);
@@ -34,8 +35,12 @@ onMounted(async () => {
     await fetchGalleries();
 });
 
-const fetchGalleries = async () => {
-    loading.value = true;
+const fetchGalleries = async (isManualRefresh = false) => {
+    if (isManualRefresh) {
+        refreshing.value = true;
+    } else {
+        loading.value = true;
+    }
     try {
         const result = await pb.collection('galleries').getFullList({
             sort: '-date',
@@ -44,22 +49,19 @@ const fetchGalleries = async () => {
 
         galleries.value = result as unknown as AdminGallery[];
 
-        // 一次性获取所有图集的图片数量
         if (galleries.value.length > 0) {
             const galleryIds = galleries.value.map(g => `gallery = "${g.id}"`).join(' || ');
             const imagesResult = await pb.collection('gallery_images').getFullList({
                 filter: galleryIds,
-                fields: 'gallery', // 只获取 gallery 字段，减少数据传输
+                fields: 'gallery',
             });
 
-            // 按 gallery ID 统计图片数量
             const countByGallery = new Map<string, number>();
             for (const img of imagesResult) {
                 const galleryId = (img as unknown as { gallery: string }).gallery;
                 countByGallery.set(galleryId, (countByGallery.get(galleryId) || 0) + 1);
             }
 
-            // 将统计结果分配给对应的图集
             for (const gallery of galleries.value) {
                 gallery.imageCount = countByGallery.get(gallery.id) || 0;
             }
@@ -68,6 +70,7 @@ const fetchGalleries = async () => {
         console.error('Failed to fetch galleries:', error);
     } finally {
         loading.value = false;
+        refreshing.value = false;
     }
 };
 
@@ -160,15 +163,32 @@ const editGallery = (id: string) => {
                 <div>
                     <h1 class="text-2xl font-semibold text-[#c9c9c9]">图集管理</h1>
                 </div>
-                <button
-                    @click="createNew"
-                    class="inline-flex items-center gap-2 px-4 py-2 border border-red-300/50 text-red-300 hover:bg-white/5 font-medium rounded-lg transition-colors"
-                >
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                    </svg>
-                    新建图集
-                </button>
+                <div class="flex flex-wrap items-center gap-3">
+                    <button
+                        @click="createNew"
+                        class="inline-flex items-center gap-2 px-4 py-2 border border-red-300/50 text-red-300 hover:bg-white/5 font-medium rounded-lg transition-colors"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        新建图集
+                    </button>
+                    <button
+                        @click="fetchGalleries(true)"
+                        :disabled="refreshing"
+                        class="inline-flex items-center gap-2 px-4 py-2 border border-red-300/50 text-red-300 hover:bg-white/5 font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <svg class="w-5 h-5" :class="refreshing ? 'animate-spin' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                            />
+                        </svg>
+                        {{ refreshing ? '刷新中...' : '刷新列表' }}
+                    </button>
+                </div>
             </div>
 
             <div class="grid grid-cols-3 gap-4">

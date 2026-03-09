@@ -9,6 +9,7 @@ const router = useRouter();
 
 const songs = ref<Song[]>([]);
 const loading = ref(true);
+const refreshing = ref(false);
 const searchQuery = ref('');
 const deleteConfirm = ref<string | null>(null);
 const deleting = ref(false);
@@ -30,8 +31,12 @@ onMounted(async () => {
     await fetchSongs();
 });
 
-const fetchSongs = async () => {
-    loading.value = true;
+const fetchSongs = async (isManualRefresh = false) => {
+    if (isManualRefresh) {
+        refreshing.value = true;
+    } else {
+        loading.value = true;
+    }
     try {
         const result = await pb.collection('songs').getFullList({
             sort: '-releaseDate',
@@ -42,6 +47,7 @@ const fetchSongs = async () => {
         console.error('Failed to fetch songs:', error);
     } finally {
         loading.value = false;
+        refreshing.value = false;
     }
 };
 
@@ -97,15 +103,32 @@ const editSong = (id: string) => {
                 <div>
                     <h1 class="text-2xl font-semibold text-[#c9c9c9]">音乐管理</h1>
                 </div>
-                <button
-                    @click="createNew"
-                    class="inline-flex items-center gap-2 px-4 py-2 border border-red-300/50 text-red-300 hover:bg-white/5 font-medium rounded-lg transition-colors"
-                >
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                    </svg>
-                    新建音乐
-                </button>
+                <div class="flex flex-wrap items-center gap-3">
+                    <button
+                        @click="createNew"
+                        class="inline-flex items-center gap-2 px-4 py-2 border border-red-300/50 text-red-300 hover:bg-white/5 font-medium rounded-lg transition-colors"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        新建音乐
+                    </button>
+                    <button
+                        @click="fetchSongs(true)"
+                        :disabled="refreshing"
+                        class="inline-flex items-center gap-2 px-4 py-2 border border-red-300/50 text-red-300 hover:bg-white/5 font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <svg class="w-5 h-5" :class="refreshing ? 'animate-spin' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                            />
+                        </svg>
+                        {{ refreshing ? '刷新中...' : '刷新列表' }}
+                    </button>
+                </div>
             </div>
 
             <div class="grid grid-cols-1 gap-4">
