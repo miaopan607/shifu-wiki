@@ -14,7 +14,7 @@
       const records = await pb.collection('misc').getFullList({
         sort: '-created',
         filter: 'published = true',
-        fields: 'id,title,slug,created,description',
+        fields: 'id,title,index,created,description',
       });
       miscItems.value = records as unknown as Misc[];
     } catch (e) {
@@ -40,7 +40,7 @@
           <RouterLink
             v-for="item in miscItems"
             :key="item.id"
-            :to="`/misc/${item.slug || item.id}`"
+            :to="`/misc/${item.index || item.id}`"
             class="group block border-b border-[#c9c9c9]/20 pb-8 hover:border-red-300/50 transition-all"
           >
             <div class="flex justify-between items-end">

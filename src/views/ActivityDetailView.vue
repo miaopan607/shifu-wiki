@@ -33,14 +33,14 @@
   });
 
   onMounted(async () => {
-    const slug = route.params.slug;
-    if (!slug) {
+    const index = route.params.index;
+    if (!index) {
       router.replace('/404');
       return;
     }
 
     try {
-      activity.value = await pb.collection('activities').getFirstListItem(`index="${slug}"`);
+      activity.value = await pb.collection('activities').getFirstListItem(`index=${index}`);
       if (activity.value) {
         document.title = `${activity.value.title} | 黄诗扶 Wiki`;
       }

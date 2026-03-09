@@ -430,6 +430,14 @@
         await pb.collection('albums').update(route.params.id as string, formData);
         targetAlbumId = route.params.id as string;
       } else {
+        // 自动分配递增索引：获取当前最大索引并加1
+        const maxIndexResult = await pb.collection('albums').getList(1, 1, {
+          sort: '-index',
+          fields: 'index',
+        });
+        const nextIndex = maxIndexResult.items.length > 0 ? ((maxIndexResult.items[0] as any).index as number) + 1 : 1;
+        formData.append('index', String(nextIndex));
+
         const created = await pb.collection('albums').create(formData);
         targetAlbumId = created.id;
       }
@@ -544,8 +552,11 @@
   <div class="max-w-4xl mx-auto space-y-6">
     <div class="flex items-center justify-between">
       <div class="flex-1">
-        <h1 class="text-2xl font-semibold text-[#c9c9c9]">
+        <h1 class="text-2xl font-semibold text-[#c9c9c9] flex items-center gap-3">
           {{ isEdit ? '编辑专辑' : '新建专辑' }}
+          <span v-if="isEdit && !loading && album.index" class="text-lg text-[#888] font-normal"
+            >#{{ album.index }}</span
+          >
         </h1>
       </div>
       <div class="flex gap-3">
@@ -770,6 +781,7 @@
       transform: rotate(360deg);
     }
   }
+
   .animate-spin {
     animation: spin 1s linear infinite;
   }
@@ -777,13 +789,16 @@
   .custom-scrollbar::-webkit-scrollbar {
     width: 4px;
   }
+
   .custom-scrollbar::-webkit-scrollbar-track {
     background: transparent;
   }
+
   .custom-scrollbar::-webkit-scrollbar-thumb {
     background: rgba(201, 201, 201, 0.1);
     border-radius: 10px;
   }
+
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: rgba(201, 201, 201, 0.2);
   }

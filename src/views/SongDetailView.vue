@@ -46,14 +46,14 @@
   });
 
   onMounted(async () => {
-    const slug = route.params.slug;
-    if (!slug) {
+    const index = route.params.index;
+    if (!index) {
       router.replace('/404');
       return;
     }
 
     try {
-      song.value = decodeSongLinkNames(await pb.collection('songs').getFirstListItem(`index="${slug}"`));
+      song.value = decodeSongLinkNames(await pb.collection('songs').getFirstListItem(`index=${index}`));
       if (song.value) {
         document.title = `${song.value.title} | 黄诗扶 Wiki`;
       }

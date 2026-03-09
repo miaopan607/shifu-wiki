@@ -70,16 +70,12 @@
 
       let index = activity.value.index;
       if (!isEdit.value) {
-        const records = await collection.getFullList({
+        // 自动分配递增索引：获取当前最大索引并加1
+        const maxIndexResult = await collection.getList(1, 1, {
           sort: '-index',
           fields: 'index',
-          requestKey: null,
         });
-        const maxIndex = records.reduce((max, record: any) => {
-          const current = Number(record.index) || 0;
-          return Math.max(max, current);
-        }, 0);
-        index = maxIndex + 1;
+        index = maxIndexResult.items.length > 0 ? ((maxIndexResult.items[0] as any).index as number) + 1 : 1;
       }
 
       const data = {
@@ -144,8 +140,11 @@
   <div class="max-w-4xl mx-auto space-y-6">
     <div class="flex items-center justify-between">
       <div class="flex-1">
-        <h1 class="text-2xl font-semibold text-[#c9c9c9]">
+        <h1 class="text-2xl font-semibold text-[#c9c9c9] flex items-center gap-3">
           {{ isEdit ? '编辑活动' : '新建活动' }}
+          <span v-if="isEdit && !loading && activity.index" class="text-lg text-[#888] font-normal"
+            >#{{ activity.index }}</span
+          >
         </h1>
       </div>
       <div class="flex gap-3">

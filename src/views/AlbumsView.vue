@@ -14,7 +14,7 @@
       const [albumsResult, songsResult] = await Promise.all([
         pb
           .collection('albums')
-          .getFullList({ sort: '-releaseDate', fields: 'id,collectionId,title,releaseDate,cover' }),
+          .getFullList({ sort: '-releaseDate', fields: 'id,collectionId,title,index,releaseDate,cover' }),
         pb.collection('songs').getFullList({ fields: 'album' }),
       ]);
       albums.value = albumsResult.map(album => ({
@@ -60,7 +60,7 @@
           <RouterLink
             v-for="album in albums"
             :key="album.id"
-            :to="`/albums/${encodeURIComponent(album.title)}`"
+            :to="`/albums/${album.index || album.id}`"
             class="bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-xl overflow-hidden group hover:border-red-300/50 transition-all"
           >
             <div class="aspect-square relative overflow-hidden bg-black/40">

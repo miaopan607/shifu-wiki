@@ -13,8 +13,8 @@
   const contentHtml = ref('');
 
   onMounted(async () => {
-    const slugOrId = route.params.slug as string;
-    if (!slugOrId) {
+    const indexOrId = route.params.index as string;
+    if (!indexOrId) {
       router.replace('/404');
       return;
     }
@@ -23,12 +23,12 @@
       let record: any = null;
 
       try {
-        record = await pb.collection('misc').getFirstListItem(`slug="${slugOrId}"`);
+        record = await pb.collection('misc').getFirstListItem(`index=${indexOrId}`);
       } catch {
         try {
-          record = await pb.collection('misc').getOne(slugOrId);
+          record = await pb.collection('misc').getOne(indexOrId);
         } catch {
-          console.warn('Misc item not found by slug or ID');
+          console.warn('Misc item not found by index or ID');
         }
       }
 

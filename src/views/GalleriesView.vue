@@ -31,7 +31,7 @@
       const result = await pb.collection('galleries').getFullList({
         sort: '-date',
         filter: 'published = true',
-        fields: 'id,title,slug,date,description',
+        fields: 'id,title,index,date,description',
       });
       galleries.value = result as unknown as GalleryWithPreview[];
 
@@ -161,7 +161,7 @@
           <RouterLink
             v-for="gallery in galleries"
             :key="gallery.id"
-            :to="`/galleries/${gallery.slug || gallery.id}`"
+            :to="`/galleries/${gallery.index || gallery.id}`"
             class="group block border-b border-[#c9c9c9]/20 pb-8 hover:border-red-300/50 transition-all"
           >
             <!-- 标题和描述 -->

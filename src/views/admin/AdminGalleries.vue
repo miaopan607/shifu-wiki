@@ -21,7 +21,7 @@
     return galleries.value.filter(
       g =>
         g.title.toLowerCase().includes(query) ||
-        g.slug?.toLowerCase().includes(query) ||
+        String(g.index).includes(query) ||
         g.description?.toLowerCase().includes(query)
     );
   });
@@ -45,7 +45,7 @@
     try {
       const result = await pb.collection('galleries').getFullList({
         sort: '-date',
-        fields: 'id,title,slug,date,description,published',
+        fields: 'id,title,index,date,description,published',
       });
 
       galleries.value = result as unknown as AdminGallery[];
@@ -245,7 +245,7 @@
               <td class="px-4 py-3">
                 <div>
                   <p class="font-medium text-[#c9c9c9]">{{ gallery.title }}</p>
-                  <p v-if="gallery.slug" class="text-sm text-[#888]">{{ gallery.slug }}</p>
+                  <p class="text-sm text-[#888]">#{{ gallery.index }}</p>
                 </div>
               </td>
               <td class="px-4 py-3 hidden sm:table-cell">

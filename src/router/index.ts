@@ -25,13 +25,13 @@ const router = createRouter({
       meta: { title: '专辑 | 黄诗扶 Wiki' },
     },
     {
-      path: '/songs/:slug',
+      path: '/songs/:index',
       name: 'song-detail',
       component: () => import('../views/SongDetailView.vue'),
       meta: { title: '加载中... | 黄诗扶 Wiki' },
     },
     {
-      path: '/albums/:title',
+      path: '/albums/:index',
       name: 'album-detail',
       component: () => import('../views/AlbumDetailView.vue'),
       meta: { title: '专辑详情 | 黄诗扶 Wiki' },
@@ -43,7 +43,7 @@ const router = createRouter({
       meta: { title: '活动 | 黄诗扶 Wiki' },
     },
     {
-      path: '/activities/:slug',
+      path: '/activities/:index',
       name: 'activity-detail',
       component: () => import('../views/ActivityDetailView.vue'),
       meta: { title: '加载中... | 黄诗扶 Wiki' },
@@ -55,7 +55,7 @@ const router = createRouter({
       meta: { title: '图集 | 黄诗扶 Wiki' },
     },
     {
-      path: '/galleries/:slug',
+      path: '/galleries/:index',
       name: 'gallery-detail',
       component: () => import('../views/GalleryDetailView.vue'),
       meta: { title: '加载中... | 黄诗扶 Wiki' },
@@ -79,7 +79,7 @@ const router = createRouter({
       meta: { title: '关于 | 黄诗扶 Wiki' },
     },
     {
-      path: '/misc/:slug',
+      path: '/misc/:index',
       name: 'misc-detail',
       component: () => import('../views/MiscDetailView.vue'),
       meta: { title: '加载中... | 黄诗扶 Wiki' },

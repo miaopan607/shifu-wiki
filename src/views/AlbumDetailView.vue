@@ -6,7 +6,7 @@
   import AppIcon from '@/components/AppIcon.vue';
 
   const route = useRoute();
-  const albumTitle = decodeURIComponent(route.params.title as string);
+  const indexOrId = route.params.index as string;
   const songs = ref<any[]>([]);
   const albumInfo = ref<any>(null);
   const loading = ref(true);
@@ -31,22 +31,37 @@
     return items;
   });
 
+  const albumTitle = computed(() => albumInfo.value?.title || '');
+
   onMounted(async () => {
     try {
-      const [songsResult, albumResult] = await Promise.all([
-        pb.collection('songs').getList(1, 50, {
-          filter: `album = "${albumTitle}"`,
-          sort: '+releaseDate',
-          fields: 'id,title,index,artist',
-        }),
-        pb
-          .collection('albums')
-          .getFirstListItem(`title="${albumTitle}"`)
-          .catch(() => null),
-      ]);
+      // Try to fetch album by index first, then by ID
+      let albumRecord: any = null;
+      try {
+        albumRecord = await pb.collection('albums').getFirstListItem(`index=${indexOrId}`);
+      } catch {
+        try {
+          albumRecord = await pb.collection('albums').getOne(indexOrId);
+        } catch {
+          console.warn('Album not found by index or ID');
+        }
+      }
+
+      if (!albumRecord) {
+        loading.value = false;
+        return;
+      }
+
+      albumInfo.value = albumRecord;
+      const albumTitle = albumRecord.title;
+
+      const songsResult = await pb.collection('songs').getList(1, 50, {
+        filter: `album = "${albumTitle}"`,
+        sort: '+releaseDate',
+        fields: 'id,title,index,artist',
+      });
 
       songs.value = songsResult.items;
-      albumInfo.value = albumResult;
       document.title = `${albumTitle} | 专辑详情 | 黄诗扶 Wiki`;
     } catch (error) {
       console.error('Failed to fetch album data:', error);

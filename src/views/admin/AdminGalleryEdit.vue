@@ -57,7 +57,7 @@
 
   const form = ref<GalleryFormData>({
     title: '',
-    slug: '',
+    index: 0,
     description: '',
     published: false,
     date: '',
@@ -223,7 +223,7 @@
 
       form.value = {
         title: record.title,
-        slug: record.slug,
+        index: record.index,
         description: record.description || '',
         published: record.published,
         date: record.date ? parseDateFromBackend(record.date) : '',
@@ -759,7 +759,6 @@
       // 4. 保存图集基本信息
       const formData = new FormData();
       formData.append('title', form.value.title.trim());
-      formData.append('slug', form.value.slug.trim());
       formData.append('description', form.value.description);
       formData.append('published', String(form.value.published));
       formData.append('date', normalizeDateForStorage(form.value.date));
@@ -767,6 +766,14 @@
       let targetGalleryId: string;
 
       if (isNew.value) {
+        // 自动分配递增索引：获取当前最大索引并加1
+        const maxIndexResult = await pb.collection('galleries').getList(1, 1, {
+          sort: '-index',
+          fields: 'index',
+        });
+        const nextIndex = maxIndexResult.items.length > 0 ? ((maxIndexResult.items[0] as any).index as number) + 1 : 1;
+        formData.append('index', String(nextIndex));
+
         const created = await pb.collection('galleries').create(formData);
         targetGalleryId = created.id;
       } else {
@@ -934,8 +941,9 @@
   <div class="max-w-7xl mx-auto space-y-6">
     <div class="flex items-center justify-between">
       <div class="flex-1">
-        <h1 class="text-2xl font-semibold text-[#c9c9c9]">
+        <h1 class="text-2xl font-semibold text-[#c9c9c9] flex items-center gap-3">
           {{ isNew ? '新建图集' : '编辑图集' }}
+          <span v-if="!isNew && !loading && form.index" class="text-lg text-[#888] font-normal">#{{ form.index }}</span>
         </h1>
       </div>
       <div class="flex gap-3">
@@ -1065,14 +1073,6 @@
               </div>
             </div>
           </div>
-
-          <AdminInput
-            v-model="form.slug"
-            label="语义化标签"
-            placeholder="自定义 URL 路径"
-            @input="markChanged()"
-            @clear="markChanged()"
-          />
 
           <AdminInput
             v-model="form.description"
@@ -1208,8 +1208,8 @@
                 <div
                   v-if="slot.image.isNew"
                   class="absolute top-2 left-2 px-2 py-0.5 bg-yellow-500/80 text-black text-xs font-medium rounded"
-                  >未上传</div
-                >
+                  >未上传
+                </div>
 
                 <div
                   class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
@@ -1272,6 +1272,7 @@
       transform: rotate(360deg);
     }
   }
+
   .animate-spin {
     animation: spin 1s linear infinite;
   }
@@ -1279,13 +1280,16 @@
   .custom-scrollbar::-webkit-scrollbar {
     width: 4px;
   }
+
   .custom-scrollbar::-webkit-scrollbar-track {
     background: transparent;
   }
+
   .custom-scrollbar::-webkit-scrollbar-thumb {
     background: rgba(201, 201, 201, 0.1);
     border-radius: 10px;
   }
+
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: rgba(201, 201, 201, 0.2);
   }

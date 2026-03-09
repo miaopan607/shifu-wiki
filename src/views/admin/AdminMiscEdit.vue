@@ -17,7 +17,7 @@
 
   const misc = ref<Partial<Misc>>({
     title: '',
-    slug: '',
+    index: 0,
     date: '',
     description: '',
     content: '',
@@ -62,17 +62,24 @@
 
     saving.value = true;
     try {
-      const data = {
+      const data: any = {
         ...misc.value,
         title: normalizedTitle,
         content: normalizedContent,
-        slug: misc.value.slug?.trim() || undefined,
         date: normalizeDateForStorage(misc.value.date),
       };
 
       if (isEdit.value) {
         await pb.collection('misc').update(route.params.id as string, data);
       } else {
+        // 自动分配递增索引：获取当前最大索引并加1
+        const maxIndexResult = await pb.collection('misc').getList(1, 1, {
+          sort: '-index',
+          fields: 'index',
+        });
+        const nextIndex = maxIndexResult.items.length > 0 ? ((maxIndexResult.items[0] as any).index as number) + 1 : 1;
+        data.index = nextIndex;
+
         await pb.collection('misc').create(data);
       }
       router.push('/admin/misc');
@@ -125,8 +132,9 @@
   <div class="max-w-4xl mx-auto space-y-6">
     <div class="flex items-center justify-between">
       <div class="flex-1">
-        <h1 class="text-2xl font-semibold text-[#c9c9c9]">
+        <h1 class="text-2xl font-semibold text-[#c9c9c9] flex items-center gap-3">
           {{ isEdit ? '编辑杂记' : '新建杂记' }}
+          <span v-if="isEdit && !loading && misc.index" class="text-lg text-[#888] font-normal">#{{ misc.index }}</span>
         </h1>
       </div>
       <div class="flex gap-3">
@@ -206,7 +214,6 @@
                 </div>
               </div>
             </div>
-            <AdminInput v-model="misc.slug" label="语义化标签" placeholder="自定义 URL 路径" />
           </div>
 
           <div class="flex gap-6">
@@ -268,6 +275,7 @@
       transform: rotate(360deg);
     }
   }
+
   .animate-spin {
     animation: spin 1s linear infinite;
   }

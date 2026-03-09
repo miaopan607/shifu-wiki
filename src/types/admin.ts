@@ -23,7 +23,7 @@ export interface AuthState {
 
 export interface GalleryFormData {
   title: string;
-  slug: string;
+  index: number;
   description: string;
   published: boolean;
   date: string;

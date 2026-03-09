@@ -7,7 +7,7 @@
   import type { Gallery, GalleryImage } from '@/types';
 
   const route = useRoute();
-  const slugOrId = route.params.slug as string;
+  const indexOrId = route.params.index as string;
   const gallery = ref<Gallery | null>(null);
   const images = ref<GalleryImage[]>([]);
   const loading = ref(true);
@@ -34,13 +34,13 @@
     try {
       // Fetch gallery details
       try {
-        gallery.value = await pb.collection('galleries').getFirstListItem(`slug="${slugOrId}"`);
+        gallery.value = await pb.collection('galleries').getFirstListItem(`index=${indexOrId}`);
       } catch {
-        // If fetching by slug fails, try by ID
+        // If fetching by index fails, try by ID
         try {
-          gallery.value = await pb.collection('galleries').getOne(slugOrId);
+          gallery.value = await pb.collection('galleries').getOne(indexOrId);
         } catch {
-          console.warn('Gallery not found by slug or ID');
+          console.warn('Gallery not found by index or ID');
         }
       }
 

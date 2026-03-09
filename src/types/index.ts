@@ -5,7 +5,7 @@ export interface Gallery {
   created: string;
   updated: string;
   title: string;
-  slug?: string;
+  index: number;
   description?: string;
   published?: boolean;
   date: string; // ISO8601 string from PocketBase Date/Time field
@@ -34,7 +34,7 @@ export interface Misc {
   created: string;
   updated: string;
   title: string;
-  slug?: string;
+  index: number;
   content: string; // Markdown content
   description?: string;
   published?: boolean;
@@ -68,6 +68,7 @@ export interface Album {
   created: string;
   updated: string;
   title: string;
+  index: number;
   releaseDate: string;
   cover?: string;
   description?: string;
