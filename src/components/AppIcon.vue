@@ -50,10 +50,12 @@
       | 'info'
       | 'markdown'
       | 'chevron-down'
+      | 'chevron-right'
       | 'external-link'
       | 'pause'
       | 'play'
-      | 'link';
+      | 'link'
+      | 'chevron-right';
     className?: string;
   }>();
 </script>
@@ -786,5 +788,17 @@
       stroke-width="2"
       d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"
     />
+  </svg>
+
+  <!-- 向右箭头 -->
+  <svg
+    v-else-if="name === 'chevron-right'"
+    :class="className || 'w-5 h-5'"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+  >
+    <polyline points="9 18 15 12 9 6" />
   </svg>
 </template>

@@ -1,10 +1,16 @@
 <script setup lang="ts">
-  import { RouterView } from 'vue-router';
+  import { RouterView, useRoute } from 'vue-router';
+  import GlobalSearch from '@/components/GlobalSearch.vue';
+
+  const route = useRoute();
 </script>
 
 <template>
   <div class="app-container">
-    <router-view />
+    <router-view v-slot="{ Component }">
+      <component :is="Component" :key="route.fullPath" />
+    </router-view>
+    <GlobalSearch v-if="!route.path.startsWith('/admin')" />
   </div>
 </template>
 
