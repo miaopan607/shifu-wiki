@@ -323,8 +323,8 @@ defineProps<{
 	<svg v-else-if="name === 'markdown'" :class="className || 'w-5 h-5'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 		<path d="M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0Z" />
 		<path d="M7 15V9l2 2 2-2v6" />
-		<path d="m14 11 2-2 2 2" />
-		<path d="M16 9v6" />
+		<path d="m14 13 2 2 2-2" />
+		<path d="M16 15V9" />
 	</svg>
 
 	<!-- 向下箭头（展开/折叠） -->
