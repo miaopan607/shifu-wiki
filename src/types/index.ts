@@ -38,7 +38,6 @@ export interface Misc {
   content: string; // Markdown content
   description?: string;
   published?: boolean;
-  date: string;
 }
 
 export interface AlbumDisc {

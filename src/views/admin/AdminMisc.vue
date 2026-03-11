@@ -200,7 +200,7 @@
               <td class="px-4 py-3">
                 <div class="flex items-center gap-1 text-sm text-[#888]">
                   <AppIcon name="date" />
-                  <span>{{ formatDate(misc.date || misc.created) }}</span>
+                  <span>{{ formatDate(misc.created) }}</span>
                 </div>
               </td>
               <td class="px-4 py-3 text-center">

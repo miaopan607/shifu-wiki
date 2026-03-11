@@ -48,11 +48,31 @@
   const parseTimeSlots = (raw: unknown): ActivityTimeSlot[] => {
     if (!raw) return [];
     if (Array.isArray(raw)) {
-      return raw.map((slot: any) => ({
-        type: slot.type === 'date' ? 'date' : 'datetime',
-        start: slot.start || '',
-        end: slot.end || undefined,
-      }));
+      return raw.map((slot: any) => {
+        const type = slot.type === 'date' ? 'date' : 'datetime';
+        let start = slot.start || '';
+        let end = slot.end || undefined;
+
+        // 如果是日期类型，提取日期部分 YYYY-MM-DD
+        if (type === 'date') {
+          if (start.includes('T')) start = start.split('T')[0];
+          if (start.includes(' ')) start = start.split(' ')[0];
+          if (end && end.includes('T')) end = end.split('T')[0];
+          if (end && end.includes(' ')) end = end.split(' ')[0];
+        } else {
+          // 如果是日期时间类型，转换为 datetime-local 格式 (YYYY-MM-DDTHH:mm)
+          if (start) {
+            const startDate = new Date(start);
+            if (!isNaN(startDate.getTime())) start = toDateTimeLocal(startDate);
+          }
+          if (end) {
+            const endDate = new Date(end);
+            if (!isNaN(endDate.getTime())) end = toDateTimeLocal(endDate);
+          }
+        }
+
+        return { type, start, end };
+      });
     }
     return [];
   };
@@ -144,11 +164,25 @@
         ...activity.value,
         title: normalizedTitle,
         index,
-        timeSlots: activity.value.timeSlots?.map(slot => ({
-          type: slot.type,
-          start: slot.start,
-          end: slot.end || null,
-        })),
+        timeSlots: activity.value.timeSlots?.map(slot => {
+          if (slot.type === 'date') {
+            // 如果是日期类型，确保存储时是 YYYY-MM-DD 00:00:00 格式的字符串
+            // 虽然在 JSON 中，但我们遵循统一的零点规则
+            const startStr = slot.start.includes('T') ? slot.start.split('T')[0] : slot.start;
+            const endStr = slot.end ? (slot.end.includes('T') ? slot.end.split('T')[0] : slot.end) : null;
+            return {
+              type: 'date',
+              start: startStr ? `${startStr} 00:00:00.000Z` : '',
+              end: endStr ? `${endStr} 00:00:00.000Z` : null,
+            };
+          }
+          return {
+            type: slot.type,
+            start: slot.start ? new Date(slot.start).toISOString() : '',
+            end: slot.end ? new Date(slot.end).toISOString() : null,
+          };
+        }),
+        tags: activity.value.tags || [],
       };
 
       if (isEdit.value) {

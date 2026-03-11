@@ -155,14 +155,26 @@
         sort: '-created',
         fields: 'id,index,title,timeSlots,location,tags',
       });
-      activities.value = records.map(record => ({
-        id: record.id,
-        index: record.index,
-        title: record.title,
-        timeSlots: record.timeSlots,
-        location: record.location,
-        tags: Array.isArray(record.tags) ? record.tags : [],
-      }));
+      activities.value = records.map(record => {
+        // 处理 timeSlots，提取日期部分
+        const timeSlots = (record.timeSlots || []).map((slot: any) => {
+          if (slot.type === 'date') {
+            const start = slot.start?.split('T')[0]?.split(' ')[0] || '';
+            const end = slot.end?.split('T')[0]?.split(' ')[0] || null;
+            return { ...slot, start, end };
+          }
+          return slot;
+        });
+
+        return {
+          id: record.id,
+          index: record.index,
+          title: record.title,
+          timeSlots,
+          location: record.location,
+          tags: Array.isArray(record.tags) ? record.tags : [],
+        };
+      });
     } catch (e) {
       console.warn('Failed to fetch activities:', e);
     } finally {

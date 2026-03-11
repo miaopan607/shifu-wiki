@@ -45,17 +45,19 @@ export const encodeSongLinkNames = <T>(record: T): T => {
 // 将各种日期格式统一转换为 YYYY/MM/DD 格式用于展示
 export const formatDateToDisplay = (dateStr: string | undefined): string => {
   if (!dateStr) return '-';
-  // 兼容 YYYY-MM-DD 和 YYYY/MM/DD 格式
-  const normalized = dateStr.replace(/-/g, '/');
+  // PocketBase 返回的日期格式可能是 "YYYY-MM-DD HH:MM:SS.SSSZ"
+  // 我们只取日期部分并显示为 YYYY/MM/DD
   try {
-    const date = new Date(normalized);
+    const date = new Date(dateStr);
     if (isNaN(date.getTime())) return dateStr;
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}/${month}/${day}`;
   } catch {
-    return dateStr;
+    // 降级处理：尝试直接字符串分割
+    const datePart = dateStr.split(' ')[0];
+    return datePart ? datePart.replace(/-/g, '/') : dateStr;
   }
 };
 
@@ -90,27 +92,38 @@ export const formatTimeToDisplay = (dateStr: string | undefined): string => {
   }
 };
 
-// 将日期转换为 YYYY/MM/DD 格式用于存储
+// 将日期转换为 YYYY-MM-DD 00:00:00.000Z 格式用于存储到 PocketBase date 类型字段
 export const normalizeDateForStorage = (dateStr: string | undefined): string => {
   if (!dateStr) return '';
-  // 移除所有非数字字符，然后格式化为 YYYY/MM/DD
+  // 提取数字：YYYYMMDD 或 YYYY/MM/DD 或 YYYY-MM-DD
   const digits = dateStr.replace(/\D/g, '');
-  if (digits.length !== 8) return dateStr;
+  if (digits.length < 8) return dateStr;
   const year = digits.slice(0, 4);
   const month = digits.slice(4, 6);
   const day = digits.slice(6, 8);
-  return `${year}/${month}/${day}`;
+  // PocketBase 的 date 类型字段建议使用 YYYY-MM-DD HH:MM:SS 格式
+  // 用户要求只用到日期的就把时间定为零点
+  return `${year}-${month}-${day} 00:00:00.000Z`;
 };
 
 // 处理从后端获取的日期，兼容新老格式
 export const parseDateFromBackend = (dateStr: string | undefined): string => {
   if (!dateStr) return '';
-  // 后端可能返回 YYYY-MM-DD HH:MM:SS 或 YYYY/MM/DD 格式
-  // 先取日期部分
-  const datePart = dateStr.split(' ')[0];
-  if (!datePart) return '';
-  // 将 - 替换为 / 以统一格式
-  return datePart.replace(/-/g, '/');
+  // 后端返回的是 ISO8601 或 YYYY-MM-DD HH:MM:SS
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) {
+      // 降级：如果不是标准日期，尝试按空格分割
+      const part = dateStr.split(' ')[0];
+      return part ? part.replace(/-/g, '/') : '';
+    }
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}/${month}/${day}`;
+  } catch {
+    return '';
+  }
 };
 
 // 将后端的日期时间格式转换为 datetime-local 输入格式 (YYYY-MM-DDTHH:mm)

@@ -52,11 +52,21 @@
   const parseTimeSlots = (raw: unknown): ActivityTimeSlot[] => {
     if (!raw) return [];
     if (Array.isArray(raw)) {
-      return raw.map((slot: any) => ({
-        type: slot.type === 'date' ? 'date' : 'datetime',
-        start: slot.start || '',
-        end: slot.end || undefined,
-      }));
+      return raw.map((slot: any) => {
+        const type = slot.type === 'date' ? 'date' : 'datetime';
+        let start = slot.start || '';
+        let end = slot.end || undefined;
+
+        // 如果是日期类型，提取日期部分 YYYY-MM-DD
+        if (type === 'date') {
+          if (start.includes('T')) start = start.split('T')[0];
+          if (start.includes(' ')) start = start.split(' ')[0];
+          if (end && end.includes('T')) end = end.split('T')[0];
+          if (end && end.includes(' ')) end = end.split(' ')[0];
+        }
+
+        return { type, start, end };
+      });
     }
     return [];
   };

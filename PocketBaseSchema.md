@@ -10,7 +10,7 @@
 | `index`            | number   | 索引                                                     |
 | `title`            | text     | 标题 (必填)                                              |
 | `artist`           | text     | 艺人 (必填)                                              |
-| `releaseDate`      | text     | 发布日期                                                 |
+| `releaseDate`      | date     | 发布日期                                                 |
 | `lyricist`         | text     | 词作                                                     |
 | `composer`         | text     | 曲作                                                     |
 | `lyrics`           | text     | 歌词                                                     |
@@ -44,7 +44,7 @@
 | `id`          | text     | 主键                               |
 | `index`       | number   | 索引                               |
 | `title`       | text     | 专辑名 (必填)                      |
-| `releaseDate` | text     | 发布日期                           |
+| `releaseDate` | date     | 发布日期                           |
 | `description` | text     | 描述                               |
 | `cover`       | file     | 专辑封面图片                       |
 | `tracks`      | json     | Disc 与歌曲关联 (AlbumDisc[] JSON) |
@@ -82,14 +82,14 @@
 
 ```json
 [
-  { "type": "datetime", "start": "2024-01-15T19:00:00", "end": "2024-01-15T21:00:00" },
-  { "type": "date", "start": "2024-02-20" }
+  { "type": "datetime", "start": "2024-01-15T19:00:00.000Z", "end": "2024-01-15T21:00:00.000Z" },
+  { "type": "date", "start": "2024-02-20T00:00:00.000Z" }
 ]
 ```
 
 - `type`: 时间类型 - `datetime`(详细时间) 或 `date`(仅日期)
-- `start`: 开始时间 (ISO8601 格式或 YYYY-MM-DD)
-- `end`: 可选的结束时间
+- `start`: 开始时间 (ISO8601 格式)。若 `type` 为 `date`，时间固定为零点 (`00:00:00.000Z`)
+- `end`: 可选的结束时间 (ISO8601 格式)。规则同 `start`
 
 ### galleries (图集)
 
