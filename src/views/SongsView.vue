@@ -10,12 +10,18 @@
   const loading = ref(true);
   const searchQuery = ref('');
 
+  // 缓存歌曲封面URL
+  const songCoverUrls = ref<Map<string, string>>(new Map());
+
   onMounted(async () => {
     try {
       allSongs.value = await pb.collection('songs').getFullList({
         sort: '-releaseDate',
-        fields: 'id,title,index,album,releaseDate,artist',
+        fields: 'id,title,index,releaseDate,artist,defaultAlbum,defaultCover,defaultAlbumName',
       });
+
+      // 加载每首歌的默认封面
+      await loadSongCovers();
     } catch (error) {
       console.error('Failed to fetch songs:', error);
     } finally {
@@ -23,27 +29,89 @@
     }
   });
 
+  // 加载歌曲封面
+  const loadSongCovers = async () => {
+    const coverPromises = allSongs.value.map(async song => {
+      const coverUrl = await getSongDefaultCoverUrl(song);
+      if (coverUrl) {
+        songCoverUrls.value.set(song.id, coverUrl);
+      }
+    });
+    await Promise.all(coverPromises);
+  };
+
+  // 获取歌曲默认封面URL
+  const getSongDefaultCoverUrl = async (song: any): Promise<string> => {
+    // 1. 如果设置了专辑封面
+    if (song.defaultCover === 'album' && song.defaultAlbum) {
+      try {
+        const album = await pb.collection('albums').getOne(song.defaultAlbum, { fields: 'id,cover,collectionId' });
+        if (album.cover) {
+          return pb.files.getURL(album, album.cover, { thumb: '400x400' });
+        }
+      } catch {
+        // 专辑可能已删除
+      }
+    }
+
+    // 2. 如果设置了特定的song_cover
+    if (song.defaultCover?.startsWith('song_cover:')) {
+      const coverId = song.defaultCover.replace('song_cover:', '');
+      try {
+        const cover = await pb.collection('song_covers').getOne(coverId, { fields: 'id,image,collectionId' });
+        if (cover.image) {
+          return pb.files.getURL(cover, cover.image, { thumb: '400x400' });
+        }
+      } catch {
+        // 封面可能已删除
+      }
+    }
+
+    // 3. 如果没有设置默认封面，但有关联专辑，尝试获取专辑封面作为默认
+    if (!song.defaultCover && song.defaultAlbum) {
+      try {
+        const album = await pb.collection('albums').getOne(song.defaultAlbum, { fields: 'id,cover,collectionId' });
+        if (album.cover) {
+          return pb.files.getURL(album, album.cover, { thumb: '400x400' });
+        }
+      } catch {
+        // 专辑可能已删除
+      }
+    }
+
+    return '';
+  };
+
   const filteredSongs = computed(() => {
     if (!searchQuery.value.trim()) {
       return allSongs.value;
     }
     const query = searchQuery.value.toLowerCase();
     return allSongs.value.filter(
-      song => song.title?.toLowerCase().includes(query) || song.album?.toLowerCase().includes(query)
+      song => song.title?.toLowerCase().includes(query) || song.artist?.toLowerCase().includes(query)
     );
   });
 
   // 格式化歌曲元数据
   interface MetaPart {
-    type: 'album' | 'date';
+    type: 'artist' | 'date' | 'album';
     value: string;
   }
 
   const getSongMetaParts = (song: any): MetaPart[] => {
     const parts: MetaPart[] = [];
-    if (song.album) parts.push({ type: 'album', value: song.album });
+    if (song.artist) parts.push({ type: 'artist', value: song.artist });
+    // 添加默认展示专辑
+    if (song.defaultAlbumName) {
+      parts.push({ type: 'album', value: song.defaultAlbumName });
+    }
     if (song.releaseDate) parts.push({ type: 'date', value: formatDateToDisplay(song.releaseDate) });
     return parts;
+  };
+
+  // 获取歌曲封面URL
+  const getSongCoverUrl = (songId: string): string => {
+    return songCoverUrls.value.get(songId) || '';
   };
 </script>
 
@@ -60,7 +128,7 @@
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="搜索音乐标题或专辑"
+          placeholder="搜索音乐标题或艺人"
           class="w-full px-4 py-3 bg-[#c9c9c9]/10 border border-[#c9c9c9]/20 rounded text-[#c9c9c9] placeholder-[#888] focus:outline-none focus:border-red-300/50 transition-colors"
         />
       </div>
@@ -80,23 +148,39 @@
           :to="`/songs/${song.index}`"
           class="group block border-b border-[#c9c9c9]/20 pb-8 hover:border-red-300/50 transition-all"
         >
-          <div class="flex justify-between items-end">
-            <div>
-              <h2 class="text-2xl text-[#c9c9c9] group-hover:text-red-300 transition-colors">{{ song.title }}</h2>
-              <div class="flex items-center gap-3 mt-2 tracking-widest text-sm text-[#888]">
-                <template v-for="(part, index) in getSongMetaParts(song)" :key="index">
-                  <div class="flex items-center gap-1">
-                    <AppIcon :name="part.type" />
-                    <span>{{ part.value }}</span>
+          <div class="flex gap-4 items-start">
+            <!-- 封面 -->
+            <div
+              class="shrink-0 w-16 h-16 rounded-lg overflow-hidden shadow-md bg-[#c9c9c9]/10 flex items-center justify-center"
+            >
+              <img
+                v-if="getSongCoverUrl(song.id)"
+                :src="getSongCoverUrl(song.id)"
+                :alt="song.title"
+                class="w-full h-full object-cover"
+              />
+              <AppIcon v-else name="image-placeholder" class-name="w-8 h-8 text-[#888]" />
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex justify-between items-start">
+                <div class="flex-1 min-w-0">
+                  <h2 class="text-2xl text-[#c9c9c9] group-hover:text-red-300 transition-colors">{{ song.title }}</h2>
+                  <div class="flex items-center gap-3 mt-2 tracking-widest text-sm text-[#888]">
+                    <template v-for="(part, index) in getSongMetaParts(song)" :key="index">
+                      <div class="flex items-center gap-1">
+                        <AppIcon :name="part.type === 'artist' ? 'users' : part.type === 'album' ? 'album' : 'date'" />
+                        <span>{{ part.value }}</span>
+                      </div>
+                      <span v-if="index < getSongMetaParts(song).length - 1">·</span>
+                    </template>
                   </div>
-                  <span v-if="index < getSongMetaParts(song).length - 1">·</span>
-                </template>
+                </div>
+                <span
+                  class="text-red-300 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0 shrink-0 ml-4"
+                  >详情 →</span
+                >
               </div>
             </div>
-            <span
-              class="text-red-300 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0"
-              >详情 →</span
-            >
           </div>
         </RouterLink>
       </div>

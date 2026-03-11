@@ -17,7 +17,7 @@
   const filteredSongs = computed(() => {
     if (!searchQuery.value.trim()) return songs.value;
     const query = searchQuery.value.toLowerCase();
-    return songs.value.filter(s => s.title.toLowerCase().includes(query) || s.album?.toLowerCase().includes(query));
+    return songs.value.filter(s => s.title.toLowerCase().includes(query) || s.artist?.toLowerCase().includes(query));
   });
 
   const stats = computed(() => ({
@@ -37,7 +37,7 @@
     try {
       const result = await pb.collection('songs').getFullList({
         sort: '-releaseDate',
-        fields: 'id,title,index,album,releaseDate,artist',
+        fields: 'id,title,index,releaseDate,artist',
       });
       songs.value = result as unknown as Song[];
     } catch (error) {
@@ -134,7 +134,7 @@
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="搜索音乐标题或专辑"
+          placeholder="搜索音乐标题或艺人"
           class="w-full pl-10 pr-4 py-2.5 bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] placeholder-[#888] focus:outline-none focus:border-red-300/50 transition-all"
         />
       </div>
@@ -155,8 +155,8 @@
               </th>
               <th class="px-4 py-3 text-sm font-medium text-[#888]">
                 <div class="flex items-center gap-1.5">
-                  <AppIcon name="album" class-name="w-4 h-4 opacity-60" />
-                  专辑
+                  <AppIcon name="users" class-name="w-4 h-4 opacity-60" />
+                  艺人
                 </div>
               </th>
               <th class="px-4 py-3 text-sm font-medium text-[#888]">
@@ -175,7 +175,7 @@
                 <p class="text-xs text-[#888]">{{ song.artist }}</p>
               </td>
               <td class="px-4 py-3">
-                <p class="text-sm text-[#888]">{{ song.album }}</p>
+                <p class="text-sm text-[#888]">{{ song.artist }}</p>
               </td>
               <td class="px-4 py-3 text-sm text-[#888]">
                 {{ formatDate(song.releaseDate) }}

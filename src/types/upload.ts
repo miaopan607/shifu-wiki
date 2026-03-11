@@ -16,7 +16,7 @@ export interface FileUploadInfo {
 }
 
 // 批量任务类型
-export type BatchTaskType = 'gallery_images' | 'album_cover';
+export type BatchTaskType = 'gallery_images' | 'song_covers';
 
 // 批量上传任务状态
 export type BatchTaskStatus =
@@ -33,11 +33,11 @@ export interface BatchUploadTask {
   id: string;
   type: BatchTaskType;
   targetId: string;
-  targetType: 'gallery' | 'album';
-  targetName: string; // 图集/专辑名称，用于显示
+  targetType: 'gallery' | 'song';
+  targetName: string; // 图集/专辑/音乐名称，用于显示
   serverBatchId?: string;
   lockId?: string;
-  lockCollection?: 'galleries' | 'albums';
+  lockCollection?: 'galleries' | 'albums' | 'songs';
   isFinalizingCancel?: boolean;
   status: BatchTaskStatus;
   files: FileUploadInfo[];
@@ -54,7 +54,7 @@ export interface BatchUploadTask {
 export interface CreateBatchTaskParams {
   type: BatchTaskType;
   targetId: string;
-  targetType: 'gallery' | 'album';
+  targetType: 'gallery' | 'song';
   targetName: string;
   files: File[];
   sorts?: number[]; // 每个文件的排序值

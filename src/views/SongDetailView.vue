@@ -2,8 +2,11 @@
   import { ref, onMounted, computed } from 'vue';
   import { useRoute, useRouter, RouterLink } from 'vue-router';
   import { pb, decodeSongLinkNames, formatDateToDisplay } from '@/lib/pocketbase';
+  import { normalizeAlbumTracks } from '@/lib/albumTracks';
   import { marked } from 'marked';
   import AppIcon from '@/components/AppIcon.vue';
+  import Lightbox from '@/components/Lightbox.vue';
+  import type { SongCover } from '@/types';
 
   const route = useRoute();
   const router = useRouter();
@@ -11,28 +14,48 @@
   const loading = ref(true);
   const showCredits = ref(false);
 
+  // 封面数据
+  interface CoverItem {
+    url: string;
+    source: string;
+    id?: string;
+    collectionId?: string;
+    image?: string;
+  }
+  const allCovers = ref<CoverItem[]>([]);
+  const defaultCoverUrl = ref('');
+
+  // 灯箱
+  const showLightbox = ref(false);
+  const lightboxInitialIndex = ref(0);
+
+  // 关联的专辑信息
+  interface LinkedAlbum {
+    id: string;
+    title: string;
+    index: number;
+  }
+  const linkedAlbums = ref<LinkedAlbum[]>([]);
+
+  // 默认展示专辑信息
+  const displayAlbumName = ref('');
+  const displayAlbumLink = ref('');
+
   const backLink = computed(() => {
     const from = route.query.from;
     const albumIndex = route.query.albumIndex as string;
-
-    if (from === 'album' && albumIndex) {
-      return `/albums/${albumIndex}`;
-    }
+    if (from === 'album' && albumIndex) return `/albums/${albumIndex}`;
     return '/songs';
   });
 
-  const backText = computed(() => {
-    if (route.query.from === 'album') {
-      return '← 返回专辑';
-    }
-    return '← 返回列表';
-  });
+  const backText = computed(() => (route.query.from === 'album' ? '← 返回专辑' : '← 返回列表'));
 
-  // 元数据项配置
+  // 元数据
   interface MetaItem {
     label?: string;
     value: string;
     icon?: string;
+    link?: string;
   }
 
   const metaItems = computed<MetaItem[]>(() => {
@@ -40,10 +63,30 @@
     const items: MetaItem[] = [];
     if (song.value.lyricist) items.push({ label: '词', value: song.value.lyricist, icon: 'lyricist' });
     if (song.value.composer) items.push({ label: '曲', value: song.value.composer, icon: 'composer' });
-    if (song.value.album) items.push({ label: '专辑', value: song.value.album, icon: 'album' });
+    // 默认展示专辑
+    if (displayAlbumName.value) {
+      items.push({
+        label: '专辑',
+        value: displayAlbumName.value,
+        icon: 'album',
+        link: displayAlbumLink.value || undefined,
+      });
+    }
+    // 其他关联专辑（来自 tracks 反查，排除默认专辑）
+    for (const album of linkedAlbums.value) {
+      if (album.id === song.value.defaultAlbum) continue;
+      items.push({ label: '专辑', value: album.title, icon: 'album', link: `/albums/${album.index || album.id}` });
+    }
     if (song.value.releaseDate) items.push({ value: formatDateToDisplay(song.value.releaseDate), icon: 'date' });
     return items;
   });
+
+  // 打开灯箱
+  const openLightbox = () => {
+    if (allCovers.value.length <= 1) return;
+    lightboxInitialIndex.value = 0;
+    showLightbox.value = true;
+  };
 
   onMounted(async () => {
     const index = route.params.index;
@@ -54,9 +97,72 @@
 
     try {
       song.value = decodeSongLinkNames(await pb.collection('songs').getFirstListItem(`index=${index}`));
-      if (song.value) {
-        document.title = `${song.value.title} | 黄诗扶 Wiki`;
+      if (song.value) document.title = `${song.value.title} | 黄诗扶 Wiki`;
+
+      // 设置默认专辑显示
+      if (song.value.defaultAlbum) {
+        try {
+          const album = await pb.collection('albums').getOne(song.value.defaultAlbum);
+          displayAlbumName.value = album.title;
+          displayAlbumLink.value = `/albums/${album.index || album.id}`;
+          // 如果默认封面是专辑封面
+          if (song.value.defaultCover === 'album' && album.cover) {
+            defaultCoverUrl.value = pb.files.getURL(album, album.cover, { thumb: '400x400' });
+          }
+        } catch {
+          /* album deleted */
+        }
+      } else if (song.value.defaultAlbumName) {
+        displayAlbumName.value = song.value.defaultAlbumName;
       }
+
+      // 加载歌曲自有封面
+      const songCovers = (await pb.collection('song_covers').getFullList({
+        filter: `song = "${song.value.id}"`,
+        sort: 'sort',
+      })) as unknown as SongCover[];
+
+      const songCoverItems: CoverItem[] = songCovers.map(c => ({
+        url: pb.files.getURL(c, c.image, { thumb: '400x400' }),
+        source: '自有封面',
+        id: c.id,
+        collectionId: c.collectionId,
+        image: c.image,
+      }));
+
+      // 如果默认封面指向特定 song_cover
+      if (song.value.defaultCover?.startsWith('song_cover:')) {
+        const coverId = song.value.defaultCover.replace('song_cover:', '');
+        defaultCoverUrl.value = songCoverItems.find((_, i) => songCovers[i]?.id === coverId)?.url || '';
+      }
+
+      // 查找关联的专辑（通过 albums.tracks 反查）+ 专辑封面
+      try {
+        const allAlbumsResult = await pb
+          .collection('albums')
+          .getFullList({ fields: 'id,title,index,tracks,cover,collectionId' });
+        for (const album of allAlbumsResult) {
+          const tracks = normalizeAlbumTracks((album as any).tracks);
+          const songIsInAlbum = tracks.some(disc => Array.isArray(disc.songs) && disc.songs.includes(song.value.id));
+          if (songIsInAlbum) {
+            linkedAlbums.value.push({ id: album.id, title: album.title, index: album.index });
+            // 添加专辑的封面到轮播
+            if (album.cover) {
+              songCoverItems.push({
+                url: pb.files.getURL(album, album.cover, { thumb: '400x400' }),
+                source: `来自专辑: ${album.title}`,
+                id: album.id,
+                collectionId: album.collectionId,
+                image: album.cover,
+              });
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load linked albums:', err);
+      }
+
+      allCovers.value = songCoverItems;
     } catch (error) {
       console.error('Failed to fetch song:', error);
       router.replace('/404');
@@ -69,7 +175,6 @@
     showCredits.value = false;
     document.body.style.overflow = 'auto';
   };
-
   const openModal = () => {
     showCredits.value = true;
     document.body.style.overflow = 'hidden';
@@ -94,57 +199,68 @@
 
       <div class="relative">
         <article class="w-full">
-          <header class="mb-6">
-            <!-- 标题 -->
-            <h1 class="text-5xl text-[#c9c9c9] tracking-[0.2em] drop-shadow-[0_0_10px_rgba(201,201,201,0.3)]">
-              {{ song.title }}
-            </h1>
-            <!-- 元数据 -->
-            <div class="flex flex-wrap items-center gap-y-2 text-[#888] text-sm tracking-widest mt-4">
-              <template v-for="(item, index) in metaItems" :key="index">
-                <div class="flex items-center">
-                  <div class="flex items-center gap-1.5">
-                    <AppIcon :name="item.icon as any" />
-                    <span v-if="item.label">{{ item.label }}：{{ item.value }}</span>
-                    <span v-else>{{ item.value }}</span>
-                  </div>
-                  <span
-                    v-if="index < metaItems.length - 1 || song.credits"
-                    class="mx-4 h-3 w-px bg-[#c9c9c9]/30"
-                  ></span>
-                </div>
-              </template>
-              <button
-                v-if="song.credits"
-                class="w-fit transition-all duration-300 border-b border-transparent hover:border-red-300 hover:text-red-300 text-left cursor-pointer flex items-center gap-1.5"
-                @click="openModal"
+          <header class="mb-6 flex gap-6 items-start">
+            <!-- 封面 - 放在左侧 -->
+            <div
+              v-if="defaultCoverUrl"
+              class="shrink-0 w-24 h-24 rounded-lg overflow-hidden shadow-lg cursor-pointer hover:shadow-xl transition-shadow"
+              :class="allCovers.length > 1 ? 'hover:ring-2 hover:ring-red-300/50' : ''"
+              @click="openLightbox"
+            >
+              <img :src="defaultCoverUrl" :alt="song.title" class="w-full h-full object-cover" />
+            </div>
+
+            <!-- 标题和元数据 -->
+            <div class="flex-1 min-w-0">
+              <h1
+                class="text-4xl md:text-5xl text-[#c9c9c9] tracking-[0.2em] drop-shadow-[0_0_10px_rgba(201,201,201,0.3)]"
+                >{{ song.title }}</h1
               >
-                <AppIcon name="users" />
-                制作人员
-              </button>
+              <div class="flex flex-wrap items-center gap-y-2 text-[#888] text-sm tracking-widest mt-4">
+                <template v-for="(item, index) in metaItems" :key="index">
+                  <div class="flex items-center">
+                    <div class="flex items-center gap-1.5">
+                      <AppIcon :name="item.icon as any" />
+                      <template v-if="item.link">
+                        <RouterLink :to="item.link" class="hover:text-red-300 transition-colors">
+                          <span v-if="item.label">{{ item.label }}：{{ item.value }}</span>
+                          <span v-else>{{ item.value }}</span>
+                        </RouterLink>
+                      </template>
+                      <template v-else>
+                        <span v-if="item.label">{{ item.label }}：{{ item.value }}</span>
+                        <span v-else>{{ item.value }}</span>
+                      </template>
+                    </div>
+                    <span
+                      v-if="index < metaItems.length - 1 || song.credits"
+                      class="mx-4 h-3 w-px bg-[#c9c9c9]/30"
+                    ></span>
+                  </div>
+                </template>
+                <button
+                  v-if="song.credits"
+                  class="w-fit transition-all duration-300 border-b border-transparent hover:border-red-300 hover:text-red-300 text-left cursor-pointer flex items-center gap-1.5"
+                  @click="openModal"
+                >
+                  <AppIcon name="users" /> 制作人员
+                </button>
+              </div>
             </div>
           </header>
-          <!-- 装饰线 -->
           <hr class="border-[#c9c9c9]/30 mb-8" />
-
-          <!-- 描述内容 -->
           <div
             v-if="song.description"
             class="prose prose-invert mx-auto mb-8 text-[#c9c9c9]/90 leading-relaxed tracking-wider text-base"
           >
             <div v-html="renderMarkdown(song.description)"></div>
           </div>
-
-          <!-- 描述与歌词的分隔线 -->
           <hr v-if="song.description" class="border-[#c9c9c9]/30 mb-8" />
-
-          <!-- 歌词内容 -->
           <div
             class="prose prose-invert mx-auto lyrics-container mt-0 text-lg whitespace-pre-line"
             v-html="song.lyrics"
           ></div>
         </article>
-        <!-- 右侧边栏 -->
         <aside class="w-full lg:w-56 shrink-0 mt-12 lg:mt-0 lg:absolute lg:left-[calc(100%+4rem)] lg:top-0">
           <hr class="border-[#c9c9c9]/30 mb-5" />
           <template v-if="song.links && Array.isArray(song.links) && song.links.length > 0">
@@ -166,7 +282,6 @@
             </div>
             <hr class="border-[#c9c9c9]/30 mt-5 mb-5" />
           </template>
-
           <template v-if="song.otherLinks && Array.isArray(song.otherLinks) && song.otherLinks.length > 0">
             <div class="flex flex-col gap-4 px-2">
               <a
@@ -191,7 +306,6 @@
     </div>
   </main>
 
-  <!-- 制作人员名单 -->
   <Transition name="fade">
     <div v-if="showCredits" class="fixed inset-0 z-50 flex items-center justify-center px-4">
       <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" @click="closeModal"></div>
@@ -215,6 +329,26 @@
       </div>
     </div>
   </Transition>
+
+  <!-- 封面灯箱 -->
+  <Lightbox
+    v-if="allCovers.length > 0"
+    v-model="showLightbox"
+    :images="
+      allCovers.map(c => ({
+        id: c.id || '',
+        collectionId: c.collectionId || '',
+        collectionName: c.collectionId || '',
+        image: c.image || '',
+        gallery: '',
+        sort: 0,
+        created: '',
+        updated: '',
+      }))
+    "
+    :initial-index="lightboxInitialIndex"
+    :gallery-title="song?.title || ''"
+  />
 </template>
 
 <style scoped>
@@ -222,7 +356,6 @@
   .fade-leave-active {
     transition: opacity 0.3s ease;
   }
-
   .fade-enter-from,
   .fade-leave-to {
     opacity: 0;

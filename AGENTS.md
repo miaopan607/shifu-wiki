@@ -34,7 +34,6 @@ src/
 
 pocketbase/
 ├── pb_hooks/         # 服务端钩子
-└── pb_migrations/    # 数据库迁移
 ```
 
 ## 核心功能

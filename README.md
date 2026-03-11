@@ -17,7 +17,7 @@
 │   │   └── admin/         # 管理后台页面
 │   ├── App.vue            # 根组件
 │   └── main.ts            # 入口文件
-├── pocketbase/            # PocketBase hooks / migrations / 部署说明
+├── pocketbase/            # PocketBase hooks
 ├── public/                # 公共静态资源
 ├── index.html             # 入口 HTML
 ├── package.json           # 项目配置

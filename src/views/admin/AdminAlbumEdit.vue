@@ -10,12 +10,11 @@
     releaseEditLock,
     type EditLockRecord,
   } from '@/lib/editLock';
-  import { uploadStore } from '@/stores/uploadStore';
   import EditLockConflictDialog from '@/components/EditLockConflictDialog.vue';
   import VersionConflictDialog from '@/components/VersionConflictDialog.vue';
   import AdminInput from '@/components/AdminInput.vue';
   import type { Album } from '@/types';
-  import type { BatchUploadTask } from '@/types/upload';
+  import { normalizeAlbumTracks } from '@/lib/albumTracks';
   import AppIcon from '@/components/AppIcon.vue';
 
   const route = useRoute();
@@ -36,35 +35,60 @@
   let editLockConflictResolver: ((force: boolean) => void) | null = null;
 
   const originalUpdated = ref<string | null>(null);
-
-  const currentBatchTask = ref<BatchUploadTask | null>(null);
-
   const currentLockId = ref<string | null>(null);
   const conflictingLock = ref<EditLockRecord | null>(null);
   const takingOverLock = ref(false);
+  const hasChanges = ref(false);
 
   const album = ref<Partial<Album>>({
     title: '',
     releaseDate: '',
     description: '',
+    tracks: [{ disc: 1, songs: [] }],
   });
 
-  const coverPreview = ref<string | null>(null);
+  // === 单封面管理 ===
   const coverFile = ref<File | null>(null);
-  const originalCoverUrl = ref<string | null>(null);
+  const coverPreviewUrl = ref('');
+  const removeCoverFlag = ref(false);
   const fileInput = ref<HTMLInputElement | null>(null);
-  const isCoverDragOver = ref(false);
-  const hasChanges = ref(false);
-  const coverMarkedForDeletion = ref(false);
 
-  // 是否有未保存的封面
-  const hasUnsavedCover = computed(() => coverFile.value !== null || coverMarkedForDeletion.value);
-
-  // 保存按钮可用条件
-  const canSave = computed(() => {
-    return !saving.value && (album.value.title?.trim().length ?? 0) > 0;
+  const currentCoverUrl = computed(() => {
+    if (removeCoverFlag.value) return '';
+    if (coverPreviewUrl.value) return coverPreviewUrl.value;
+    if (isEdit.value && album.value.cover && album.value.collectionId) {
+      return pb.files.getURL(album.value as any, album.value.cover, { thumb: '400x400' });
+    }
+    return '';
   });
 
+  // === 曲目管理 ===
+  const songSearchQuery = ref('');
+  const songSearchResults = ref<any[]>([]);
+  const searchingDisc = ref<number | null>(null);
+  const isSearchingSongs = ref(false);
+
+  const allLinkedSongIds = computed(() => {
+    const ids = new Set<string>();
+    for (const disc of album.value.tracks || []) {
+      for (const songId of disc.songs) {
+        ids.add(songId);
+      }
+    }
+    return ids;
+  });
+
+  const songCache = ref<Map<string, any>>(new Map());
+
+  const getSongName = (songId: string) => {
+    return songCache.value.get(songId)?.title || songId;
+  };
+
+  const getSongArtist = (songId: string) => {
+    return songCache.value.get(songId)?.artist || '';
+  };
+
+  // === 编辑锁 ===
   const getLockWarningMessage = (lock?: EditLockRecord | null, fallbackUsername?: string): string => {
     const lockingUser = lock?.username?.trim() || fallbackUsername || '未知用户';
     const lockedAt = formatEditLockDateTime(lock?.created || lock?.updated);
@@ -79,7 +103,6 @@
   const requestEditLockConflictResolution = (message?: string): Promise<boolean> => {
     editLockConflictMessage.value = message || '仍有其他终端正在编辑此页面，请稍后再试。';
     showEditLockConflictDialog.value = true;
-
     return new Promise(resolve => {
       editLockConflictResolver = resolve;
     });
@@ -92,23 +115,19 @@
     resolver?.(force);
   };
 
-  // 创建编辑锁
   const createEditLock = async (): Promise<boolean> => {
     if (!isEdit.value) return true;
     if (currentLockId.value) return true;
-
     try {
       const result = await acquireEditLock('albums', route.params.id as string);
       if (!result.ok) {
         setConflictingLockState(result.conflictingLock || null, result.lockingUser);
         return false;
       }
-
       if (isDisposed && result.lockId) {
         await releaseEditLock(result.lockId);
         return false;
       }
-
       currentLockId.value = result.lockId || null;
       setConflictingLockState(null);
       return true;
@@ -118,163 +137,30 @@
     }
   };
 
-  const handoffEditLockToTask = async (task: BatchUploadTask, targetId: string) => {
-    let lockId = currentLockId.value;
-
-    if (!lockId) {
-      const result = await acquireEditLock('albums', targetId);
-      if (!result.ok || !result.lockId) {
-        throw new Error(`无法为后台上传创建编辑锁：${result.lockingUser || '锁创建失败'}`);
-      }
-      lockId = result.lockId;
-    }
-
-    uploadStore.attachTaskLock(task.id, lockId, 'albums');
-    currentLockId.value = null;
-  };
-
-  // 删除编辑锁
   const removeEditLock = async () => {
     if (currentLockId.value) {
       try {
         await releaseEditLock(currentLockId.value);
       } catch (err) {
-        console.error('Failed to remove edit lock:', err);
+        console.error(err);
       }
       currentLockId.value = null;
     }
-
     setConflictingLockState(null);
   };
 
-  onMounted(async () => {
-    loading.value = true;
-    try {
-      if (isEdit.value) {
-        const record = await pb.collection('albums').getOne(route.params.id as string);
-        // 记录原始更新时间用于版本控制
-        originalUpdated.value = record.updated;
-
-        album.value = {
-          ...record,
-          releaseDate: record.releaseDate ? parseDateFromBackend(record.releaseDate) : '',
-        } as unknown as Album;
-
-        if (record.cover) {
-          const url = pb.files.getURL(record, record.cover, { thumb: '400x400' });
-          coverPreview.value = url;
-          originalCoverUrl.value = url;
-        }
-      }
-    } catch (err) {
-      console.error('Failed to initialize album edit:', err);
-      error.value = '初始化失败';
-      alert('初始化失败');
-      router.push('/admin/albums');
-    } finally {
-      loading.value = false;
-      if (isEdit.value && !error.value) {
-        window.setTimeout(() => {
-          void createEditLock();
-        }, 0);
-      }
-    }
-  });
-
-  const setCoverFile = (file: File) => {
-    if (!file.type.startsWith('image/')) {
-      alert('仅支持图片文件');
-      return;
-    }
-
-    // 如果已经有未保存的封面，先释放URL
-    if (coverPreview.value && coverPreview.value.startsWith('blob:')) {
-      URL.revokeObjectURL(coverPreview.value);
-    }
-
-    coverFile.value = file;
-    coverPreview.value = URL.createObjectURL(file);
-    coverMarkedForDeletion.value = false;
-    markChanged();
-
-    if (currentBatchTask.value) {
-      uploadStore.replaceTaskFiles(currentBatchTask.value.id, {
-        files: [file],
-      });
-      return;
-    }
-
-    currentBatchTask.value = uploadStore.addBatchTask({
-      type: 'album_cover',
-      targetId: (route.params.id as string) || 'new',
-      targetType: 'album',
-      targetName: album.value.title || '新建专辑',
-      files: [file],
-    });
-  };
-
-  const removeCover = () => {
-    if (coverPreview.value && coverPreview.value.startsWith('blob:')) {
-      URL.revokeObjectURL(coverPreview.value);
-    }
-    coverFile.value = null;
-    coverMarkedForDeletion.value = true;
-    markChanged();
-
-    if (currentBatchTask.value) {
-      uploadStore.discardTask(currentBatchTask.value.id);
-      currentBatchTask.value = null;
-    }
-  };
-
-  const cancelRemoveCover = () => {
-    coverMarkedForDeletion.value = false;
-    coverPreview.value = originalCoverUrl.value;
-    markChanged();
-  };
-
-  const handleCoverChange = (event: Event) => {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files[0]) {
-      setCoverFile(input.files[0]);
-    }
-  };
-
-  const handleCoverDragEnter = () => {
-    isCoverDragOver.value = true;
-  };
-
-  const handleCoverDragLeave = () => {
-    isCoverDragOver.value = false;
-  };
-
-  const handleCoverDrop = (event: DragEvent) => {
-    isCoverDragOver.value = false;
-    const file = event.dataTransfer?.files?.[0];
-    if (file) {
-      setCoverFile(file);
-    }
-  };
-
-  const markChanged = () => {
-    hasChanges.value = true;
-  };
-
-  // 检查编辑锁（提交时检测）
   const checkEditLock = async (): Promise<string | null> => {
     if (!isEdit.value) return null;
-
     try {
       const lock = await findConflictingEditLock('albums', route.params.id as string, currentLockId.value);
       if (lock) {
         setConflictingLockState(lock);
         return getLockWarningMessage(lock);
       }
-
       setConflictingLockState(null);
       return null;
     } catch (err) {
-      console.error('Failed to check edit lock:', err);
+      console.error(err);
       return null;
     }
   };
@@ -286,32 +172,26 @@
 
   const forceTakeoverEditLock = async (): Promise<boolean> => {
     if (!isEdit.value) return true;
-
     try {
       const result = await forceAcquireEditLock('albums', route.params.id as string, currentLockId.value);
       if (!result.ok || !result.lockId) {
-        error.value = '无法强行接管编辑锁，请重试';
+        error.value = '无法强行接管编辑锁';
         return false;
       }
-
       currentLockId.value = result.lockId;
       setConflictingLockState(null);
       return true;
     } catch (err) {
-      console.error('Failed to force acquire edit lock:', err);
-      error.value = '无法强行接管编辑锁，请重试';
+      console.error(err);
+      error.value = '无法强行接管编辑锁';
       return false;
     }
   };
 
   const takeOverConflictingEditLock = async () => {
-    if (takingOverLock.value || currentLockId.value) {
-      return;
-    }
-
+    if (takingOverLock.value || currentLockId.value) return;
     takingOverLock.value = true;
     error.value = '';
-
     try {
       await forceTakeoverEditLock();
     } finally {
@@ -319,18 +199,15 @@
     }
   };
 
+  // === 版本冲突 ===
   const latestEditPath = computed(() => {
-    if (!isEdit.value) {
-      return router.resolve({ name: 'admin-album-new' }).href;
-    }
-
+    if (!isEdit.value) return router.resolve({ name: 'admin-album-new' }).href;
     return router.resolve({ name: 'admin-album-edit', params: { id: route.params.id as string } }).href;
   });
 
   const requestVersionConflictResolution = (latestUpdated?: string | null): Promise<boolean> => {
     latestConflictUpdated.value = latestUpdated || null;
     showVersionConflictDialog.value = true;
-
     return new Promise(resolve => {
       versionConflictResolver = resolve;
     });
@@ -343,125 +220,207 @@
     resolver?.(force);
   };
 
-  // 检查版本冲突（提交时检测）
   const checkVersionConflict = async (): Promise<{ hasConflict: boolean; currentUpdated?: string }> => {
     if (!isEdit.value || !originalUpdated.value) return { hasConflict: false };
-
     try {
       const current = await pb.collection('albums').getOne(route.params.id as string);
-
-      if (current.updated !== originalUpdated.value) {
-        return { hasConflict: true, currentUpdated: current.updated };
-      }
+      if (current.updated !== originalUpdated.value) return { hasConflict: true, currentUpdated: current.updated };
       return { hasConflict: false };
     } catch (err) {
-      console.error('Failed to check version:', err);
+      console.error(err);
       return { hasConflict: false };
     }
   };
 
+  // === 加载 ===
+  onMounted(async () => {
+    if (isEdit.value) {
+      loading.value = true;
+      try {
+        const record = await pb.collection('albums').getOne(route.params.id as string);
+        originalUpdated.value = record.updated;
+        const parsedTracks = normalizeAlbumTracks((record as any).tracks);
+        album.value = {
+          ...record,
+          releaseDate: record.releaseDate ? parseDateFromBackend(record.releaseDate) : '',
+          tracks: parsedTracks.length > 0 ? parsedTracks : [{ disc: 1, songs: [] }],
+        } as unknown as Album;
+
+        // 加载歌曲名缓存
+        const allSongIds = (album.value.tracks || []).flatMap(d => d.songs);
+        if (allSongIds.length > 0) {
+          const filter = allSongIds.map(id => `id="${id}"`).join(' || ');
+          const songs = await pb.collection('songs').getFullList({ filter, fields: 'id,title,artist' });
+          songs.forEach(s => songCache.value.set(s.id, s));
+        }
+      } catch (err) {
+        console.error('Failed to fetch album:', err);
+        alert('获取专辑详情失败');
+        router.push('/admin/albums');
+      } finally {
+        loading.value = false;
+        if (!error.value) {
+          window.setTimeout(() => {
+            void createEditLock();
+          }, 0);
+        }
+      }
+    }
+  });
+
+  // === 封面操作 ===
+  const handleCoverSelect = (event: Event) => {
+    const target = event.target as HTMLInputElement;
+    if (target.files && target.files[0]) {
+      coverFile.value = target.files[0];
+      if (coverPreviewUrl.value) URL.revokeObjectURL(coverPreviewUrl.value);
+      coverPreviewUrl.value = URL.createObjectURL(target.files[0]);
+      removeCoverFlag.value = false;
+      hasChanges.value = true;
+      target.value = '';
+    }
+  };
+
+  const removeCover = () => {
+    if (coverPreviewUrl.value) URL.revokeObjectURL(coverPreviewUrl.value);
+    coverFile.value = null;
+    coverPreviewUrl.value = '';
+    removeCoverFlag.value = true;
+    hasChanges.value = true;
+  };
+
+  // === 曲目操作 ===
+  const addDisc = () => {
+    if (!album.value.tracks) album.value.tracks = [];
+    const maxDisc = album.value.tracks.reduce((max, d) => Math.max(max, d.disc), 0);
+    album.value.tracks.push({ disc: maxDisc + 1, songs: [] });
+    hasChanges.value = true;
+  };
+
+  const removeDisc = (discIndex: number) => {
+    album.value.tracks?.splice(discIndex, 1);
+    hasChanges.value = true;
+  };
+
+  const removeSongFromDisc = (discIndex: number, songIndex: number) => {
+    album.value.tracks?.[discIndex]?.songs.splice(songIndex, 1);
+    hasChanges.value = true;
+  };
+
+  let searchDebounce: ReturnType<typeof setTimeout> | null = null;
+  const searchSongs = (discIndex: number) => {
+    searchingDisc.value = discIndex;
+    if (searchDebounce) clearTimeout(searchDebounce);
+    const query = songSearchQuery.value.trim();
+    if (!query) {
+      songSearchResults.value = [];
+      return;
+    }
+    isSearchingSongs.value = true;
+    searchDebounce = setTimeout(async () => {
+      try {
+        const results = await pb.collection('songs').getList(1, 15, {
+          filter: `title ~ "${query}" || artist ~ "${query}"`,
+          fields: 'id,title,artist',
+        });
+        songSearchResults.value = results.items.filter(s => !allLinkedSongIds.value.has(s.id));
+      } catch (err) {
+        console.error(err);
+      } finally {
+        isSearchingSongs.value = false;
+      }
+    }, 300);
+  };
+
+  const addSongToDisc = (discIndex: number, song: any) => {
+    const disc = album.value.tracks?.[discIndex];
+    if (!disc) return;
+    disc.songs.push(song.id);
+    songCache.value.set(song.id, song);
+    songSearchResults.value = songSearchResults.value.filter(s => s.id !== song.id);
+    hasChanges.value = true;
+  };
+
+  const closeSearch = () => {
+    searchingDisc.value = null;
+    songSearchQuery.value = '';
+    songSearchResults.value = [];
+  };
+
+  const markChanged = () => {
+    hasChanges.value = true;
+  };
+
+  // === 保存 ===
   const saveAlbum = async () => {
     titleError.value = '';
     error.value = '';
-
-    if (!album.value.title?.trim()) {
-      titleError.value = '专辑标题不能为空';
+    const normalizedTitle = album.value.title?.trim() || '';
+    if (!normalizedTitle) {
+      titleError.value = '标题不能为空';
       return;
     }
 
     saving.value = true;
-
     try {
-      // 1. 检查并处理编辑锁冲突
-      const lockMessage = await checkEditLock();
-      if (lockMessage) {
-        saving.value = false;
-        const shouldForceSubmit = await requestEditLockConflictResolution(lockMessage);
-        if (!shouldForceSubmit) {
-          return;
-        }
-        const tookOverLock = await forceTakeoverEditLock();
-        if (!tookOverLock) {
-          return;
-        }
-        saving.value = true;
-      }
-
-      const hasLock = await ensureEditLock();
-      if (!hasLock) {
-        saving.value = false;
-        const shouldForceSubmit = await requestEditLockConflictResolution(lockWarning.value);
-        if (!shouldForceSubmit) {
-          return;
-        }
-        const tookOverLock = await forceTakeoverEditLock();
-        if (!tookOverLock) {
-          return;
-        }
-        saving.value = true;
-      }
-
-      // 2. 检查版本冲突
-      const { hasConflict, currentUpdated } = await checkVersionConflict();
-      if (hasConflict) {
-        saving.value = false;
-        const shouldForce = await requestVersionConflictResolution(currentUpdated);
-        if (!shouldForce) {
+      if (isEdit.value) {
+        const lockMessage = await checkEditLock();
+        if (lockMessage) {
           saving.value = false;
-          return;
+          const shouldForce = await requestEditLockConflictResolution(lockMessage);
+          if (!shouldForce) return;
+          const took = await forceTakeoverEditLock();
+          if (!took) return;
+          saving.value = true;
         }
-        saving.value = true;
+        const hasLock = await ensureEditLock();
+        if (!hasLock) {
+          saving.value = false;
+          const shouldForce = await requestEditLockConflictResolution(lockWarning.value);
+          if (!shouldForce) return;
+          const took = await forceTakeoverEditLock();
+          if (!took) return;
+          saving.value = true;
+        }
+        const { hasConflict, currentUpdated } = await checkVersionConflict();
+        if (hasConflict) {
+          saving.value = false;
+          const shouldForce = await requestVersionConflictResolution(currentUpdated);
+          if (!shouldForce) return;
+          saving.value = true;
+        }
       }
 
-      // 3. 保存专辑基本信息
-      const formData = new FormData();
-      formData.append('title', album.value.title.trim());
-      formData.append('releaseDate', normalizeDateForStorage(album.value.releaseDate));
-      formData.append('description', album.value.description || '');
-
-      // 处理封面删除（仅编辑模式）
-      if (isEdit.value && coverMarkedForDeletion.value) {
-        formData.append('cover', '');
+      let index = album.value.index;
+      if (!isEdit.value) {
+        const maxResult = await pb.collection('albums').getList(1, 1, { sort: '-index', fields: 'index' });
+        index = maxResult.items.length > 0 ? ((maxResult.items[0] as any).index as number) + 1 : 1;
       }
 
-      let targetAlbumId: string;
+      const normalizedTracks = normalizeAlbumTracks(album.value.tracks);
+
+      const payload: Record<string, unknown> = {
+        title: normalizedTitle,
+        index,
+        releaseDate: normalizeDateForStorage(album.value.releaseDate) || '',
+        description: album.value.description || '',
+        tracks: normalizedTracks,
+      };
+
+      if (coverFile.value) {
+        payload.cover = coverFile.value;
+      } else if (removeCoverFlag.value) {
+        payload.cover = '';
+      }
 
       if (isEdit.value) {
-        await pb.collection('albums').update(route.params.id as string, formData);
-        targetAlbumId = route.params.id as string;
+        await pb.collection('albums').update(route.params.id as string, payload);
       } else {
-        // 自动分配递增索引：获取当前最大索引并加1
-        const maxIndexResult = await pb.collection('albums').getList(1, 1, {
-          sort: '-index',
-          fields: 'index',
-        });
-        const nextIndex = maxIndexResult.items.length > 0 ? ((maxIndexResult.items[0] as any).index as number) + 1 : 1;
-        formData.append('index', String(nextIndex));
-
-        const created = await pb.collection('albums').create(formData);
-        targetAlbumId = created.id;
+        await pb.collection('albums').create(payload);
       }
 
-      // 4. 更新批量任务的目标 ID 和名称
-      if (currentBatchTask.value) {
-        currentBatchTask.value.targetId = targetAlbumId;
-        currentBatchTask.value.targetName = album.value.title;
-      }
-
-      // 5. 启动后台上传（如果有封面文件）
-      if (currentBatchTask.value) {
-        await handoffEditLockToTask(currentBatchTask.value, targetAlbumId);
-        uploadStore.startPendingTasks(targetAlbumId, 'album');
-        currentBatchTask.value = null;
-      } else {
-        await removeEditLock();
-      }
-
-      coverFile.value = null;
-      coverMarkedForDeletion.value = false;
+      await removeEditLock();
       hasChanges.value = false;
-
-      // 6. 立即跳转回列表页
       router.push('/admin/albums');
     } catch (err) {
       console.error('Failed to save album:', err);
@@ -472,23 +431,12 @@
   };
 
   const cancel = () => {
-    if (hasChanges.value || hasUnsavedCover.value) {
-      if (!confirm('有未保存的更改，确定要离开吗？')) {
-        return;
-      }
-    }
-
-    if (currentBatchTask.value?.status === 'pending') {
-      uploadStore.discardTask(currentBatchTask.value.id);
-      currentBatchTask.value = null;
-    }
-
+    if (hasChanges.value && !confirm('有未保存的更改，确定要离开吗？')) return;
     router.push('/admin/albums');
   };
 
-  // 阻止关闭标签页
   const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-    if (hasChanges.value || hasUnsavedCover.value) {
+    if (hasChanges.value) {
       e.preventDefault();
       e.returnValue = '';
       return '';
@@ -498,32 +446,19 @@
   onMounted(() => {
     window.addEventListener('beforeunload', handleBeforeUnload);
   });
-
   onUnmounted(() => {
     isDisposed = true;
     window.removeEventListener('beforeunload', handleBeforeUnload);
-    // 清理本地预览 URL
-    if (coverPreview.value && coverPreview.value.startsWith('blob:')) {
-      URL.revokeObjectURL(coverPreview.value);
-    }
-    if (currentBatchTask.value?.status === 'pending') {
-      uploadStore.discardTask(currentBatchTask.value.id);
-      currentBatchTask.value = null;
-    }
-    // 删除编辑锁
+    if (coverPreviewUrl.value) URL.revokeObjectURL(coverPreviewUrl.value);
     removeEditLock();
   });
 
   const openDatePicker = () => {
     if (!datePicker.value) return;
     try {
-      if (typeof (datePicker.value as any).showPicker === 'function') {
-        (datePicker.value as any).showPicker();
-      } else {
-        datePicker.value.click();
-      }
+      if (typeof (datePicker.value as any).showPicker === 'function') (datePicker.value as any).showPicker();
+      else datePicker.value.click();
     } catch (e) {
-      console.error('Failed to open date picker:', e);
       datePicker.value.click();
     }
   };
@@ -532,24 +467,20 @@
     const input = e.target as HTMLInputElement;
     let value = input.value.replace(/\D/g, '');
     if (value.length > 8) value = value.slice(0, 8);
-
     let formatted = '';
     if (value.length > 0) {
       formatted = value.slice(0, 4);
       if (value.length > 4) {
         formatted += '/' + value.slice(4, 6);
-        if (value.length > 6) {
-          formatted += '/' + value.slice(6, 8);
-        }
+        if (value.length > 6) formatted += '/' + value.slice(6, 8);
       }
     }
     album.value.releaseDate = formatted;
-    markChanged();
   };
 </script>
 
 <template>
-  <div class="max-w-4xl mx-auto space-y-6">
+  <div class="max-w-7xl mx-auto space-y-6">
     <div class="flex items-center justify-between">
       <div class="flex-1">
         <h1 class="text-2xl font-semibold text-[#c9c9c9] flex items-center gap-3">
@@ -564,12 +495,11 @@
           class="px-4 py-2 text-[#c9c9c9] hover:bg-white/5 rounded-lg transition-colors inline-flex items-center gap-2"
           @click="cancel"
         >
-          <AppIcon name="close" class-name="w-4 h-4" />
-          取消
+          <AppIcon name="close" class-name="w-4 h-4" /> 取消
         </button>
         <button
-          :disabled="!canSave"
-          class="px-6 py-2 bg-red-300 text-[rgb(77,0,0)] font-semibold rounded-lg hover:bg-[#fca5a5] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+          class="px-6 py-2 bg-red-300 text-[rgb(77,0,0)] font-semibold rounded-lg hover:bg-[#fca5a5] transition-colors flex items-center gap-2"
+          :disabled="saving"
           @click="saveAlbum"
         >
           <AppIcon v-if="saving" name="refresh" class-name="w-4 h-4 animate-spin" />
@@ -588,30 +518,21 @@
         <AppIcon name="warning" class-name="w-5 h-5 shrink-0" />
         <span>{{ lockWarning }}</span>
       </p>
-
       <div v-if="conflictingLock" class="space-y-1 pl-7 text-sm text-yellow-100/85">
-        <p>
-          <span class="text-[#888]">锁用户：</span>
-          <span>{{ conflictingLock.username || '未知用户' }}</span>
-        </p>
-        <p>
-          <span class="text-[#888]">加锁时间：</span>
-          <span>{{ formatEditLockDateTime(conflictingLock.created || conflictingLock.updated) }}</span>
-        </p>
+        <p><span class="text-[#888]">锁用户：</span>{{ conflictingLock.username || '未知用户' }}</p>
+        <p
+          ><span class="text-[#888]">加锁时间：</span
+          >{{ formatEditLockDateTime(conflictingLock.created || conflictingLock.updated) }}</p
+        >
       </div>
-
-      <p v-if="!currentLockId" class="pl-7 text-sm text-yellow-100/85"
-        >如果你认为原有锁已失效，或者你知道你在做什么，可以点击下方按钮移除原有锁。</p
-      >
-
       <div v-if="!currentLockId" class="pl-7">
         <button
           type="button"
-          class="rounded-lg border border-yellow-400/40 px-4 py-2 text-sm text-yellow-100 hover:bg-yellow-500/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          class="rounded-lg border border-yellow-400/40 px-4 py-2 text-sm text-yellow-100 hover:bg-yellow-500/10 transition-colors disabled:opacity-50"
           :disabled="takingOverLock || saving"
           @click="takeOverConflictingEditLock"
         >
-          {{ takingOverLock ? '正在移除原有锁...' : '移除原有锁并继续编辑' }}
+          {{ takingOverLock ? '正在移除...' : '移除原有锁并继续编辑' }}
         </button>
       </div>
     </div>
@@ -620,27 +541,22 @@
       <div class="w-8 h-8 border-2 border-[#c9c9c9]/30 border-t-red-300 rounded-full animate-spin"></div>
     </div>
 
-    <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div class="lg:col-span-2 space-y-6">
+    <div v-else class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div class="lg:col-span-8 lg:order-1 space-y-6">
         <!-- 基本信息 -->
         <div class="bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-xl p-6 space-y-5">
           <h2 class="text-lg font-semibold text-[#c9c9c9] border-b border-[#c9c9c9]/20 pb-3 flex items-center gap-2">
-            <AppIcon name="info" class-name="w-5 h-5 text-red-300" />
-            基本信息
+            <AppIcon name="info" class-name="w-5 h-5 text-red-300" /> 基本信息
           </h2>
-
           <AdminInput
             v-model="album.title"
             label="专辑名"
             placeholder="专辑名"
             required
             :error="titleError"
-            @clear="
-              titleError = '';
-              markChanged();
-            "
+            @clear="titleError = ''"
+            @update:model-value="markChanged"
           />
-
           <div class="space-y-2">
             <label class="text-sm text-[#888]">发布日期</label>
             <div class="relative group">
@@ -655,101 +571,160 @@
                 <button
                   v-if="album.releaseDate"
                   class="p-1.5 text-[#888] hover:text-red-300 transition-colors"
-                  title="清空"
-                  @click="
-                    album.releaseDate = '';
-                    markChanged();
-                  "
-                >
-                  <AppIcon name="close" class-name="w-4 h-4" />
-                </button>
-                <button
-                  class="p-1.5 text-[#888] hover:text-red-300 transition-colors"
-                  title="选择日期"
-                  @click="openDatePicker"
-                >
-                  <AppIcon name="calendar" class-name="w-5 h-5" />
-                </button>
+                  @click="album.releaseDate = ''"
+                  ><AppIcon name="close" class-name="w-4 h-4"
+                /></button>
+                <button class="p-1.5 text-[#888] hover:text-red-300 transition-colors" @click="openDatePicker"
+                  ><AppIcon name="calendar" class-name="w-5 h-5"
+                /></button>
                 <input
                   ref="datePicker"
                   type="date"
                   class="absolute opacity-0 pointer-events-none w-0 h-0"
-                  @change="
-                    (e: any) => {
-                      album.releaseDate = e.target.value;
-                      markChanged();
-                    }
-                  "
+                  @change="(e: any) => (album.releaseDate = e.target.value)"
                 />
               </div>
             </div>
           </div>
+        </div>
 
+        <!-- 描述 -->
+        <div class="bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-xl p-6 space-y-4">
           <AdminInput
             v-model="album.description"
             label="描述"
+            icon="info"
             type="markdown"
             placeholder="专辑描述"
-            @input="markChanged()"
-            @clear="markChanged()"
+            label-size="lg"
+            @update:model-value="markChanged"
           />
+        </div>
+
+        <!-- 曲目管理 -->
+        <div class="bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-xl p-6 space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-medium text-[#c9c9c9] flex items-center gap-2">
+              <AppIcon name="music" class-name="w-5 h-5 text-red-300" /> 曲目管理
+            </h2>
+            <button
+              class="text-sm text-red-300 hover:text-[#fca5a5] transition-colors inline-flex items-center gap-1"
+              @click="addDisc"
+            >
+              <AppIcon name="plus" class-name="w-4 h-4" /> 添加 Disc
+            </button>
+          </div>
+
+          <div
+            v-for="(disc, discIndex) in album.tracks"
+            :key="disc.disc"
+            class="border border-[#c9c9c9]/10 rounded-lg p-4 space-y-3"
+          >
+            <div class="flex items-center justify-between">
+              <h3 v-if="(album.tracks?.length || 0) > 1 || disc.disc > 1" class="text-[#c9c9c9] font-medium"
+                >Disc {{ disc.disc }}</h3
+              >
+              <h3 v-else class="text-[#c9c9c9] font-medium">曲目</h3>
+              <button
+                v-if="(album.tracks?.length || 0) > 1"
+                class="text-red-400 hover:text-red-300 p-1"
+                @click="removeDisc(discIndex)"
+              >
+                <AppIcon name="trash" class-name="w-4 h-4" />
+              </button>
+            </div>
+
+            <div v-if="disc.songs.length > 0" class="space-y-1">
+              <div
+                v-for="(songId, songIndex) in disc.songs"
+                :key="songId"
+                class="flex items-center gap-3 p-2 bg-black/20 rounded group"
+              >
+                <span class="text-[#888] text-xs w-5 text-right">{{ songIndex + 1 }}</span>
+                <div class="flex-1 min-w-0">
+                  <p class="text-[#c9c9c9] text-sm truncate">{{ getSongName(songId) }}</p>
+                  <p v-if="getSongArtist(songId)" class="text-[#888] text-xs truncate">{{ getSongArtist(songId) }}</p>
+                </div>
+                <button
+                  class="text-red-400 hover:text-red-300 opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                  @click="removeSongFromDisc(discIndex, songIndex)"
+                >
+                  <AppIcon name="close" class-name="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            <!-- 搜索添加歌曲 -->
+            <div v-if="searchingDisc === discIndex" class="space-y-2">
+              <input
+                v-model="songSearchQuery"
+                type="text"
+                placeholder="搜索歌曲标题或艺人"
+                class="w-full px-3 py-2 bg-black/20 border border-[#c9c9c9]/20 rounded text-[#e0e0e0] text-sm focus:outline-none focus:border-red-300/50"
+                @input="searchSongs(discIndex)"
+              />
+              <div v-if="songSearchResults.length > 0" class="max-h-40 overflow-y-auto space-y-1">
+                <button
+                  v-for="result in songSearchResults"
+                  :key="result.id"
+                  class="w-full text-left p-2 bg-black/10 hover:bg-white/5 rounded text-sm transition-colors"
+                  @click="addSongToDisc(discIndex, result)"
+                >
+                  <span class="text-[#c9c9c9]">{{ result.title }}</span>
+                  <span v-if="result.artist" class="text-[#888] ml-2">{{ result.artist }}</span>
+                </button>
+              </div>
+              <div v-else-if="songSearchQuery.trim() && !isSearchingSongs" class="text-xs text-[#888] py-2"
+                >未找到匹配的歌曲</div
+              >
+              <button class="text-xs text-[#888] hover:text-[#c9c9c9] transition-colors" @click="closeSearch"
+                >关闭搜索</button
+              >
+            </div>
+            <button
+              v-else
+              class="text-sm text-red-300/70 hover:text-red-300 transition-colors inline-flex items-center gap-1"
+              @click="
+                searchingDisc = discIndex;
+                songSearchQuery = '';
+              "
+            >
+              <AppIcon name="plus" class-name="w-3 h-3" /> 添加歌曲
+            </button>
+          </div>
         </div>
       </div>
 
-      <div class="space-y-6">
-        <!-- 封面图 -->
+      <div class="lg:col-span-4 lg:order-2 space-y-6">
+        <!-- 封面 -->
         <div class="bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-xl p-6 space-y-4">
           <h2 class="text-lg font-medium text-[#c9c9c9] flex items-center gap-2">
-            <AppIcon name="image" class-name="w-5 h-5 text-red-300" />
-            专辑封面
+            <AppIcon name="image" class-name="w-5 h-5 text-red-300" /> 专辑封面
           </h2>
-          <div
-            class="aspect-square rounded-lg border-2 border-dashed border-[#c9c9c9]/20 flex flex-col items-center justify-center relative overflow-hidden group cursor-pointer hover:border-red-300/50 transition-colors"
-            :class="[
-              isCoverDragOver ? 'border-red-300 bg-red-300/10' : '',
-              coverMarkedForDeletion ? 'border-red-500/50 bg-red-500/10' : '',
-            ]"
-            @click="fileInput?.click()"
-            @dragenter.prevent="handleCoverDragEnter"
-            @dragover.prevent="handleCoverDragEnter"
-            @dragleave.prevent="handleCoverDragLeave"
-            @drop.prevent="handleCoverDrop"
-          >
-            <img
-              v-if="coverPreview && !coverMarkedForDeletion"
-              :src="coverPreview"
-              class="w-full h-full object-cover"
-            />
-            <div v-else class="text-center p-4">
-              <AppIcon name="image-placeholder" class-name="w-12 h-12 mx-auto text-[#888] mb-2" />
-              <p class="text-sm text-[#888]">{{ coverMarkedForDeletion ? '封面将被删除' : '点击或拖动上传封面' }}</p>
-            </div>
-            <div
-              v-if="coverPreview && !coverMarkedForDeletion"
-              class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
-            >
-              <p class="text-white text-sm">更换封面</p>
-            </div>
+          <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="handleCoverSelect" />
 
-            <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="handleCoverChange" />
+          <div v-if="currentCoverUrl" class="relative group aspect-square rounded-lg overflow-hidden">
+            <img :src="currentCoverUrl" class="w-full h-full object-cover" />
+            <div
+              class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2"
+            >
+              <button
+                class="text-xs text-[#c9c9c9] hover:text-red-300 px-2 py-1 bg-black/40 rounded"
+                @click="fileInput?.click()"
+                >更换</button
+              >
+              <button class="text-xs text-red-400 hover:text-red-300 px-2 py-1 bg-black/40 rounded" @click="removeCover"
+                >删除</button
+              >
+            </div>
           </div>
-          <div v-if="isEdit && (coverPreview || coverMarkedForDeletion)" class="flex justify-end">
-            <button
-              v-if="!coverMarkedForDeletion"
-              class="text-sm text-red-300 hover:text-red-200 transition-colors flex items-center gap-1"
-              @click="removeCover"
-            >
-              <AppIcon name="trash" class-name="w-4 h-4" />
-              删除封面
-            </button>
-            <button
-              v-else
-              class="text-sm text-[#888] hover:text-red-300 transition-colors flex items-center gap-1"
-              @click="cancelRemoveCover"
-            >
-              <AppIcon name="close" class-name="w-4 h-4" />
-              取消删除
-            </button>
+          <div
+            v-else
+            class="aspect-square rounded-lg border-2 border-dashed border-[#c9c9c9]/20 flex flex-col items-center justify-center cursor-pointer hover:border-red-300/50 transition-colors"
+            @click="fileInput?.click()"
+          >
+            <AppIcon name="image-placeholder" class-name="w-12 h-12 mx-auto text-[#888] mb-2" />
+            <p class="text-sm text-[#888]">点击上传封面</p>
           </div>
         </div>
       </div>
@@ -765,7 +740,6 @@
     @cancel="resolveVersionConflict(false)"
     @force="resolveVersionConflict(true)"
   />
-
   <EditLockConflictDialog
     :visible="showEditLockConflictDialog"
     :message="editLockConflictMessage"
@@ -782,29 +756,7 @@
       transform: rotate(360deg);
     }
   }
-
   .animate-spin {
     animation: spin 1s linear infinite;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 4px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(201, 201, 201, 0.1);
-    border-radius: 10px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(201, 201, 201, 0.2);
-  }
-
-  textarea {
-    resize: none;
   }
 </style>

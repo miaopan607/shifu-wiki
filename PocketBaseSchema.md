@@ -4,36 +4,61 @@
 
 ### songs (单曲)
 
-| 字段名        | 类型     | 说明         |
-| :------------ | :------- | :----------- |
-| `id`          | text     | 主键         |
-| `index`       | number   | 索引         |
-| `title`       | text     | 标题 (必填)  |
-| `artist`      | text     | 艺人 (必填)  |
-| `album`       | text     | 专辑         |
-| `releaseDate` | text     | 发布日期     |
-| `lyricist`    | text     | 词作         |
-| `composer`    | text     | 曲作         |
-| `lyrics`      | text     | 歌词         |
-| `credits`     | text     | 制作人员名单 |
-| `links`       | json     | 平台链接     |
-| `otherLinks`  | json     | 其他相关链接 |
-| `description` | text     | 描述         |
-| `created`     | autodate | 创建时间     |
-| `updated`     | autodate | 更新时间     |
+| 字段名             | 类型     | 说明                                                     |
+| :----------------- | :------- | :------------------------------------------------------- |
+| `id`               | text     | 主键                                                     |
+| `index`            | number   | 索引                                                     |
+| `title`            | text     | 标题 (必填)                                              |
+| `artist`           | text     | 艺人 (必填)                                              |
+| `releaseDate`      | text     | 发布日期                                                 |
+| `lyricist`         | text     | 词作                                                     |
+| `composer`         | text     | 曲作                                                     |
+| `lyrics`           | text     | 歌词                                                     |
+| `credits`          | text     | 制作人员名单                                             |
+| `links`            | json     | 平台链接                                                 |
+| `otherLinks`       | json     | 其他相关链接                                             |
+| `description`      | text     | 描述                                                     |
+| `defaultAlbum`     | relation | 关联到 albums（可选，站内有此专辑时使用）                |
+| `defaultAlbumName` | text     | 专辑名称文本（可选，站内无此专辑时使用）                 |
+| `defaultCover`     | text     | 默认封面：空=缺省封面, `album`=专辑封面, `song_cover:ID` |
+| `created`          | autodate | 创建时间                                                 |
+| `updated`          | autodate | 更新时间                                                 |
+
+### song_covers (音乐封面 - 关联 songs)
+
+| 字段名           | 类型     | 说明                |
+| :--------------- | :------- | :------------------ |
+| `id`             | text     | 主键                |
+| `image`          | file     | 封面图片 (必填)     |
+| `song`           | relation | 关联到 songs (必填) |
+| `sort`           | number   | 排序权重            |
+| `uploadBatchId`  | text     | 批量上传ID          |
+| `clientUploadId` | text     | 客户端上传标识      |
+| `created`        | autodate | 创建时间            |
+| `updated`        | autodate | 更新时间            |
 
 ### albums (专辑)
 
-| 字段名        | 类型     | 说明             |
-| :------------ | :------- | :--------------- |
-| `id`          | text     | 主键             |
-| `index`       | number   | 索引             |
-| `title`       | text     | 专辑名 (必填)    |
-| `releaseDate` | text     | 发布日期         |
-| `description` | text     | 描述             |
-| `cover`       | file     | 封面图片 (限1张) |
-| `created`     | autodate | 创建时间         |
-| `updated`     | autodate | 更新时间         |
+| 字段名        | 类型     | 说明                               |
+| :------------ | :------- | :--------------------------------- |
+| `id`          | text     | 主键                               |
+| `index`       | number   | 索引                               |
+| `title`       | text     | 专辑名 (必填)                      |
+| `releaseDate` | text     | 发布日期                           |
+| `description` | text     | 描述                               |
+| `cover`       | file     | 专辑封面图片                       |
+| `tracks`      | json     | Disc 与歌曲关联 (AlbumDisc[] JSON) |
+| `created`     | autodate | 创建时间                           |
+| `updated`     | autodate | 更新时间                           |
+
+`tracks` JSON 结构示例:
+
+```json
+[
+  { "disc": 1, "songs": ["SONG_ID_1", "SONG_ID_2"] },
+  { "disc": 2, "songs": ["SONG_ID_3"] }
+]
+```
 
 ### activities (活动)
 

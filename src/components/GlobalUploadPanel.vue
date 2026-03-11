@@ -154,7 +154,7 @@
   // 获取任务类型显示文本
   const getTaskTypeText = (task: BatchUploadTask): string => {
     if (task.targetType === 'gallery') return '图集';
-    if (task.targetType === 'album') return '专辑';
+    if (task.targetType === 'song') return '音乐';
     return '文件';
   };
 

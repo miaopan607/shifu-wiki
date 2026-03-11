@@ -79,7 +79,7 @@
   // 鼠标滚轮缩放 - 按比例缩放
   const handleWheel = (e: WheelEvent) => {
     e.preventDefault();
-    const ratio = e.deltaY > 0 ? (1 - ZOOM_RATIO) : (1 + ZOOM_RATIO);
+    const ratio = e.deltaY > 0 ? 1 - ZOOM_RATIO : 1 + ZOOM_RATIO;
     const newScale = Math.min(MAX_PIXEL_SCALE, Math.max(MIN_PIXEL_SCALE, pixelScale.value * ratio));
     pixelScale.value = newScale;
   };
@@ -348,27 +348,29 @@
     </div>
 
     <!-- 点击关闭区域 - 放在图片后面 -->
-    <div
-      class="absolute inset-0 z-0"
-      @click="close"
-    ></div>
+    <div class="absolute inset-0 z-0" @click="close"></div>
 
     <!-- 图片容器 -->
-    <div
-      class="relative z-10 flex items-center justify-center pointer-events-none"
-    >
+    <div class="relative z-10 flex items-center justify-center pointer-events-none">
       <img
         v-if="currentImage()"
         :key="currentImageUrl"
         :src="currentImageUrl"
         :alt="galleryTitle"
         class="object-contain pointer-events-auto"
-        :class="[isImageLoading ? 'max-w-[100vw] max-h-[100vh]' : 'max-w-none max-h-none', isDragging ? 'cursor-grabbing' : 'cursor-grab']"
-        :style="isImageLoading ? {} : {
-          width: `${imageNaturalWidth}px`,
-          height: `${imageNaturalHeight}px`,
-          transform: `scale(${pixelScale}) translate(${translateX / pixelScale}px, ${translateY / pixelScale}px)`,
-        }"
+        :class="[
+          isImageLoading ? 'max-w-[100vw] max-h-[100vh]' : 'max-w-none max-h-none',
+          isDragging ? 'cursor-grabbing' : 'cursor-grab',
+        ]"
+        :style="
+          isImageLoading
+            ? {}
+            : {
+                width: `${imageNaturalWidth}px`,
+                height: `${imageNaturalHeight}px`,
+                transform: `scale(${pixelScale}) translate(${translateX / pixelScale}px, ${translateY / pixelScale}px)`,
+              }
+        "
         draggable="false"
         @mousedown="handleMouseDown"
         @touchstart="handleTouchStart"
@@ -379,14 +381,30 @@
     </div>
 
     <!-- 底部工具栏 -->
-    <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/60 rounded-lg px-4 py-2 backdrop-blur-sm z-30">
+    <div
+      class="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/60 rounded-lg px-4 py-2 backdrop-blur-sm z-30"
+    >
       <!-- 缩小按钮 -->
       <button
         class="text-white/70 hover:text-white w-8 h-8 flex items-center justify-center transition-colors"
         @click.stop="zoomOut"
         title="缩小"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          <line x1="8" y1="11" x2="14" y2="11" />
+        </svg>
       </button>
 
       <!-- 缩放比例 -->
@@ -400,7 +418,22 @@
         @click.stop="zoomIn"
         title="放大"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          <line x1="11" y1="8" x2="11" y2="14" />
+          <line x1="8" y1="11" x2="14" y2="11" />
+        </svg>
       </button>
 
       <!-- 分隔线 -->
@@ -421,7 +454,19 @@
         @click.stop="zoomToFit"
         title="适应屏幕"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l-7"/></svg>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l-7" />
+        </svg>
       </button>
     </div>
   </div>

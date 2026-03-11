@@ -37,12 +37,14 @@
     const items: SearchResultItem[] = [];
 
     results.value.songs.forEach(song => {
+      const parts = [song.artist || ''];
+      if (song.defaultAlbumName) parts.push(song.defaultAlbumName);
       items.push({
         id: song.id,
         type: 'songs',
         index: song.index,
         title: song.title,
-        subtitle: song.album + (song.artist ? ` · ${song.artist}` : ''),
+        subtitle: parts.filter(Boolean).join(' · '),
       });
     });
 
@@ -307,9 +309,7 @@
                       ]"
                       >{{ song.title }}</div
                     >
-                    <div class="text-xs text-[#888] mt-0.5"
-                      >{{ song.album }} <span v-if="song.artist">· {{ song.artist }}</span></div
-                    >
+                    <div class="text-xs text-[#888] mt-0.5">{{ song.artist }}</div>
                   </div>
                   <AppIcon
                     name="chevron-right"

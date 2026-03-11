@@ -1,26 +1,50 @@
 <script setup lang="ts">
   import { ref, onMounted } from 'vue';
   import { RouterLink } from 'vue-router';
-  import { pb } from '@/lib/pocketbase';
+  import { pb, formatDateToDisplay } from '@/lib/pocketbase';
+  import { normalizeAlbumTracks } from '@/lib/albumTracks';
   import SubPageNav from '@/components/SubPageNav.vue';
   import SongsNav from '@/components/SongsNav.vue';
   import AppIcon from '@/components/AppIcon.vue';
+  import type { Album } from '@/types';
 
-  const albums = ref<any[]>([]);
+  interface AlbumWithMeta {
+    id: string;
+    collectionId: string;
+    title: string;
+    index: number;
+    releaseDate: string;
+    songCount: number;
+    coverUrl: string;
+  }
+
+  const albums = ref<AlbumWithMeta[]>([]);
   const loading = ref(true);
 
   onMounted(async () => {
     try {
-      const [albumsResult, songsResult] = await Promise.all([
-        pb
-          .collection('albums')
-          .getFullList({ sort: '-releaseDate', fields: 'id,collectionId,title,index,releaseDate,cover' }),
-        pb.collection('songs').getFullList({ fields: 'album' }),
-      ]);
-      albums.value = albumsResult.map(album => ({
-        ...album,
-        songCount: songsResult.filter(s => s.album === album.title).length,
-      }));
+      const albumsResult = await pb.collection('albums').getFullList({
+        sort: '-releaseDate',
+        fields: 'id,collectionId,title,index,releaseDate,cover,tracks',
+      });
+
+      albums.value = (albumsResult as unknown as Album[]).map(album => {
+        const tracks = normalizeAlbumTracks((album as any).tracks);
+        const songCount = tracks.reduce((sum, disc) => sum + (Array.isArray(disc.songs) ? disc.songs.length : 0), 0);
+        let coverUrl = '';
+        if (album.cover && album.collectionId) {
+          coverUrl = pb.files.getURL(album as any, album.cover, { thumb: '400x400' });
+        }
+        return {
+          id: album.id,
+          collectionId: album.collectionId,
+          title: album.title,
+          index: album.index,
+          releaseDate: album.releaseDate,
+          songCount,
+          coverUrl,
+        };
+      });
     } catch (error) {
       console.warn('Failed to fetch albums:', error);
       albums.value = [];
@@ -28,17 +52,6 @@
       loading.value = false;
     }
   });
-
-  import { formatDateToDisplay } from '@/lib/pocketbase';
-
-  const formatDate = (dateStr: string) => {
-    return formatDateToDisplay(dateStr);
-  };
-
-  const getImageUrl = (record: any, filename: string) => {
-    if (!filename) return '';
-    return pb.files.getURL(record, filename, { thumb: '400x400' });
-  };
 </script>
 
 <template>
@@ -65,8 +78,8 @@
           >
             <div class="aspect-square relative overflow-hidden bg-black/40">
               <img
-                v-if="album.cover"
-                :src="getImageUrl(album, album.cover)"
+                v-if="album.coverUrl"
+                :src="album.coverUrl"
                 :alt="album.title"
                 class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
               />
@@ -88,7 +101,7 @@
               >
               <div class="flex items-center gap-1 text-xs text-[#888]">
                 <AppIcon name="date" />
-                <span>{{ formatDate(album.releaseDate) }}</span>
+                <span>{{ formatDateToDisplay(album.releaseDate) }}</span>
               </div>
             </div>
           </RouterLink>

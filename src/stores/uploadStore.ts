@@ -88,7 +88,7 @@ function getTask(taskId: string): BatchUploadTask | undefined {
 }
 
 function taskUsesRemoteUploadBatch(task: BatchUploadTask): boolean {
-  return task.type === 'gallery_images' || task.type === 'album_cover';
+  return task.type === 'gallery_images' || task.type === 'song_covers';
 }
 
 function getActiveRequestCount(taskId?: string): number {
@@ -225,7 +225,7 @@ function discardTask(taskId: string): void {
   refreshSchedulerState();
 }
 
-function attachTaskLock(taskId: string, lockId: string, lockCollection: 'galleries' | 'albums'): void {
+function attachTaskLock(taskId: string, lockId: string, lockCollection: 'galleries' | 'songs'): void {
   const task = getTask(taskId);
   if (!task) return;
 
@@ -233,11 +233,11 @@ function attachTaskLock(taskId: string, lockId: string, lockCollection: 'galleri
   task.lockCollection = lockCollection;
 }
 
-function findTaskByTargetId(targetId: string, targetType: 'gallery' | 'album'): BatchUploadTask | undefined {
+function findTaskByTargetId(targetId: string, targetType: 'gallery' | 'song'): BatchUploadTask | undefined {
   return tasks.value.find(task => task.targetId === targetId && task.targetType === targetType);
 }
 
-function startPendingTasks(targetId: string, targetType: 'gallery' | 'album'): void {
+function startPendingTasks(targetId: string, targetType: 'gallery' | 'song'): void {
   tasks.value.forEach(task => {
     if (
       task.targetType === targetType &&
@@ -362,14 +362,17 @@ async function rollbackCancelledTaskUploads(task: BatchUploadTask): Promise<void
     });
   }
 
-  if (task.type === 'gallery_images') {
+  const collectionName =
+    task.type === 'gallery_images' ? 'gallery_images' : task.type === 'song_covers' ? 'song_covers' : null;
+
+  if (collectionName) {
     const uploadedIds = new Set(
       task.files.map(file => file.uploadedRecordId).filter((id): id is string => Boolean(id))
     );
 
     if (serverBatchId) {
       await pb
-        .collection('gallery_images')
+        .collection(collectionName)
         .getFullList<{ id: string }>({
           filter: `uploadBatchId = "${serverBatchId}"`,
           fields: 'id',
@@ -381,14 +384,12 @@ async function rollbackCancelledTaskUploads(task: BatchUploadTask): Promise<void
           });
         })
         .catch(error => {
-          console.error('Failed to query gallery images by upload batch:', error);
+          console.error(`Failed to query ${collectionName} by upload batch:`, error);
         });
     }
 
     if (uploadedIds.size > 0) {
-      await Promise.allSettled(
-        Array.from(uploadedIds).map(recordId => pb.collection('gallery_images').delete(recordId))
-      );
+      await Promise.allSettled(Array.from(uploadedIds).map(recordId => pb.collection(collectionName).delete(recordId)));
     }
   }
 
@@ -532,7 +533,7 @@ function retryTask(taskId: string): void {
       file.status = 'pending';
       file.progress = 0;
       file.error = undefined;
-      if (task.type === 'gallery_images') {
+      if (task.type === 'gallery_images' || task.type === 'song_covers') {
         file.uploadedRecordId = undefined;
       }
     }
@@ -649,10 +650,14 @@ async function uploadSingleFile(task: BatchUploadTask, fileInfo: FileUploadInfo)
       if (fileInfo.sort !== undefined) {
         formData.append('sort', String(fileInfo.sort));
       }
-    } else {
-      formData.append('cover', file);
-      formData.append('albumId', task.targetId);
+    } else if (task.type === 'song_covers') {
+      formData.append('image', file);
+      formData.append('song', task.targetId);
+      formData.append('uploadBatchId', uploadBatchId || '');
       formData.append('clientUploadId', fileInfo.clientId || fileInfo.id);
+      if (fileInfo.sort !== undefined) {
+        formData.append('sort', String(fileInfo.sort));
+      }
     }
 
     if (task.status === 'cancelled') {
@@ -666,10 +671,8 @@ async function uploadSingleFile(task: BatchUploadTask, fileInfo: FileUploadInfo)
     }
 
     const method = 'POST';
-    const url =
-      task.type === 'gallery_images'
-        ? `${pb.baseUrl}/api/collections/gallery_images/records`
-        : `${pb.baseUrl}/api/shifu/upload-batches/${uploadBatchId}/album-cover`;
+    const uploadCollectionName = task.type === 'gallery_images' ? 'gallery_images' : 'song_covers';
+    const url = `${pb.baseUrl}/api/collections/${uploadCollectionName}/records`;
     const request = uploadFileWithXHR(
       url,
       formData,
@@ -690,9 +693,15 @@ async function uploadSingleFile(task: BatchUploadTask, fileInfo: FileUploadInfo)
     const latestTask = getTask(task.id) ?? task;
 
     if (latestTask.status === 'cancelled') {
-      if (latestTask.type === 'gallery_images' && typeof response === 'object' && response && 'id' in response) {
+      const cancelCollectionName =
+        latestTask.type === 'gallery_images'
+          ? 'gallery_images'
+          : latestTask.type === 'song_covers'
+            ? 'song_covers'
+            : null;
+      if (cancelCollectionName && typeof response === 'object' && response && 'id' in response) {
         await pb
-          .collection('gallery_images')
+          .collection(cancelCollectionName)
           .delete(String((response as { id: string }).id))
           .catch(() => undefined);
       }
@@ -708,7 +717,7 @@ async function uploadSingleFile(task: BatchUploadTask, fileInfo: FileUploadInfo)
     updateFileStatus(task.id, fileInfo.id, 'success', {
       progress: 100,
       uploadedRecordId:
-        task.type === 'gallery_images' && typeof response === 'object' && response && 'id' in response
+        typeof response === 'object' && response && 'id' in response
           ? String((response as { id: string }).id)
           : undefined,
     });

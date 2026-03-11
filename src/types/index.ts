@@ -41,6 +41,11 @@ export interface Misc {
   date: string;
 }
 
+export interface AlbumDisc {
+  disc: number;
+  songs: string[]; // Song record IDs
+}
+
 export interface Song {
   id: string;
   collectionId: string;
@@ -49,7 +54,6 @@ export interface Song {
   updated: string;
   title: string;
   index: number;
-  album: string;
   artist: string;
   releaseDate: string;
   lyricist?: string;
@@ -59,6 +63,22 @@ export interface Song {
   description?: string;
   links?: { name: string; url: string }[];
   otherLinks?: { name: string; url: string }[];
+  defaultAlbum?: string; // Relation ID → albums
+  defaultAlbumName?: string; // 专辑名称文本（站内无此专辑时使用）
+  defaultCover?: string; // 空=缺省封面, 'album'=专辑封面, 'song_cover:{id}'=某张自有封面
+}
+
+export interface SongCover {
+  id: string;
+  collectionId: string;
+  collectionName: string;
+  created: string;
+  updated: string;
+  image: string;
+  song: string; // Relation ID
+  sort?: number;
+  uploadBatchId?: string;
+  clientUploadId?: string;
 }
 
 export interface Album {
@@ -70,9 +90,9 @@ export interface Album {
   title: string;
   index: number;
   releaseDate: string;
-  cover?: string;
   description?: string;
-  songCount?: number;
+  cover?: string; // 单封面文件名
+  tracks?: AlbumDisc[];
 }
 
 export interface Activity {

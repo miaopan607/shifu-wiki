@@ -1,18 +1,25 @@
 <script setup lang="ts">
   import { ref, onMounted, computed } from 'vue';
   import { useRouter } from 'vue-router';
-  import { pb } from '@/lib/pocketbase';
+  import { pb, formatDateToDisplay } from '@/lib/pocketbase';
+  import { normalizeAlbumTracks } from '@/lib/albumTracks';
   import AppIcon from '@/components/AppIcon.vue';
   import type { Album } from '@/types';
 
   const router = useRouter();
 
-  const albums = ref<Album[]>([]);
+  interface AlbumWithMeta extends Album {
+    songCount: number;
+    coverUrl?: string;
+  }
+
+  const albums = ref<AlbumWithMeta[]>([]);
   const loading = ref(true);
   const refreshing = ref(false);
   const searchQuery = ref('');
   const deleteConfirm = ref<string | null>(null);
   const deleting = ref(false);
+  const deleteWarning = ref('');
 
   const filteredAlbums = computed(() => {
     if (!searchQuery.value.trim()) return albums.value;
@@ -37,16 +44,20 @@
       loading.value = true;
     }
     try {
-      const [albumsResult, songsResult] = await Promise.all([
-        pb
-          .collection('albums')
-          .getFullList({ sort: '-releaseDate', fields: 'id,collectionId,title,releaseDate,cover' }),
-        pb.collection('songs').getFullList({ fields: 'album' }),
-      ]);
-      albums.value = (albumsResult as unknown as Album[]).map(album => ({
-        ...album,
-        songCount: songsResult.filter(s => s.album === album.title).length,
-      }));
+      const albumsResult = await pb.collection('albums').getFullList({
+        sort: '-releaseDate',
+        fields: 'id,collectionId,title,releaseDate,cover,tracks',
+      });
+
+      albums.value = (albumsResult as unknown as Album[]).map(album => {
+        const tracks = normalizeAlbumTracks((album as any).tracks);
+        const songCount = tracks.reduce((sum, disc) => sum + (Array.isArray(disc.songs) ? disc.songs.length : 0), 0);
+        let coverUrl = '';
+        if (album.cover && album.collectionId) {
+          coverUrl = pb.files.getURL(album as any, album.cover, { thumb: '400x400' });
+        }
+        return { ...album, songCount, coverUrl };
+      });
     } catch (error) {
       console.error('Failed to fetch albums:', error);
     } finally {
@@ -55,18 +66,27 @@
     }
   };
 
-  import { formatDateToDisplay } from '@/lib/pocketbase';
+  const formatDate = (dateStr: string) => formatDateToDisplay(dateStr);
 
-  const formatDate = (dateStr: string) => {
-    return formatDateToDisplay(dateStr);
-  };
-
-  const confirmDelete = (id: string) => {
+  const confirmDelete = async (id: string) => {
     deleteConfirm.value = id;
+    deleteWarning.value = '';
+    // Check for referencing songs
+    try {
+      const res = await pb.send(`/api/shifu/albums/${id}/referencing-songs`, {});
+      if (res.count > 0) {
+        const titles = res.songTitles.slice(0, 5).join('、');
+        const extra = res.count > 5 ? `等 ${res.count} 首` : `${res.count} 首`;
+        deleteWarning.value = `该专辑被 ${extra}歌曲引用（${titles}），删除后这些歌曲的默认专辑和封面设置将被清空。`;
+      }
+    } catch (err) {
+      console.error('Failed to check referencing songs:', err);
+    }
   };
 
   const cancelDelete = () => {
     deleteConfirm.value = null;
+    deleteWarning.value = '';
   };
 
   const deleteAlbum = async (album: Album) => {
@@ -75,6 +95,7 @@
       await pb.collection('albums').delete(album.id);
       albums.value = albums.value.filter(a => a.id !== album.id);
       deleteConfirm.value = null;
+      deleteWarning.value = '';
     } catch (error) {
       console.error('Failed to delete album:', error);
       alert('删除失败，请重试');
@@ -86,14 +107,8 @@
   const createNew = () => {
     router.push('/admin/albums/new');
   };
-
   const editAlbum = (id: string) => {
     router.push(`/admin/albums/${id}`);
-  };
-
-  const getImageUrl = (record: any, filename: string) => {
-    if (!filename) return '';
-    return pb.files.getURL(record, filename, { thumb: '400x400' });
   };
 </script>
 
@@ -105,23 +120,18 @@
     >
       <div class="w-8 h-8 border-2 border-[#c9c9c9]/30 border-t-red-300 rounded-full animate-spin"></div>
     </div>
-
     <div v-if="loading" class="relative z-30 space-y-6">
       <h1 class="text-2xl font-semibold text-[#c9c9c9]">专辑管理</h1>
     </div>
-
     <div v-else class="relative space-y-6">
       <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-        <div>
-          <h1 class="text-2xl font-semibold text-[#c9c9c9]">专辑管理</h1>
-        </div>
+        <div><h1 class="text-2xl font-semibold text-[#c9c9c9]">专辑管理</h1></div>
         <div class="flex flex-wrap items-center gap-3">
           <button
             class="inline-flex items-center gap-2 px-4 py-2 border border-red-300/50 text-red-300 hover:bg-white/5 font-medium rounded-lg transition-colors"
             @click="createNew"
           >
-            <AppIcon name="plus" class-name="w-5 h-5" />
-            新建专辑
+            <AppIcon name="plus" class-name="w-5 h-5" /> 新建专辑
           </button>
           <button
             :disabled="refreshing"
@@ -163,22 +173,20 @@
         >
           <div class="aspect-square relative overflow-hidden bg-black/40">
             <img
-              v-if="album.cover"
-              :src="getImageUrl(album, album.cover)"
+              v-if="album.coverUrl"
+              :src="album.coverUrl"
               :alt="album.title"
               class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
             />
             <div v-else class="w-full h-full flex items-center justify-center text-[#c9c9c9]/20">
               <AppIcon name="music-note" class-name="w-16 h-16" />
             </div>
-
             <div
               class="absolute top-[3%] right-[3%] px-[4%] py-[2%] bg-black/40 backdrop-blur-sm rounded-full text-[clamp(10px,10%,14px)] text-[#c9c9c9]/80 flex items-center gap-[0.6em]"
             >
               <AppIcon name="music" class-name="w-[1.4em] h-[1.4em]" />
               <span class="text-[2em] leading-none -translate-y-[0.1em]">{{ album.songCount }}</span>
             </div>
-
             <div
               class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4"
             >
@@ -199,9 +207,7 @@
             </div>
           </div>
           <div class="p-4 space-y-2">
-            <div class="flex items-start justify-between gap-2">
-              <h3 class="font-medium text-[#c9c9c9] truncate" :title="album.title">{{ album.title }}</h3>
-            </div>
+            <h3 class="font-medium text-[#c9c9c9] truncate" :title="album.title">{{ album.title }}</h3>
             <div class="flex items-center gap-1 text-xs text-[#888]">
               <AppIcon name="date" />
               <span>{{ formatDate(album.releaseDate) }}</span>
@@ -217,15 +223,21 @@
       >
         <div class="bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-xl max-w-sm w-full p-6 shadow-2xl">
           <h3 class="text-xl font-semibold text-[#c9c9c9] mb-2">确认删除</h3>
-          <p class="text-[#888] mb-6">确定要删除这个专辑吗？此操作不可撤销。</p>
+          <p class="text-[#888] mb-3">确定要删除这个专辑吗？此操作不可撤销。</p>
+          <p
+            v-if="deleteWarning"
+            class="text-yellow-400 text-sm mb-4 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg flex items-start gap-2"
+          >
+            <AppIcon name="warning" class-name="w-4 h-4 shrink-0 mt-0.5" />
+            <span>{{ deleteWarning }}</span>
+          </p>
           <div class="flex justify-end gap-3">
             <button
               class="px-4 py-2 text-[#c9c9c9] hover:bg-white/5 rounded-lg transition-colors"
               :disabled="deleting"
               @click="cancelDelete"
+              >取消</button
             >
-              取消
-            </button>
             <button
               class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors flex items-center gap-2"
               :disabled="deleting"
