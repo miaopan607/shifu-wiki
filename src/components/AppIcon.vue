@@ -56,7 +56,9 @@
       | 'play'
       | 'link'
       | 'chevron-right'
-      | 'save';
+      | 'save'
+      // 时间图标
+      | 'clock';
     className?: string;
   }>();
 </script>
@@ -818,5 +820,18 @@
       stroke-width="2"
       d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
     />
+  </svg>
+
+  <!-- 时钟图标 -->
+  <svg
+    v-else-if="name === 'clock'"
+    :class="className || 'w-5 h-5'"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+  >
+    <circle cx="12" cy="12" r="10" />
+    <polyline points="12 6 12 12 16 14" />
   </svg>
 </template>

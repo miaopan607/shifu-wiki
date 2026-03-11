@@ -1,9 +1,10 @@
 <script setup lang="ts">
   import { ref, onMounted } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
-  import { pb, parseDateFromBackend, normalizeDateForStorage } from '@/lib/pocketbase';
+  import { pb } from '@/lib/pocketbase';
   import AdminInput from '@/components/AdminInput.vue';
-  import type { Activity } from '@/types';
+  import type { Activity, ActivityTimeSlot } from '@/types';
+  import { DEFAULT_TIME_INPUT_MODE } from '@/types';
   import AppIcon from '@/components/AppIcon.vue';
 
   const route = useRoute();
@@ -11,12 +12,11 @@
   const isEdit = ref(route.params.id !== undefined);
   const loading = ref(false);
   const saving = ref(false);
-  const datePicker = ref<HTMLInputElement | null>(null);
   const titleError = ref('');
 
   const activity = ref<Partial<Activity>>({
     title: '',
-    date: '',
+    timeSlots: [],
     location: '',
     tags: [],
     content: '',
@@ -31,7 +31,7 @@
         const record = await pb.collection('activities').getOne(route.params.id as string);
         activity.value = {
           ...record,
-          date: record.date ? parseDateFromBackend(record.date) : '',
+          timeSlots: parseTimeSlots(record.timeSlots),
           tags: Array.isArray(record.tags) ? record.tags : [],
         } as unknown as Activity;
       } catch (error) {
@@ -43,6 +43,69 @@
       }
     }
   });
+
+  // 解析时间段数据
+  const parseTimeSlots = (raw: unknown): ActivityTimeSlot[] => {
+    if (!raw) return [];
+    if (Array.isArray(raw)) {
+      return raw.map((slot: any) => ({
+        type: slot.type === 'date' ? 'date' : 'datetime',
+        start: slot.start || '',
+        end: slot.end || undefined,
+      }));
+    }
+    return [];
+  };
+
+  // 添加时间段
+  const addTimeSlot = () => {
+    const newSlot: ActivityTimeSlot = {
+      type: DEFAULT_TIME_INPUT_MODE,
+      start: toDateTimeLocal(new Date()),
+      end: toDateTimeLocal(new Date(Date.now() + 2 * 60 * 60 * 1000)),
+    };
+    activity.value.timeSlots = [...(activity.value.timeSlots || []), newSlot];
+  };
+
+  // 删除时间段
+  const removeTimeSlot = (index: number) => {
+    const slots = activity.value.timeSlots || [];
+    activity.value.timeSlots = slots.filter((_, i) => i !== index);
+  };
+
+  // 切换时间段类型
+  const toggleSlotType = (index: number) => {
+    const slots = activity.value.timeSlots || [];
+    const slot = slots[index];
+    if (!slot) return;
+
+    const newType = slot.type === 'datetime' ? 'date' : 'datetime';
+    const newSlot: ActivityTimeSlot = {
+      type: newType,
+      start: newType === 'datetime' ? toDateTimeLocal(new Date()) : toDateString(new Date()),
+      end: newType === 'datetime' ? toDateTimeLocal(new Date(Date.now() + 2 * 60 * 60 * 1000)) : undefined,
+    };
+    slots[index] = newSlot;
+    activity.value.timeSlots = [...slots];
+  };
+
+  // 工具函数：转换为日期字符串 YYYY-MM-DD
+  const toDateString = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // 工具函数：转换为 datetime-local 格式 YYYY-MM-DDTHH:mm
+  const toDateTimeLocal = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
 
   const addTag = () => {
     const tag = tagInput.value.trim();
@@ -70,7 +133,6 @@
 
       let index = activity.value.index;
       if (!isEdit.value) {
-        // 自动分配递增索引：获取当前最大索引并加1
         const maxIndexResult = await collection.getList(1, 1, {
           sort: '-index',
           fields: 'index',
@@ -82,7 +144,11 @@
         ...activity.value,
         title: normalizedTitle,
         index,
-        date: normalizeDateForStorage(activity.value.date),
+        timeSlots: activity.value.timeSlots?.map(slot => ({
+          type: slot.type,
+          start: slot.start,
+          end: slot.end || null,
+        })),
       };
 
       if (isEdit.value) {
@@ -101,38 +167,6 @@
 
   const cancel = () => {
     router.push('/admin/activities');
-  };
-
-  const openDatePicker = () => {
-    if (!datePicker.value) return;
-    try {
-      if (typeof (datePicker.value as any).showPicker === 'function') {
-        (datePicker.value as any).showPicker();
-      } else {
-        datePicker.value.click();
-      }
-    } catch (e) {
-      console.error('Failed to open date picker:', e);
-      datePicker.value.click();
-    }
-  };
-
-  const handleDateInput = (e: Event) => {
-    const input = e.target as HTMLInputElement;
-    let value = input.value.replace(/\D/g, '');
-    if (value.length > 8) value = value.slice(0, 8);
-
-    let formatted = '';
-    if (value.length > 0) {
-      formatted = value.slice(0, 4);
-      if (value.length > 4) {
-        formatted += '/' + value.slice(4, 6);
-        if (value.length > 6) {
-          formatted += '/' + value.slice(6, 8);
-        }
-      }
-    }
-    activity.value.date = formatted;
   };
 </script>
 
@@ -189,43 +223,109 @@
             @clear="titleError = ''"
           />
 
-          <div class="space-y-2">
-            <label class="text-sm text-[#888]">日期</label>
-            <div class="relative group">
-              <input
-                :value="activity.date"
-                type="text"
-                placeholder="YYYY/MM/DD"
-                class="w-full px-4 py-2.5 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all pr-24"
-                @input="handleDateInput"
-              />
-              <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                <button
-                  v-if="activity.date"
-                  class="p-1.5 text-[#888] hover:text-red-300 transition-colors"
-                  title="清空"
-                  @click="activity.date = ''"
-                >
-                  <AppIcon name="close" class-name="w-4 h-4" />
-                </button>
-                <button
-                  class="p-1.5 text-[#888] hover:text-red-300 transition-colors"
-                  title="选择日期"
-                  @click="openDatePicker"
-                >
-                  <AppIcon name="calendar" class-name="w-5 h-5" />
-                </button>
+          <AdminInput v-model="activity.location" label="地点" placeholder="活动地点" />
+        </div>
+
+        <!-- 时间段管理 -->
+        <div class="bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-xl p-6 space-y-5">
+          <div class="flex items-center justify-between border-b border-[#c9c9c9]/20 pb-3">
+            <h2 class="text-lg font-semibold text-[#c9c9c9] flex items-center gap-2">
+              <AppIcon name="clock" class-name="w-5 h-5 text-red-300" />
+              时间段
+            </h2>
+          </div>
+
+          <!-- 时间段列表 -->
+          <div v-if="!activity.timeSlots || activity.timeSlots.length === 0" class="text-center py-8 text-[#888]">
+            暂无时间段，点击下方按钮添加
+          </div>
+
+          <div v-else class="space-y-4">
+            <div
+              v-for="(slot, index) in activity.timeSlots"
+              :key="index"
+              class="bg-black/20 border border-[#c9c9c9]/10 rounded-lg p-4 space-y-3"
+            >
+              <div class="flex items-center justify-between">
+                <span class="text-sm font-medium text-[#c9c9c9]">时间段 #{{ index + 1 }}</span>
+                <div class="flex items-center gap-2">
+                  <!-- 仅日期切换按钮 -->
+                  <button
+                    class="flex items-center gap-2 px-3 py-1.5 text-sm rounded transition-colors"
+                    :class="
+                      slot.type === 'date'
+                        ? 'bg-red-300 text-[rgb(77,0,0)]'
+                        : 'bg-white/5 text-[#888] hover:bg-white/10'
+                    "
+                    @click="toggleSlotType(index)"
+                  >
+                    <!-- 圆圈勾选图标 -->
+                    <div
+                      class="w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors"
+                      :class="slot.type === 'date' ? 'border-[rgb(77,0,0)] bg-[rgb(77,0,0)]' : 'border-current'"
+                    >
+                      <svg
+                        v-if="slot.type === 'date'"
+                        class="w-2.5 h-2.5 text-red-300"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        stroke-width="3"
+                      >
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <span>仅日期</span>
+                  </button>
+                  <button
+                    class="p-1.5 text-[#888] hover:text-red-500 transition-colors"
+                    title="删除"
+                    @click="removeTimeSlot(index)"
+                  >
+                    <AppIcon name="trash" class-name="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              <!-- 详细时间模式 -->
+              <div v-if="slot.type === 'datetime'" class="grid grid-cols-2 gap-3">
+                <div class="space-y-1">
+                  <label class="text-xs text-[#888]">开始时间</label>
+                  <input
+                    v-model="slot.start"
+                    type="datetime-local"
+                    class="w-full px-3 py-2 bg-black/20 border border-[#c9c9c9]/20 rounded text-[#e0e0e0] text-sm focus:outline-none focus:border-red-300/50"
+                  />
+                </div>
+                <div class="space-y-1">
+                  <label class="text-xs text-[#888]">结束时间</label>
+                  <input
+                    v-model="slot.end"
+                    type="datetime-local"
+                    class="w-full px-3 py-2 bg-black/20 border border-[#c9c9c9]/20 rounded text-[#e0e0e0] text-sm focus:outline-none focus:border-red-300/50"
+                  />
+                </div>
+              </div>
+
+              <!-- 仅日期模式 -->
+              <div v-else class="space-y-1">
+                <label class="text-xs text-[#888]">日期</label>
                 <input
-                  ref="datePicker"
+                  v-model="slot.start"
                   type="date"
-                  class="absolute opacity-0 pointer-events-none w-0 h-0"
-                  @change="(e: any) => (activity.date = e.target.value)"
+                  class="w-full px-3 py-2 bg-black/20 border border-[#c9c9c9]/20 rounded text-[#e0e0e0] text-sm focus:outline-none focus:border-red-300/50"
                 />
               </div>
             </div>
           </div>
 
-          <AdminInput v-model="activity.location" label="地点" placeholder="活动地点" />
+          <button
+            class="w-full py-3 border border-dashed border-[#c9c9c9]/30 rounded-lg text-[#888] hover:text-red-300 hover:border-red-300/50 transition-colors flex items-center justify-center gap-2"
+            @click="addTimeSlot"
+          >
+            <AppIcon name="plus" class-name="w-4 h-4" />
+            添加时间段
+          </button>
         </div>
 
         <!-- 标签 -->

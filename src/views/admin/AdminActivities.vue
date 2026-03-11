@@ -2,8 +2,8 @@
   import { ref, onMounted, computed } from 'vue';
   import { useRouter } from 'vue-router';
   import { pb } from '@/lib/pocketbase';
+  import type { Activity, ActivityTimeSlot } from '@/types';
   import AppIcon from '@/components/AppIcon.vue';
-  import type { Activity } from '@/types';
 
   const router = useRouter();
 
@@ -41,8 +41,8 @@
     }
     try {
       const result = await pb.collection('activities').getFullList({
-        sort: '-date',
-        fields: 'id,index,title,date,location,tags',
+        sort: '-created',
+        fields: 'id,index,title,timeSlots,location,tags',
       });
       activities.value = result as unknown as Activity[];
     } catch (error) {
@@ -53,10 +53,38 @@
     }
   };
 
-  import { formatDateToDisplay } from '@/lib/pocketbase';
+  // 解析时间段数据
+  const parseTimeSlots = (raw: unknown): ActivityTimeSlot[] => {
+    if (!raw) return [];
+    if (Array.isArray(raw)) {
+      return raw.map((slot: any) => ({
+        type: slot.type === 'date' ? 'date' : 'datetime',
+        start: slot.start || '',
+        end: slot.end || undefined,
+      }));
+    }
+    return [];
+  };
 
-  const formatDate = (dateStr: string) => {
-    return formatDateToDisplay(dateStr);
+  // 从时间字符串提取日期
+  const extractDate = (timeStr: string): string => {
+    if (!timeStr) return '';
+    return timeStr.split('T')[0]?.split(' ')[0] || timeStr;
+  };
+
+  // 格式化时间段显示 - 仅显示日期
+  const formatTimeSlots = (raw: unknown): string => {
+    const slots = parseTimeSlots(raw);
+    if (slots.length === 0) return '-';
+    const firstSlot = slots[0];
+    if (!firstSlot) return '-';
+
+    const firstDate = extractDate(firstSlot.start);
+    if (slots.length === 1) {
+      return firstDate;
+    }
+    // 多个时间段
+    return `${firstDate} 等 ${slots.length} 个`;
   };
 
   const confirmDelete = (id: string) => {
@@ -170,10 +198,10 @@
                   地点
                 </div>
               </th>
-              <th class="px-4 py-3 text-sm font-medium text-[#888] w-24">
+              <th class="px-4 py-3 text-sm font-medium text-[#888] w-40">
                 <div class="flex items-center gap-1.5">
-                  <AppIcon name="date" class-name="w-4 h-4 opacity-60" />
-                  日期
+                  <AppIcon name="clock" class-name="w-4 h-4 opacity-60" />
+                  时间段
                 </div>
               </th>
               <th class="px-4 py-3 text-right text-sm font-medium text-[#888]">操作</th>
@@ -200,7 +228,7 @@
                 <p class="text-sm text-[#888]">{{ activity.location || '-' }}</p>
               </td>
               <td class="px-4 py-3 text-sm text-[#888]">
-                {{ formatDate(activity.date) }}
+                {{ formatTimeSlots(activity.timeSlots) }}
               </td>
               <td class="px-4 py-3 text-right">
                 <div class="flex items-center justify-end gap-2">

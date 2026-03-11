@@ -59,6 +59,37 @@ export const formatDateToDisplay = (dateStr: string | undefined): string => {
   }
 };
 
+// 将日期时间格式转换为 YYYY/MM/DD HH:mm 格式用于展示
+export const formatDateTimeToDisplay = (dateStr: string | undefined): string => {
+  if (!dateStr) return '-';
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return dateStr;
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}/${month}/${day} ${hours}:${minutes}`;
+  } catch {
+    return dateStr;
+  }
+};
+
+// 将日期时间格式转换为 HH:mm 格式用于展示（仅时间）
+export const formatTimeToDisplay = (dateStr: string | undefined): string => {
+  if (!dateStr) return '-';
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return dateStr;
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  } catch {
+    return dateStr;
+  }
+};
+
 // 将日期转换为 YYYY/MM/DD 格式用于存储
 export const normalizeDateForStorage = (dateStr: string | undefined): string => {
   if (!dateStr) return '';
@@ -80,4 +111,34 @@ export const parseDateFromBackend = (dateStr: string | undefined): string => {
   if (!datePart) return '';
   // 将 - 替换为 / 以统一格式
   return datePart.replace(/-/g, '/');
+};
+
+// 将后端的日期时间格式转换为 datetime-local 输入格式 (YYYY-MM-DDTHH:mm)
+export const parseDateTimeFromBackend = (dateStr: string | undefined): string => {
+  if (!dateStr) return '';
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return '';
+    // 转换为本地时间字符串格式 YYYY-MM-DDTHH:mm
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  } catch {
+    return '';
+  }
+};
+
+// 将 datetime-local 格式转换为 ISO 格式存储
+export const normalizeDateTimeForStorage = (dateStr: string | undefined): string => {
+  if (!dateStr) return '';
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return '';
+    return date.toISOString();
+  } catch {
+    return '';
+  }
 };

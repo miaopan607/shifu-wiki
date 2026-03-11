@@ -96,6 +96,16 @@ export interface Album {
   tracks?: AlbumDisc[];
 }
 
+// 活动时间段类型
+export interface ActivityTimeSlot {
+  type: 'datetime' | 'date'; // datetime=详细时间, date=仅日期
+  start: string; // ISO8601 格式或 YYYY-MM-DD
+  end?: string; // 可选的结束时间
+}
+
+// 默认时间段输入模式配置
+export const DEFAULT_TIME_INPUT_MODE: 'datetime' | 'date' = 'datetime';
+
 export interface Activity {
   id: string;
   collectionId: string;
@@ -104,7 +114,7 @@ export interface Activity {
   updated: string;
   title: string;
   index: number;
-  date: string;
+  timeSlots?: ActivityTimeSlot[]; // 多个时间段（替代原来的 date 字段）
   location?: string;
   tags?: string[];
   content?: string;

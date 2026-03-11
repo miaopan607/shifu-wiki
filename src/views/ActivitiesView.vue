@@ -1,7 +1,8 @@
 <script setup lang="ts">
   import { ref, onMounted, computed, watch, onUnmounted } from 'vue';
   import { RouterLink } from 'vue-router';
-  import { pb, formatDateToDisplay } from '@/lib/pocketbase';
+  import { pb } from '@/lib/pocketbase';
+  import type { ActivityTimeSlot } from '@/types';
   import SubPageNav from '@/components/SubPageNav.vue';
   import AppIcon from '@/components/AppIcon.vue';
 
@@ -15,7 +16,7 @@
     id: string;
     index: number;
     title: string;
-    date: string;
+    timeSlots?: ActivityTimeSlot[];
     location?: string;
     tags?: string[];
   }
@@ -23,8 +24,8 @@
   interface SectionConfig {
     id: string;
     label: string;
-    tags?: string[]; // 该部分包含的 Tags，如果为空则包含所有
-    showFilter: boolean; // 是否显示二级筛选器
+    tags?: string[];
+    showFilter: boolean;
   }
 
   // 配色配置
@@ -56,7 +57,7 @@
   ];
 
   const activeSectionId = ref('all');
-  const activeTag = ref<string | null>(null); // null 表示该分区下的"全部"
+  const activeTag = ref<string | null>(null);
   const activities = ref<Activity[]>([]);
   const loading = ref(true);
   const searchQuery = ref('');
@@ -67,12 +68,9 @@
 
   // 计算当前分区下应该显示的 Tag 列表
   const availableTags = computed(() => {
-    // 如果 Section 指定了 tags，就用指定的
     if (currentSection.value.tags) {
       return currentSection.value.tags;
     }
-    // 如果 Section 是 "all"，则显示所有已知的带 Theme 的 tag，或者从 activities 动态提取
-    // 这里为了简单和可控，显示 TAG_THEMES 里定义的 tag，加上 Section 配置里用到的 tag
     const tags = new Set<string>();
     Object.keys(TAG_THEMES).forEach(t => tags.add(t));
     SECTIONS.forEach(s => s.tags?.forEach(t => tags.add(t)));
@@ -80,26 +78,48 @@
   });
 
   const currentTheme = computed<Theme>(() => {
-    // 优先使用当前选中 Tag 的 Theme
     if (activeTag.value) {
       const theme = TAG_THEMES[activeTag.value];
       if (theme) return theme;
     }
-    // 否则使用默认 Theme
     return DEFAULT_THEME;
   });
 
-  // 格式化活动元数据
+  // 格式化活动元数据 - 显示日期
   interface MetaPart {
-    type: 'date' | 'location';
+    type: 'location' | 'clock';
     value: string;
   }
 
   const getActivityMetaParts = (activity: Activity): MetaPart[] => {
     const parts: MetaPart[] = [];
-    if (activity.date) parts.push({ type: 'date', value: formatDateToDisplay(activity.date) });
+    // 显示日期
+    if (activity.timeSlots && activity.timeSlots.length > 0) {
+      const dateDisplay = getFirstDate(activity.timeSlots);
+      if (dateDisplay) {
+        parts.push({
+          type: 'clock',
+          value: activity.timeSlots.length > 1 ? `${dateDisplay} 等 ${activity.timeSlots.length} 个时段` : dateDisplay,
+        });
+      }
+    }
     if (activity.location) parts.push({ type: 'location', value: activity.location });
     return parts;
+  };
+
+  // 获取第一个日期
+  const getFirstDate = (slots: ActivityTimeSlot[]): string => {
+    if (slots.length === 0) return '';
+    const firstSlot = slots[0];
+    if (!firstSlot) return '';
+    return extractDate(firstSlot.start);
+  };
+
+  // 从时间字符串提取日期
+  const extractDate = (timeStr: string): string => {
+    if (!timeStr) return '';
+    // 如果是 ISO 格式或 datetime-local 格式，提取日期部分
+    return timeStr.split('T')[0]?.split(' ')[0] || timeStr;
   };
 
   const filteredActivities = computed(() => {
@@ -132,14 +152,14 @@
   onMounted(async () => {
     try {
       const records = await pb.collection('activities').getFullList({
-        sort: '-date',
-        fields: 'id,index,title,date,location,tags',
+        sort: '-created',
+        fields: 'id,index,title,timeSlots,location,tags',
       });
       activities.value = records.map(record => ({
         id: record.id,
         index: record.index,
         title: record.title,
-        date: record.date,
+        timeSlots: record.timeSlots,
         location: record.location,
         tags: Array.isArray(record.tags) ? record.tags : [],
       }));
@@ -160,7 +180,7 @@
 
   const switchSection = (id: string) => {
     activeSectionId.value = id;
-    activeTag.value = null; // 切换分区时重置 tag 筛选
+    activeTag.value = null;
   };
 
   const switchTag = (tag: string | null) => {
@@ -283,6 +303,7 @@
         <p v-else class="text-center py-20 opacity-40 italic tracking-widest">暂无活动记录</p>
       </div>
     </div>
+
   </main>
 </template>
 

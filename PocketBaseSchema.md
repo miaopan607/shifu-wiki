@@ -143,15 +143,15 @@
 
 ### upload_batches (上传批次)
 
-| 字段名              | 类型     | 说明                                                         |
-| :------------------ | :------- | :----------------------------------------------------------- |
-| `id`                | text     | 主键                                                         |
-| `status`            | text     | 批次状态: `open`, `cancelling`, `cancelled`, `completed`     |
-| `ownerId`           | text     | 创建者用户ID                                                 |
-| `targetType`        | text     | 目标类型: `gallery` 或 `song`                                |
-| `targetId`          | text     | 目标记录ID                                                   |
-| `targetName`        | text     | 目标名称（用于显示）                                         |
-| `snapshotCoverName` | text     | 封面快照名称（可选）                                         |
-| `snapshotFile`      | file     | 快照文件（可选）                                             |
-| `created`           | autodate | 创建时间                                                     |
-| `updated`           | autodate | 更新时间                                                     |
+| 字段名              | 类型     | 说明                                                     |
+| :------------------ | :------- | :------------------------------------------------------- |
+| `id`                | text     | 主键                                                     |
+| `status`            | text     | 批次状态: `open`, `cancelling`, `cancelled`, `completed` |
+| `ownerId`           | text     | 创建者用户ID                                             |
+| `targetType`        | text     | 目标类型: `gallery` 或 `song`                            |
+| `targetId`          | text     | 目标记录ID                                               |
+| `targetName`        | text     | 目标名称（用于显示）                                     |
+| `snapshotCoverName` | text     | 封面快照名称（可选）                                     |
+| `snapshotFile`      | file     | 快照文件（可选）                                         |
+| `created`           | autodate | 创建时间                                                 |
+| `updated`           | autodate | 更新时间                                                 |
