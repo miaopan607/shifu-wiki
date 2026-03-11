@@ -62,6 +62,9 @@
       { name: '酷我音乐', url: '' },
     ],
     otherLinks: [],
+    qqId: '',
+    neteaseId: '',
+    enabledPlatform: '',
   });
 
   // === 专辑选择 ===
@@ -951,6 +954,75 @@
               />
               <button class="text-red-400 hover:text-red-300 p-2" @click="removeOtherLink(index)">
                 <AppIcon name="trash" class-name="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 平台 ID -->
+        <div class="bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-xl p-6 space-y-4">
+          <h2 class="text-lg font-medium text-[#c9c9c9] flex items-center gap-2">
+            <AppIcon name="music" class-name="w-5 h-5 text-red-300" />
+            平台 ID
+          </h2>
+          <p class="text-xs text-[#888] leading-relaxed">
+            用于播放音乐，仅非 VIP 歌曲可播全曲，建议启用不用 VIP
+            就能播的平台。如果没有能播的，建议一个平台也不启用，也可以不填，反正不启用的话也没用。
+          </p>
+          <div class="space-y-4">
+            <div class="space-y-2">
+              <label class="text-sm text-[#888] flex items-center justify-between">
+                <span>QQ 音乐 ID</span>
+                <label class="flex items-center gap-1.5 cursor-pointer group">
+                  <input
+                    v-model="song.enabledPlatform"
+                    type="radio"
+                    value="qq"
+                    class="w-3.5 h-3.5 accent-red-300"
+                    @change="markChanged"
+                  />
+                  <span class="text-xs group-hover:text-red-300 transition-colors">启用</span>
+                </label>
+              </label>
+              <input
+                v-model="song.qqId"
+                type="text"
+                placeholder="输入 QQ 音乐 ID"
+                class="w-full px-3 py-2 bg-black/20 border border-[#c9c9c9]/20 rounded text-[#e0e0e0] text-sm focus:outline-none focus:border-red-300/50"
+                @input="markChanged"
+              />
+            </div>
+            <div class="space-y-2">
+              <label class="text-sm text-[#888] flex items-center justify-between">
+                <span>网易云音乐 ID</span>
+                <label class="flex items-center gap-1.5 cursor-pointer group">
+                  <input
+                    v-model="song.enabledPlatform"
+                    type="radio"
+                    value="netease"
+                    class="w-3.5 h-3.5 accent-red-300"
+                    @change="markChanged"
+                  />
+                  <span class="text-xs group-hover:text-red-300 transition-colors">启用</span>
+                </label>
+              </label>
+              <input
+                v-model="song.neteaseId"
+                type="text"
+                placeholder="输入网易云音乐 ID"
+                class="w-full px-3 py-2 bg-black/20 border border-[#c9c9c9]/20 rounded text-[#e0e0e0] text-sm focus:outline-none focus:border-red-300/50"
+                @input="markChanged"
+              />
+            </div>
+            <div v-if="song.enabledPlatform" class="flex justify-end">
+              <button
+                class="text-xs text-[#888] hover:text-red-300 transition-colors"
+                @click="
+                  song.enabledPlatform = '';
+                  markChanged();
+                "
+              >
+                取消启用标记
               </button>
             </div>
           </div>
