@@ -303,7 +303,6 @@
         <p v-else class="text-center py-20 opacity-40 italic tracking-widest">暂无活动记录</p>
       </div>
     </div>
-
   </main>
 </template>
 

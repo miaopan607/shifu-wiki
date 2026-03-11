@@ -66,16 +66,16 @@
 
 ### activities (活动)
 
-| 字段名      | 类型     | 说明                                    |
-| :---------- | :------- | :-------------------------------------- |
-| `id`        | text     | 主键                                    |
-| `index`     | number   | 索引                                    |
-| `title`     | text     | 标题 (必填)                             |
-| `timeSlots` | json     | 时间段数组 (ActivityTimeSlot[])         |
-| `location`  | text     | 地点                                    |
-| `tags`      | json     | 标签数组 (string[])                     |
-| `created`   | autodate | 创建时间                                |
-| `updated`   | autodate | 更新时间                                |
+| 字段名      | 类型     | 说明                            |
+| :---------- | :------- | :------------------------------ |
+| `id`        | text     | 主键                            |
+| `index`     | number   | 索引                            |
+| `title`     | text     | 标题 (必填)                     |
+| `timeSlots` | json     | 时间段数组 (ActivityTimeSlot[]) |
+| `location`  | text     | 地点                            |
+| `tags`      | json     | 标签数组 (string[])             |
+| `created`   | autodate | 创建时间                        |
+| `updated`   | autodate | 更新时间                        |
 
 `timeSlots` JSON 结构示例:
 
