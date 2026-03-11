@@ -18,6 +18,8 @@ pnpm format
 ```
 src/
 ├── components/       # 公用组件
+├── composables/      # Vue Composables (可复用逻辑)
+│   └── useEditLock.ts
 ├── lib/              # 工具库
 │   ├── pocketbase.ts
 │   ├── editLock.ts
@@ -52,10 +54,15 @@ pocketbase/
 防止多人同时编辑同一资源。
 
 ```typescript
-import { acquireEditLock, releaseEditLock } from '@/lib/editLock';
+import { useEditLock } from '@/composables/useEditLock';
 
-const lock = await acquireEditLock({ collection, recordId, recordTitle });
-await releaseEditLock(lock.id);
+const editLock = useEditLock({
+  collection: 'galleries',
+  recordId: computed(() => id),
+  isEdit: computed(() => !isNew.value),
+});
+
+await editLock.createEditLock();
 ```
 
 ### 3. 数据模型

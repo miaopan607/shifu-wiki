@@ -2,15 +2,9 @@
   import { ref, computed, onMounted, onUnmounted } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
   import { pb, parseDateFromBackend, normalizeDateForStorage } from '@/lib/pocketbase';
-  import {
-    acquireEditLock,
-    findConflictingEditLock,
-    forceAcquireEditLock,
-    formatEditLockDateTime,
-    releaseEditLock,
-    type EditLockRecord,
-  } from '@/lib/editLock';
+  import { useEditLock } from '@/composables/useEditLock';
   import EditLockConflictDialog from '@/components/EditLockConflictDialog.vue';
+  import EditLockWarning from '@/components/EditLockWarning.vue';
   import VersionConflictDialog from '@/components/VersionConflictDialog.vue';
   import AdminInput from '@/components/AdminInput.vue';
   import type { Album } from '@/types';
@@ -25,20 +19,20 @@
   const datePicker = ref<HTMLInputElement | null>(null);
   const titleError = ref('');
   const error = ref('');
-  const lockWarning = ref('');
   let isDisposed = false;
   const showVersionConflictDialog = ref(false);
   const latestConflictUpdated = ref<string | null>(null);
   let versionConflictResolver: ((force: boolean) => void) | null = null;
-  const showEditLockConflictDialog = ref(false);
-  const editLockConflictMessage = ref('');
-  let editLockConflictResolver: ((force: boolean) => void) | null = null;
 
   const originalUpdated = ref<string | null>(null);
-  const currentLockId = ref<string | null>(null);
-  const conflictingLock = ref<EditLockRecord | null>(null);
-  const takingOverLock = ref(false);
   const hasChanges = ref(false);
+
+  // 使用编辑锁 Composable
+  const editLock = useEditLock({
+    collection: 'albums',
+    recordId: computed(() => (route.params.id as string) || null),
+    isEdit,
+  });
 
   const album = ref<Partial<Album>>({
     title: '',
@@ -86,117 +80,6 @@
 
   const getSongArtist = (songId: string) => {
     return songCache.value.get(songId)?.artist || '';
-  };
-
-  // === 编辑锁 ===
-  const getLockWarningMessage = (lock?: EditLockRecord | null, fallbackUsername?: string): string => {
-    const lockingUser = lock?.username?.trim() || fallbackUsername || '未知用户';
-    const lockedAt = formatEditLockDateTime(lock?.created || lock?.updated);
-    return `当前记录正在由 ${lockingUser} 编辑，加锁时间：${lockedAt}。`;
-  };
-
-  const setConflictingLockState = (lock: EditLockRecord | null, fallbackUsername?: string) => {
-    conflictingLock.value = lock;
-    lockWarning.value = lock || fallbackUsername ? getLockWarningMessage(lock, fallbackUsername) : '';
-  };
-
-  const requestEditLockConflictResolution = (message?: string): Promise<boolean> => {
-    editLockConflictMessage.value = message || '仍有其他终端正在编辑此页面，请稍后再试。';
-    showEditLockConflictDialog.value = true;
-    return new Promise(resolve => {
-      editLockConflictResolver = resolve;
-    });
-  };
-
-  const resolveEditLockConflict = (force: boolean) => {
-    showEditLockConflictDialog.value = false;
-    const resolver = editLockConflictResolver;
-    editLockConflictResolver = null;
-    resolver?.(force);
-  };
-
-  const createEditLock = async (): Promise<boolean> => {
-    if (!isEdit.value) return true;
-    if (currentLockId.value) return true;
-    try {
-      const result = await acquireEditLock('albums', route.params.id as string);
-      if (!result.ok) {
-        setConflictingLockState(result.conflictingLock || null, result.lockingUser);
-        return false;
-      }
-      if (isDisposed && result.lockId) {
-        await releaseEditLock(result.lockId);
-        return false;
-      }
-      currentLockId.value = result.lockId || null;
-      setConflictingLockState(null);
-      return true;
-    } catch (err) {
-      console.error('Failed to create edit lock:', err);
-      return true;
-    }
-  };
-
-  const removeEditLock = async () => {
-    if (currentLockId.value) {
-      try {
-        await releaseEditLock(currentLockId.value);
-      } catch (err) {
-        console.error(err);
-      }
-      currentLockId.value = null;
-    }
-    setConflictingLockState(null);
-  };
-
-  const checkEditLock = async (): Promise<string | null> => {
-    if (!isEdit.value) return null;
-    try {
-      const lock = await findConflictingEditLock('albums', route.params.id as string, currentLockId.value);
-      if (lock) {
-        setConflictingLockState(lock);
-        return getLockWarningMessage(lock);
-      }
-      setConflictingLockState(null);
-      return null;
-    } catch (err) {
-      console.error(err);
-      return null;
-    }
-  };
-
-  const ensureEditLock = async (): Promise<boolean> => {
-    if (!isEdit.value || currentLockId.value) return true;
-    return createEditLock();
-  };
-
-  const forceTakeoverEditLock = async (): Promise<boolean> => {
-    if (!isEdit.value) return true;
-    try {
-      const result = await forceAcquireEditLock('albums', route.params.id as string, currentLockId.value);
-      if (!result.ok || !result.lockId) {
-        error.value = '无法强行接管编辑锁';
-        return false;
-      }
-      currentLockId.value = result.lockId;
-      setConflictingLockState(null);
-      return true;
-    } catch (err) {
-      console.error(err);
-      error.value = '无法强行接管编辑锁';
-      return false;
-    }
-  };
-
-  const takeOverConflictingEditLock = async () => {
-    if (takingOverLock.value || currentLockId.value) return;
-    takingOverLock.value = true;
-    error.value = '';
-    try {
-      await forceTakeoverEditLock();
-    } finally {
-      takingOverLock.value = false;
-    }
   };
 
   // === 版本冲突 ===
@@ -266,7 +149,7 @@
         loading.value = false;
         if (!error.value) {
           window.setTimeout(() => {
-            void createEditLock();
+            void editLock.createEditLock();
           }, 0);
         }
       }
@@ -370,21 +253,21 @@
     saving.value = true;
     try {
       if (isEdit.value) {
-        const lockMessage = await checkEditLock();
+        const lockMessage = await editLock.checkEditLock();
         if (lockMessage) {
           saving.value = false;
-          const shouldForce = await requestEditLockConflictResolution(lockMessage);
+          const shouldForce = await editLock.requestEditLockConflictResolution(lockMessage);
           if (!shouldForce) return;
-          const took = await forceTakeoverEditLock();
+          const took = await editLock.forceTakeoverEditLock();
           if (!took) return;
           saving.value = true;
         }
-        const hasLock = await ensureEditLock();
+        const hasLock = await editLock.ensureEditLock();
         if (!hasLock) {
           saving.value = false;
-          const shouldForce = await requestEditLockConflictResolution(lockWarning.value);
+          const shouldForce = await editLock.requestEditLockConflictResolution(editLock.lockWarning.value);
           if (!shouldForce) return;
-          const took = await forceTakeoverEditLock();
+          const took = await editLock.forceTakeoverEditLock();
           if (!took) return;
           saving.value = true;
         }
@@ -425,7 +308,7 @@
         await pb.collection('albums').create(payload);
       }
 
-      await removeEditLock();
+      await editLock.removeEditLock();
       hasChanges.value = false;
       router.push('/admin/albums');
     } catch (err) {
@@ -456,7 +339,8 @@
     isDisposed = true;
     window.removeEventListener('beforeunload', handleBeforeUnload);
     if (coverPreviewUrl.value) URL.revokeObjectURL(coverPreviewUrl.value);
-    removeEditLock();
+    // 删除编辑锁（Composable 会自动处理，这里显式调用以确保顺序）
+    void editLock.dispose();
   });
 
   const openDatePicker = () => {
@@ -519,29 +403,14 @@
       <p class="text-red-300">{{ error }}</p>
     </div>
 
-    <div v-if="lockWarning" class="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg space-y-3">
-      <p class="text-yellow-400 flex items-center gap-2">
-        <AppIcon name="warning" class-name="w-5 h-5 shrink-0" />
-        <span>{{ lockWarning }}</span>
-      </p>
-      <div v-if="conflictingLock" class="space-y-1 pl-7 text-sm text-yellow-100/85">
-        <p><span class="text-[#888]">锁用户：</span>{{ conflictingLock.username || '未知用户' }}</p>
-        <p
-          ><span class="text-[#888]">加锁时间：</span
-          >{{ formatEditLockDateTime(conflictingLock.created || conflictingLock.updated) }}</p
-        >
-      </div>
-      <div v-if="!currentLockId" class="pl-7">
-        <button
-          type="button"
-          class="rounded-lg border border-yellow-400/40 px-4 py-2 text-sm text-yellow-100 hover:bg-yellow-500/10 transition-colors disabled:opacity-50"
-          :disabled="takingOverLock || saving"
-          @click="takeOverConflictingEditLock"
-        >
-          {{ takingOverLock ? '正在移除...' : '移除原有锁并继续编辑' }}
-        </button>
-      </div>
-    </div>
+    <EditLockWarning
+      :lock-warning="editLock.lockWarning.value"
+      :conflicting-lock="editLock.conflictingLock.value"
+      :current-lock-id="editLock.currentLockId.value"
+      :taking-over-lock="editLock.takingOverLock.value"
+      :saving="saving"
+      @take-over-lock="editLock.takeOverConflictingEditLock"
+    />
 
     <div v-if="loading" class="flex items-center justify-center py-20">
       <div class="w-8 h-8 border-2 border-[#c9c9c9]/30 border-t-red-300 rounded-full animate-spin"></div>
@@ -628,7 +497,9 @@
           >
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-3 flex-1">
-                <h3 v-if="(album.tracks?.length || 0) > 1" class="text-[#c9c9c9] font-medium shrink-0">Disc {{ disc.disc }}</h3>
+                <h3 v-if="(album.tracks?.length || 0) > 1" class="text-[#c9c9c9] font-medium shrink-0"
+                  >Disc {{ disc.disc }}</h3
+                >
                 <h3 v-else class="text-[#c9c9c9] font-medium shrink-0">曲目</h3>
                 <input
                   v-if="(album.tracks?.length || 0) > 1"
@@ -755,12 +626,12 @@
     @force="resolveVersionConflict(true)"
   />
   <EditLockConflictDialog
-    :visible="showEditLockConflictDialog"
-    :message="editLockConflictMessage"
-    :locking-user="conflictingLock?.username || null"
-    :locked-at="conflictingLock?.created || conflictingLock?.updated || null"
-    @close="resolveEditLockConflict(false)"
-    @force="resolveEditLockConflict(true)"
+    :visible="editLock.showEditLockConflictDialog.value"
+    :message="editLock.editLockConflictMessage.value"
+    :locking-user="editLock.conflictingLock.value?.username || null"
+    :locked-at="editLock.conflictingLock.value?.created || editLock.conflictingLock.value?.updated || null"
+    @close="editLock.resolveEditLockConflict(false)"
+    @force="editLock.resolveEditLockConflict(true)"
   />
 </template>
 

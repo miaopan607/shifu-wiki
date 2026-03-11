@@ -9,6 +9,7 @@
 ├── src/
 │   ├── assets/            # 静态资源 (样式、图标)
 │   ├── components/        # 公用组件
+│   ├── composables/       # Vue Composables (可复用逻辑)
 │   ├── lib/               # 工具库 (PocketBase 配置)
 │   ├── router/            # 路由配置
 │   ├── stores/            # 全局状态（主要是上传队列）

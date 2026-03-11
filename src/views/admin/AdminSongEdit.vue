@@ -8,16 +8,10 @@
     parseDateFromBackend,
     normalizeDateForStorage,
   } from '@/lib/pocketbase';
-  import {
-    acquireEditLock,
-    findConflictingEditLock,
-    forceAcquireEditLock,
-    formatEditLockDateTime,
-    releaseEditLock,
-    type EditLockRecord,
-  } from '@/lib/editLock';
+  import { useEditLock } from '@/composables/useEditLock';
   import { uploadStore } from '@/stores/uploadStore';
   import EditLockConflictDialog from '@/components/EditLockConflictDialog.vue';
+  import EditLockWarning from '@/components/EditLockWarning.vue';
   import VersionConflictDialog from '@/components/VersionConflictDialog.vue';
   import AdminInput from '@/components/AdminInput.vue';
   import AppIcon from '@/components/AppIcon.vue';
@@ -34,20 +28,20 @@
   const titleError = ref('');
   const artistError = ref('');
   const error = ref('');
-  const lockWarning = ref('');
   let isDisposed = false;
   const showVersionConflictDialog = ref(false);
   const latestConflictUpdated = ref<string | null>(null);
   let versionConflictResolver: ((force: boolean) => void) | null = null;
-  const showEditLockConflictDialog = ref(false);
-  const editLockConflictMessage = ref('');
-  let editLockConflictResolver: ((force: boolean) => void) | null = null;
 
   const originalUpdated = ref<string | null>(null);
   const currentBatchTask = ref<BatchUploadTask | null>(null);
-  const currentLockId = ref<string | null>(null);
-  const conflictingLock = ref<EditLockRecord | null>(null);
-  const takingOverLock = ref(false);
+
+  // 使用编辑锁 Composable
+  const editLock = useEditLock({
+    collection: 'songs',
+    recordId: computed(() => (route.params.id as string) || null),
+    isEdit,
+  });
 
   const song = ref<Partial<Song>>({
     title: '',
@@ -301,78 +295,21 @@
     }
   };
 
-  // === 编辑锁方法 ===
-  const getLockWarningMessage = (lock?: EditLockRecord | null, fallbackUsername?: string): string => {
-    const lockingUser = lock?.username?.trim() || fallbackUsername || '未知用户';
-    const lockedAt = formatEditLockDateTime(lock?.created || lock?.updated);
-    return `当前记录正在由 ${lockingUser} 编辑，加锁时间：${lockedAt}。`;
-  };
-
-  const setConflictingLockState = (lock: EditLockRecord | null, fallbackUsername?: string) => {
-    conflictingLock.value = lock;
-    lockWarning.value = lock || fallbackUsername ? getLockWarningMessage(lock, fallbackUsername) : '';
-  };
-
-  const requestEditLockConflictResolution = (message?: string): Promise<boolean> => {
-    editLockConflictMessage.value = message || '仍有其他终端正在编辑此页面，请稍后再试。';
-    showEditLockConflictDialog.value = true;
-    return new Promise(resolve => {
-      editLockConflictResolver = resolve;
-    });
-  };
-
-  const resolveEditLockConflict = (force: boolean) => {
-    showEditLockConflictDialog.value = false;
-    const resolver = editLockConflictResolver;
-    editLockConflictResolver = null;
-    resolver?.(force);
-  };
-
-  const createEditLock = async (): Promise<boolean> => {
-    if (!isEdit.value) return true;
-    if (currentLockId.value) return true;
-    try {
-      const result = await acquireEditLock('songs', route.params.id as string);
-      if (!result.ok) {
-        setConflictingLockState(result.conflictingLock || null, result.lockingUser);
-        return false;
-      }
-      if (isDisposed && result.lockId) {
-        await releaseEditLock(result.lockId);
-        return false;
-      }
-      currentLockId.value = result.lockId || null;
-      setConflictingLockState(null);
-      return true;
-    } catch (err) {
-      console.error('Failed to create edit lock:', err);
-      return true;
-    }
-  };
-
   const handoffEditLockToTask = async (task: BatchUploadTask, targetId: string) => {
-    let lockId = currentLockId.value;
-    if (!lockId) {
-      const result = await acquireEditLock('songs', targetId);
-      if (!result.ok || !result.lockId) {
-        throw new Error(`无法为后台上传创建编辑锁：${result.lockingUser || '锁创建失败'}`);
-      }
-      lockId = result.lockId;
-    }
-    uploadStore.attachTaskLock(task.id, lockId, 'songs');
-    currentLockId.value = null;
-  };
+    let lockId = editLock.currentLockId.value;
 
-  const removeEditLock = async () => {
-    if (currentLockId.value) {
-      try {
-        await releaseEditLock(currentLockId.value);
-      } catch (err) {
-        console.error('Failed to remove edit lock:', err);
+    if (!lockId) {
+      const result = await editLock.createEditLock();
+      if (!result) {
+        throw new Error('无法为后台上传创建编辑锁');
       }
-      currentLockId.value = null;
+      lockId = editLock.currentLockId.value;
     }
-    setConflictingLockState(null);
+
+    if (lockId) {
+      uploadStore.attachTaskLock(task.id, lockId, 'songs');
+      editLock.currentLockId.value = null;
+    }
   };
 
   // === 加载 ===
@@ -435,7 +372,7 @@
         loading.value = false;
         if (!error.value) {
           window.setTimeout(() => {
-            void createEditLock();
+            void editLock.createEditLock();
           }, 0);
         }
       }
@@ -567,56 +504,6 @@
   };
 
   // === 版本冲突 ===
-  const checkEditLock = async (): Promise<string | null> => {
-    if (!isEdit.value) return null;
-    try {
-      const lock = await findConflictingEditLock('songs', route.params.id as string, currentLockId.value);
-      if (lock) {
-        setConflictingLockState(lock);
-        return getLockWarningMessage(lock);
-      }
-      setConflictingLockState(null);
-      return null;
-    } catch (err) {
-      console.error('Failed to check edit lock:', err);
-      return null;
-    }
-  };
-
-  const ensureEditLock = async (): Promise<boolean> => {
-    if (!isEdit.value || currentLockId.value) return true;
-    return createEditLock();
-  };
-
-  const forceTakeoverEditLock = async (): Promise<boolean> => {
-    if (!isEdit.value) return true;
-    try {
-      const result = await forceAcquireEditLock('songs', route.params.id as string, currentLockId.value);
-      if (!result.ok || !result.lockId) {
-        error.value = '无法强行接管编辑锁，请重试';
-        return false;
-      }
-      currentLockId.value = result.lockId;
-      setConflictingLockState(null);
-      return true;
-    } catch (err) {
-      console.error('Failed to force acquire edit lock:', err);
-      error.value = '无法强行接管编辑锁，请重试';
-      return false;
-    }
-  };
-
-  const takeOverConflictingEditLock = async () => {
-    if (takingOverLock.value || currentLockId.value) return;
-    takingOverLock.value = true;
-    error.value = '';
-    try {
-      await forceTakeoverEditLock();
-    } finally {
-      takingOverLock.value = false;
-    }
-  };
-
   const latestEditPath = computed(() => {
     if (!isEdit.value) {
       return router.resolve({ name: 'admin-song-new' }).href;
@@ -690,21 +577,21 @@
     try {
       // 1. 编辑锁检查
       if (isEdit.value) {
-        const lockMessage = await checkEditLock();
+        const lockMessage = await editLock.checkEditLock();
         if (lockMessage) {
           saving.value = false;
-          const shouldForce = await requestEditLockConflictResolution(lockMessage);
+          const shouldForce = await editLock.requestEditLockConflictResolution(lockMessage);
           if (!shouldForce) return;
-          const took = await forceTakeoverEditLock();
+          const took = await editLock.forceTakeoverEditLock();
           if (!took) return;
           saving.value = true;
         }
-        const hasLock = await ensureEditLock();
+        const hasLock = await editLock.ensureEditLock();
         if (!hasLock) {
           saving.value = false;
-          const shouldForce = await requestEditLockConflictResolution(lockWarning.value);
+          const shouldForce = await editLock.requestEditLockConflictResolution(editLock.lockWarning.value);
           if (!shouldForce) return;
-          const took = await forceTakeoverEditLock();
+          const took = await editLock.forceTakeoverEditLock();
           if (!took) return;
           saving.value = true;
         }
@@ -784,7 +671,7 @@
         uploadStore.startPendingTasks(targetSongId, 'song');
         currentBatchTask.value = null;
       } else if (isEdit.value) {
-        await removeEditLock();
+        await editLock.removeEditLock();
       }
 
       hasChanges.value = false;
@@ -830,7 +717,8 @@
       uploadStore.discardTask(currentBatchTask.value.id);
       currentBatchTask.value = null;
     }
-    removeEditLock();
+    // 删除编辑锁（Composable 会自动处理，这里显式调用以确保顺序）
+    void editLock.dispose();
   });
 
   const openDatePicker = () => {
@@ -899,34 +787,14 @@
       <p class="text-red-300">{{ error }}</p>
     </div>
 
-    <div v-if="lockWarning" class="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg space-y-3">
-      <p class="text-yellow-400 flex items-center gap-2">
-        <AppIcon name="warning" class-name="w-5 h-5 shrink-0" />
-        <span>{{ lockWarning }}</span>
-      </p>
-      <div v-if="conflictingLock" class="space-y-1 pl-7 text-sm text-yellow-100/85">
-        <p
-          ><span class="text-[#888]">锁用户：</span><span>{{ conflictingLock.username || '未知用户' }}</span></p
-        >
-        <p
-          ><span class="text-[#888]">加锁时间：</span
-          ><span>{{ formatEditLockDateTime(conflictingLock.created || conflictingLock.updated) }}</span></p
-        >
-      </div>
-      <p v-if="!currentLockId" class="pl-7 text-sm text-yellow-100/85"
-        >如果你认为原有锁已失效，可以点击下方按钮移除原有锁。</p
-      >
-      <div v-if="!currentLockId" class="pl-7">
-        <button
-          type="button"
-          class="rounded-lg border border-yellow-400/40 px-4 py-2 text-sm text-yellow-100 hover:bg-yellow-500/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          :disabled="takingOverLock || saving"
-          @click="takeOverConflictingEditLock"
-        >
-          {{ takingOverLock ? '正在移除原有锁...' : '移除原有锁并继续编辑' }}
-        </button>
-      </div>
-    </div>
+    <EditLockWarning
+      :lock-warning="editLock.lockWarning.value"
+      :conflicting-lock="editLock.conflictingLock.value"
+      :current-lock-id="editLock.currentLockId.value"
+      :taking-over-lock="editLock.takingOverLock.value"
+      :saving="saving"
+      @take-over-lock="editLock.takeOverConflictingEditLock"
+    />
 
     <div v-if="loading" class="flex items-center justify-center py-20">
       <div class="w-8 h-8 border-2 border-[#c9c9c9]/30 border-t-red-300 rounded-full animate-spin"></div>
@@ -1389,12 +1257,12 @@
   />
 
   <EditLockConflictDialog
-    :visible="showEditLockConflictDialog"
-    :message="editLockConflictMessage"
-    :locking-user="conflictingLock?.username || null"
-    :locked-at="conflictingLock?.created || conflictingLock?.updated || null"
-    @close="resolveEditLockConflict(false)"
-    @force="resolveEditLockConflict(true)"
+    :visible="editLock.showEditLockConflictDialog.value"
+    :message="editLock.editLockConflictMessage.value"
+    :locking-user="editLock.conflictingLock.value?.username || null"
+    :locked-at="editLock.conflictingLock.value?.created || editLock.conflictingLock.value?.updated || null"
+    @close="editLock.resolveEditLockConflict(false)"
+    @force="editLock.resolveEditLockConflict(true)"
   />
 </template>
 
