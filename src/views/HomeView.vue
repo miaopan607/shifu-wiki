@@ -19,12 +19,6 @@
         }}</h1>
       </header>
 
-      <header class="space-y-2">
-        <h1 class="text-2xl font-serif text-[#c9c9c9] tracking-widest drop-shadow-[0_0_15px_rgba(162,50,62,0.3)]">{{
-          settings.home_subtitle
-        }}</h1>
-      </header>
-
       <!-- 装饰线 -->
       <div class="flex justify-center">
         <div class="h-0.5 w-24 bg-[#c9c9c9] shadow-[0_0_8px] shadow-[#c9c9c9]"></div>
