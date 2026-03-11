@@ -29,18 +29,25 @@ const normalizeSongs = (value: unknown): string[] => {
 export const normalizeAlbumTracks = (value: unknown): AlbumDisc[] => {
   const parsed = parseRawTracks(value);
 
-  return parsed
-    .map((entry, index) => {
-      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return null;
+  const result: AlbumDisc[] = [];
+  for (let i = 0; i < parsed.length; i++) {
+    const entry = parsed[i];
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue;
 
-      const { disc, songs } = entry as { disc?: unknown; songs?: unknown };
-      const discNumber = Number(disc);
+    const { disc, name, songs } = entry as { disc?: unknown; name?: unknown; songs?: unknown };
+    const discNumber = Number(disc);
 
-      return {
-        disc: Number.isInteger(discNumber) && discNumber > 0 ? discNumber : index + 1,
-        songs: normalizeSongs(songs),
-      };
-    })
-    .filter((disc): disc is AlbumDisc => disc !== null)
-    .sort((a, b) => a.disc - b.disc);
+    const discItem: AlbumDisc = {
+      disc: Number.isInteger(discNumber) && discNumber > 0 ? discNumber : i + 1,
+      songs: normalizeSongs(songs),
+    };
+
+    if (typeof name === 'string' && name.trim()) {
+      discItem.name = name.trim();
+    }
+
+    result.push(discItem);
+  }
+
+  return result.sort((a, b) => a.disc - b.disc);
 };

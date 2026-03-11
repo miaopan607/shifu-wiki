@@ -44,7 +44,7 @@
     title: '',
     releaseDate: '',
     description: '',
-    tracks: [{ disc: 1, songs: [] }],
+    tracks: [{ disc: 1, name: 'Disc 1', songs: [] }],
   });
 
   // === 单封面管理 ===
@@ -240,10 +240,15 @@
         const record = await pb.collection('albums').getOne(route.params.id as string);
         originalUpdated.value = record.updated;
         const parsedTracks = normalizeAlbumTracks((record as any).tracks);
+        // 为没有 name 的 disc 添加默认名称
+        const tracksWithName = parsedTracks.map(d => ({
+          ...d,
+          name: d.name || `Disc ${d.disc}`,
+        }));
         album.value = {
           ...record,
           releaseDate: record.releaseDate ? parseDateFromBackend(record.releaseDate) : '',
-          tracks: parsedTracks.length > 0 ? parsedTracks : [{ disc: 1, songs: [] }],
+          tracks: tracksWithName.length > 0 ? tracksWithName : [{ disc: 1, name: 'Disc 1', songs: [] }],
         } as unknown as Album;
 
         // 加载歌曲名缓存
@@ -293,7 +298,8 @@
   const addDisc = () => {
     if (!album.value.tracks) album.value.tracks = [];
     const maxDisc = album.value.tracks.reduce((max, d) => Math.max(max, d.disc), 0);
-    album.value.tracks.push({ disc: maxDisc + 1, songs: [] });
+    const newDiscNumber = maxDisc + 1;
+    album.value.tracks.push({ disc: newDiscNumber, name: `Disc ${newDiscNumber}`, songs: [] });
     hasChanges.value = true;
   };
 
@@ -621,13 +627,21 @@
             class="border border-[#c9c9c9]/10 rounded-lg p-4 space-y-3"
           >
             <div class="flex items-center justify-between">
-              <h3 v-if="(album.tracks?.length || 0) > 1 || disc.disc > 1" class="text-[#c9c9c9] font-medium"
-                >Disc {{ disc.disc }}</h3
-              >
-              <h3 v-else class="text-[#c9c9c9] font-medium">曲目</h3>
+              <div class="flex items-center gap-3 flex-1">
+                <h3 v-if="(album.tracks?.length || 0) > 1" class="text-[#c9c9c9] font-medium shrink-0">Disc {{ disc.disc }}</h3>
+                <h3 v-else class="text-[#c9c9c9] font-medium shrink-0">曲目</h3>
+                <input
+                  v-if="(album.tracks?.length || 0) > 1"
+                  v-model="disc.name"
+                  type="text"
+                  placeholder="Disc 名称"
+                  class="flex-1 min-w-0 px-3 py-1.5 bg-black/20 border border-[#c9c9c9]/20 rounded text-[#e0e0e0] text-sm focus:outline-none focus:border-red-300/50"
+                  @input="markChanged"
+                />
+              </div>
               <button
                 v-if="(album.tracks?.length || 0) > 1"
-                class="text-red-400 hover:text-red-300 p-1"
+                class="text-red-400 hover:text-red-300 p-1 ml-2"
                 @click="removeDisc(discIndex)"
               >
                 <AppIcon name="trash" class-name="w-4 h-4" />

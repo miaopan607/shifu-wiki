@@ -43,6 +43,7 @@ export interface Misc {
 
 export interface AlbumDisc {
   disc: number;
+  name?: string; // Disc名称，如 "Disc 1"、"CD 1"、"DVD" 等
   songs: string[]; // Song record IDs
 }
 

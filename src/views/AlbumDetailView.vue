@@ -13,6 +13,7 @@
 
   interface DiscGroup {
     disc: number;
+    name?: string;
     songs: any[];
   }
   const discGroups = ref<DiscGroup[]>([]);
@@ -79,6 +80,7 @@
           }
           discGroups.value = tracks.map(disc => ({
             disc: disc.disc,
+            name: disc.name,
             songs: (disc.songs || []).map(songId => songMap.get(songId)).filter(Boolean),
           }));
         }
@@ -133,8 +135,8 @@
 
           <div class="space-y-8">
             <div v-for="discGroup in discGroups" :key="discGroup.disc">
-              <div v-if="discGroups.length > 1 || discGroup.disc > 1" class="mb-4">
-                <h2 class="text-lg text-[#888] tracking-widest">Disc {{ discGroup.disc }}</h2>
+              <div v-if="discGroups.length > 1" class="mb-4">
+                <h2 class="text-lg text-[#888] tracking-widest">{{ discGroup.name || `Disc ${discGroup.disc}` }}</h2>
                 <hr class="border-[#c9c9c9]/10 mt-2" />
               </div>
               <div class="space-y-4">

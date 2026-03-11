@@ -55,10 +55,14 @@
 
 ```json
 [
-  { "disc": 1, "songs": ["SONG_ID_1", "SONG_ID_2"] },
-  { "disc": 2, "songs": ["SONG_ID_3"] }
+  { "disc": 1, "name": "CD", "songs": ["SONG_ID_1", "SONG_ID_2"] },
+  { "disc": 2, "name": "DVD", "songs": ["SONG_ID_3"] }
 ]
 ```
+
+- `disc`: Disc 编号（必填）
+- `name`: Disc 名称（可选），如 "CD"、"DVD"、"Disc 1" 等，用于多 Disc 专辑展示
+- `songs`: 歌曲 ID 数组
 
 ### activities (活动)
 
