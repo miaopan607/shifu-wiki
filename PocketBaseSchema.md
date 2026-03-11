@@ -66,18 +66,29 @@
 
 ### activities (活动)
 
-| 字段名      | 类型     | 说明        |
-| :---------- | :------- | :---------- |
-| `id`        | text     | 主键        |
-| `index`     | number   | 索引        |
-| `title`     | text     | 标题 (必填) |
-| `date`      | text     | 日期        |
-| `startTime` | date     | 开始时间    |
-| `endTime`   | date     | 结束时间    |
-| `location`  | text     | 地点        |
-| `tags`      | json     | 标签        |
-| `created`   | autodate | 创建时间    |
-| `updated`   | autodate | 更新时间    |
+| 字段名      | 类型     | 说明                                    |
+| :---------- | :------- | :-------------------------------------- |
+| `id`        | text     | 主键                                    |
+| `index`     | number   | 索引                                    |
+| `title`     | text     | 标题 (必填)                             |
+| `timeSlots` | json     | 时间段数组 (ActivityTimeSlot[])         |
+| `location`  | text     | 地点                                    |
+| `tags`      | json     | 标签数组 (string[])                     |
+| `created`   | autodate | 创建时间                                |
+| `updated`   | autodate | 更新时间                                |
+
+`timeSlots` JSON 结构示例:
+
+```json
+[
+  { "type": "datetime", "start": "2024-01-15T19:00:00", "end": "2024-01-15T21:00:00" },
+  { "type": "date", "start": "2024-02-20" }
+]
+```
+
+- `type`: 时间类型 - `datetime`(详细时间) 或 `date`(仅日期)
+- `start`: 开始时间 (ISO8601 格式或 YYYY-MM-DD)
+- `end`: 可选的结束时间
 
 ### galleries (图集)
 
