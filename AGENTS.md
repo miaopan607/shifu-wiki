@@ -8,6 +8,8 @@
 
 ## 常用命令
 
+完成前先进行类型检查和格式化。
+
 ```bash
 pnpm type-check
 pnpm format
