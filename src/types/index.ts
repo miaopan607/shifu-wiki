@@ -117,5 +117,5 @@ export interface Activity {
   timeSlots?: ActivityTimeSlot[]; // 多个时间段（替代原来的 date 字段）
   location?: string;
   tags?: string[];
-  content?: string;
+  description?: string;
 }

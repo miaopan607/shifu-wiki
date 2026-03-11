@@ -19,7 +19,7 @@
     timeSlots: [],
     location: '',
     tags: [],
-    content: '',
+    description: '',
   });
 
   const tagInput = ref('');
@@ -367,7 +367,7 @@
         <!-- 活动详情 -->
         <div class="bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-xl p-6 space-y-4">
           <AdminInput
-            v-model="activity.content"
+            v-model="activity.description"
             label="详情"
             icon="info"
             type="markdown"

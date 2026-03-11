@@ -160,7 +160,7 @@
         <!-- 活动正文内容 -->
         <div
           class="prose prose-invert mx-auto content-container text-lg leading-relaxed text-[#c9c9c9]"
-          v-html="renderMarkdown(activity.content || activity.description || '暂无详细介绍')"
+          v-html="renderMarkdown(activity.description || '暂无详细介绍')"
         ></div>
       </article>
     </div>
