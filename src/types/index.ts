@@ -54,10 +54,10 @@ export interface Song {
   updated: string;
   title: string;
   index: number;
-  artist: string;
+  artist: string[];
   releaseDate: string;
-  lyricist?: string;
-  composer?: string;
+  lyricist?: string[];
+  composer?: string[];
   lyrics?: string; // 对应 JSON 中的 lyric
   credits?: string;
   description?: string;

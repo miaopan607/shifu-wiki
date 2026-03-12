@@ -157,7 +157,9 @@
                       <div
                         class="flex gap-4 mt-1 text-xs text-[#888] tracking-wider opacity-0 group-hover:opacity-70 transition-opacity"
                       >
-                        <span>{{ song.artist || '黄诗扶' }}</span>
+                        <span>{{
+                          Array.isArray(song.artist) ? song.artist.join(' / ') : song.artist || '黄诗扶'
+                        }}</span>
                       </div>
                     </div>
                     <span

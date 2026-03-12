@@ -14,10 +14,27 @@
   const deleteConfirm = ref<string | null>(null);
   const deleting = ref(false);
 
+  // 将数组转换为 / 分隔的字符串
+  const formatArrayField = (value: string | string[] | undefined): string => {
+    if (!value) return '';
+    if (Array.isArray(value)) return value.join(' / ');
+    return value;
+  };
+
   const filteredSongs = computed(() => {
     if (!searchQuery.value.trim()) return songs.value;
     const query = searchQuery.value.toLowerCase();
-    return songs.value.filter(s => s.title.toLowerCase().includes(query) || s.artist?.toLowerCase().includes(query));
+    return songs.value.filter(s => {
+      const titleMatch = s.title.toLowerCase().includes(query);
+      // 支持数组或字符串形式的 artist
+      let artistMatch = false;
+      if (Array.isArray(s.artist)) {
+        artistMatch = s.artist.some(a => (a as string).toLowerCase().includes(query));
+      } else if (typeof s.artist === 'string') {
+        artistMatch = (s.artist as string).toLowerCase().includes(query);
+      }
+      return titleMatch || artistMatch;
+    });
   });
 
   const stats = computed(() => ({
@@ -172,10 +189,10 @@
             <tr v-for="song in filteredSongs" :key="song.id" class="hover:bg-white/5 transition-colors">
               <td class="px-4 py-3">
                 <p class="font-medium text-[#c9c9c9]">{{ song.title }}</p>
-                <p class="text-xs text-[#888]">{{ song.artist }}</p>
+                <p class="text-xs text-[#888]">{{ formatArrayField(song.artist) }}</p>
               </td>
               <td class="px-4 py-3">
-                <p class="text-sm text-[#888]">{{ song.artist }}</p>
+                <p class="text-sm text-[#888]">{{ formatArrayField(song.artist) }}</p>
               </td>
               <td class="px-4 py-3 text-sm text-[#888]">
                 {{ formatDate(song.releaseDate) }}

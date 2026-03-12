@@ -37,7 +37,8 @@
     const items: SearchResultItem[] = [];
 
     results.value.songs.forEach(song => {
-      const parts = [song.artist || ''];
+      const artistStr = Array.isArray(song.artist) ? song.artist.join(' / ') : song.artist || '';
+      const parts = [artistStr];
       if (song.defaultAlbumName) parts.push(song.defaultAlbumName);
       items.push({
         id: song.id,

@@ -58,11 +58,20 @@
     link?: string;
   }
 
+  // 将数组转换为 / 分隔的字符串
+  const formatArrayField = (value: string | string[] | undefined): string => {
+    if (!value) return '';
+    if (Array.isArray(value)) return value.join(' / ');
+    return value;
+  };
+
   const metaItems = computed<MetaItem[]>(() => {
     if (!song.value) return [];
     const items: MetaItem[] = [];
-    if (song.value.lyricist) items.push({ label: '词', value: song.value.lyricist, icon: 'lyricist' });
-    if (song.value.composer) items.push({ label: '曲', value: song.value.composer, icon: 'composer' });
+    if (song.value.lyricist?.length)
+      items.push({ label: '词', value: formatArrayField(song.value.lyricist), icon: 'lyricist' });
+    if (song.value.composer?.length)
+      items.push({ label: '曲', value: formatArrayField(song.value.composer), icon: 'composer' });
     // 默认展示专辑
     if (displayAlbumName.value) {
       items.push({

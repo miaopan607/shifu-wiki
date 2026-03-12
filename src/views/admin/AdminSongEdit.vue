@@ -45,10 +45,10 @@
 
   const song = ref<Partial<Song>>({
     title: '',
-    artist: '',
+    artist: [],
     releaseDate: '',
-    lyricist: '',
-    composer: '',
+    lyricist: [],
+    composer: [],
     lyrics: '',
     credits: '',
     description: '',
@@ -326,6 +326,21 @@
         song.value = {
           ...decodedRecord,
           releaseDate: decodedRecord.releaseDate ? parseDateFromBackend(decodedRecord.releaseDate) : '',
+          artist: Array.isArray(decodedRecord.artist)
+            ? decodedRecord.artist
+            : decodedRecord.artist
+              ? [decodedRecord.artist]
+              : [],
+          lyricist: Array.isArray(decodedRecord.lyricist)
+            ? decodedRecord.lyricist
+            : decodedRecord.lyricist
+              ? [decodedRecord.lyricist]
+              : [],
+          composer: Array.isArray(decodedRecord.composer)
+            ? decodedRecord.composer
+            : decodedRecord.composer
+              ? [decodedRecord.composer]
+              : [],
           links: Array.isArray(decodedRecord.links) ? decodedRecord.links : song.value.links,
           otherLinks: Array.isArray(decodedRecord.otherLinks) ? decodedRecord.otherLinks : [],
         } as unknown as Song;
@@ -544,18 +559,37 @@
   };
 
   // === 保存 ===
+  // === 标签输入处理 ===
+  const artistInput = ref('');
+  const lyricistInput = ref('');
+  const composerInput = ref('');
+
+  const addTag = (field: 'artist' | 'lyricist' | 'composer') => {
+    const inputRef = field === 'artist' ? artistInput : field === 'lyricist' ? lyricistInput : composerInput;
+    const tag = inputRef.value.trim();
+    if (tag && !song.value[field]?.includes(tag)) {
+      song.value[field] = [...(song.value[field] || []), tag];
+      inputRef.value = '';
+      markChanged();
+    }
+  };
+
+  const removeTag = (field: 'artist' | 'lyricist' | 'composer', tag: string) => {
+    song.value[field] = song.value[field]?.filter(t => t !== tag);
+    markChanged();
+  };
+
   const saveSong = async () => {
     titleError.value = '';
     artistError.value = '';
     error.value = '';
 
     const normalizedTitle = song.value.title?.trim() || '';
-    const normalizedArtist = song.value.artist?.trim() || '';
 
     if (!normalizedTitle) {
       titleError.value = '标题不能为空';
     }
-    if (!normalizedArtist) {
+    if (!song.value.artist || song.value.artist.length === 0) {
       artistError.value = '艺人不能为空';
     }
     if (titleError.value || artistError.value) {
@@ -636,7 +670,9 @@
       const data = encodeSongLinkNames({
         ...song.value,
         title: normalizedTitle,
-        artist: normalizedArtist,
+        artist: song.value.artist || [],
+        lyricist: song.value.lyricist || [],
+        composer: song.value.composer || [],
         index,
         links: normalizedLinks,
         otherLinks: normalizedOtherLinks,
@@ -821,19 +857,106 @@
               :error="titleError"
               @clear="titleError = ''"
             />
-            <AdminInput
-              v-model="song.artist"
-              label="艺人"
-              placeholder="艺人"
-              required
-              :error="artistError"
-              @clear="artistError = ''"
-            />
+            <!-- 艺人标签输入 -->
+            <div class="space-y-2">
+              <label class="text-sm text-[#888]">艺人 <span class="text-red-400">*</span></label>
+              <div class="flex flex-wrap gap-2 mb-2">
+                <span
+                  v-for="tag in song.artist"
+                  :key="tag"
+                  class="inline-flex items-center gap-1 px-3 py-1 bg-red-300/10 text-red-300 rounded-full text-sm"
+                >
+                  {{ tag }}
+                  <button class="-m-1 p-1 hover:text-white transition-colors" @click="removeTag('artist', tag)">
+                    <AppIcon name="close" class-name="w-4 h-4" />
+                  </button>
+                </span>
+              </div>
+              <div class="flex gap-2">
+                <input
+                  v-model="artistInput"
+                  type="text"
+                  placeholder="添加艺人"
+                  class="flex-1 px-4 py-2 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all"
+                  @keyup.enter="addTag('artist')"
+                />
+                <button
+                  class="px-4 py-2 bg-white/5 text-[#c9c9c9] rounded-lg hover:bg-white/10 transition-colors inline-flex items-center gap-1"
+                  @click="addTag('artist')"
+                >
+                  <AppIcon name="plus" class-name="w-4 h-4" />
+                  添加
+                </button>
+              </div>
+              <p v-if="artistError" class="text-sm text-red-400">{{ artistError }}</p>
+            </div>
           </div>
 
           <div class="grid grid-cols-2 gap-4">
-            <AdminInput v-model="song.lyricist" label="词作" placeholder="词作" />
-            <AdminInput v-model="song.composer" label="曲作" placeholder="曲作" />
+            <!-- 词作标签输入 -->
+            <div class="space-y-2">
+              <label class="text-sm text-[#888]">词作</label>
+              <div class="flex flex-wrap gap-2 mb-2">
+                <span
+                  v-for="tag in song.lyricist"
+                  :key="tag"
+                  class="inline-flex items-center gap-1 px-3 py-1 bg-red-300/10 text-red-300 rounded-full text-sm"
+                >
+                  {{ tag }}
+                  <button class="-m-1 p-1 hover:text-white transition-colors" @click="removeTag('lyricist', tag)">
+                    <AppIcon name="close" class-name="w-4 h-4" />
+                  </button>
+                </span>
+              </div>
+              <div class="flex gap-2">
+                <input
+                  v-model="lyricistInput"
+                  type="text"
+                  placeholder="添加词作"
+                  class="flex-1 px-4 py-2 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all"
+                  @keyup.enter="addTag('lyricist')"
+                />
+                <button
+                  class="px-4 py-2 bg-white/5 text-[#c9c9c9] rounded-lg hover:bg-white/10 transition-colors inline-flex items-center gap-1"
+                  @click="addTag('lyricist')"
+                >
+                  <AppIcon name="plus" class-name="w-4 h-4" />
+                  添加
+                </button>
+              </div>
+            </div>
+            <!-- 曲作标签输入 -->
+            <div class="space-y-2">
+              <label class="text-sm text-[#888]">曲作</label>
+              <div class="flex flex-wrap gap-2 mb-2">
+                <span
+                  v-for="tag in song.composer"
+                  :key="tag"
+                  class="inline-flex items-center gap-1 px-3 py-1 bg-red-300/10 text-red-300 rounded-full text-sm"
+                >
+                  {{ tag }}
+                  <button class="-m-1 p-1 hover:text-white transition-colors" @click="removeTag('composer', tag)">
+                    <AppIcon name="close" class-name="w-4 h-4" />
+                  </button>
+                </span>
+              </div>
+              <div class="flex gap-2">
+                <input
+                  v-model="composerInput"
+                  type="text"
+                  placeholder="添加曲作"
+                  class="flex-1 px-4 py-2 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all"
+                  @keyup.enter="addTag('composer')"
+                />
+                <button
+                  class="px-4 py-2 bg-white/5 text-[#c9c9c9] rounded-lg hover:bg-white/10 transition-colors inline-flex items-center gap-1"
+                  @click="addTag('composer')"
+                >
+                  <AppIcon name="plus" class-name="w-4 h-4" />
+                  添加
+                </button>
+              </div>
+            </div>
           </div>
 
           <div class="space-y-2">

@@ -87,9 +87,17 @@
       return allSongs.value;
     }
     const query = searchQuery.value.toLowerCase();
-    return allSongs.value.filter(
-      song => song.title?.toLowerCase().includes(query) || song.artist?.toLowerCase().includes(query)
-    );
+    return allSongs.value.filter(song => {
+      const titleMatch = song.title?.toLowerCase().includes(query);
+      // 支持数组或字符串形式的 artist
+      let artistMatch = false;
+      if (Array.isArray(song.artist)) {
+        artistMatch = song.artist.some((a: string) => a.toLowerCase().includes(query));
+      } else if (typeof song.artist === 'string') {
+        artistMatch = song.artist.toLowerCase().includes(query);
+      }
+      return titleMatch || artistMatch;
+    });
   });
 
   // 格式化歌曲元数据
@@ -98,9 +106,16 @@
     value: string;
   }
 
+  // 将数组转换为 / 分隔的字符串
+  const formatArrayField = (value: string | string[] | undefined): string => {
+    if (!value) return '';
+    if (Array.isArray(value)) return value.join(' / ');
+    return value;
+  };
+
   const getSongMetaParts = (song: any): MetaPart[] => {
     const parts: MetaPart[] = [];
-    if (song.artist) parts.push({ type: 'artist', value: song.artist });
+    if (song.artist?.length) parts.push({ type: 'artist', value: formatArrayField(song.artist) });
     // 添加默认展示专辑
     if (song.defaultAlbumName) {
       parts.push({ type: 'album', value: song.defaultAlbumName });

@@ -78,8 +78,16 @@
     return songCache.value.get(songId)?.title || songId;
   };
 
+  // 将数组转换为 / 分隔的字符串
+  const formatArrayField = (value: string | string[] | undefined): string => {
+    if (!value) return '';
+    if (Array.isArray(value)) return value.join(' / ');
+    return value;
+  };
+
   const getSongArtist = (songId: string) => {
-    return songCache.value.get(songId)?.artist || '';
+    const artist = songCache.value.get(songId)?.artist;
+    return formatArrayField(artist);
   };
 
   // === 版本冲突 ===
@@ -556,7 +564,7 @@
                   @click="addSongToDisc(discIndex, result)"
                 >
                   <span class="text-[#c9c9c9]">{{ result.title }}</span>
-                  <span v-if="result.artist" class="text-[#888] ml-2">{{ result.artist }}</span>
+                  <span v-if="result.artist" class="text-[#888] ml-2">{{ formatArrayField(result.artist) }}</span>
                 </button>
               </div>
               <div v-else-if="songSearchQuery.trim() && !isSearchingSongs" class="text-xs text-[#888] py-2"
