@@ -71,6 +71,12 @@
   const searchingDisc = ref<number | null>(null);
   const isSearchingSongs = ref(false);
 
+  // === 删除 Disc 确认弹窗 ===
+  const showDeleteDiscConfirm = ref(false);
+  const discToDeleteIndex = ref<number | null>(null);
+  const discToDeleteName = ref('');
+  const discToDeleteSongCount = ref(0);
+
   const allLinkedSongIds = computed(() => {
     const ids = new Set<string>();
     for (const disc of album.value.tracks || []) {
@@ -216,9 +222,37 @@
     hasChanges.value = true;
   };
 
+  const confirmRemoveDisc = (discIndex: number) => {
+    const disc = album.value.tracks?.[discIndex];
+    if (!disc) return;
+
+    if (disc.songs.length > 0) {
+      discToDeleteIndex.value = discIndex;
+      discToDeleteName.value = disc.name || `Disc ${disc.disc}`;
+      discToDeleteSongCount.value = disc.songs.length;
+      showDeleteDiscConfirm.value = true;
+    } else {
+      removeDisc(discIndex);
+    }
+  };
+
   const removeDisc = (discIndex: number) => {
     album.value.tracks?.splice(discIndex, 1);
     hasChanges.value = true;
+  };
+
+  const cancelRemoveDisc = () => {
+    showDeleteDiscConfirm.value = false;
+    discToDeleteIndex.value = null;
+    discToDeleteName.value = '';
+    discToDeleteSongCount.value = 0;
+  };
+
+  const executeRemoveDisc = () => {
+    if (discToDeleteIndex.value !== null) {
+      removeDisc(discToDeleteIndex.value);
+    }
+    cancelRemoveDisc();
   };
 
   const removeSongFromDisc = (discIndex: number, songIndex: number) => {
@@ -745,7 +779,7 @@
               <button
                 v-if="(previewTracks.length || 0) > 1"
                 class="text-red-400 hover:text-red-300 p-1 ml-2"
-                @click="removeDisc(discIndex)"
+                @click="confirmRemoveDisc(discIndex)"
               >
                 <AppIcon name="trash" class-name="w-4 h-4" />
               </button>
@@ -873,6 +907,39 @@
     @close="editLock.resolveEditLockConflict(false)"
     @force="editLock.resolveEditLockConflict(true)"
   />
+
+  <!-- 删除 Disc 确认弹窗 -->
+  <Teleport to="body">
+    <Transition name="fade">
+      <div
+        v-if="showDeleteDiscConfirm"
+        class="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+        @click.self="cancelRemoveDisc"
+      >
+        <div class="bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-xl max-w-sm w-full p-6 shadow-2xl">
+          <h3 class="text-xl font-semibold text-[#c9c9c9] mb-2">确认删除 Disc</h3>
+          <p class="text-[#888] mb-3">
+            确定要删除 "{{ discToDeleteName }}" 吗？此操作将同时移除该 Disc 中的 {{ discToDeleteSongCount }} 首歌曲。
+          </p>
+          <div class="flex justify-end gap-3">
+            <button
+              class="px-4 py-2 text-[#c9c9c9] hover:bg-white/5 rounded-lg transition-colors"
+              @click="cancelRemoveDisc"
+            >
+              取消
+            </button>
+            <button
+              class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors flex items-center gap-2"
+              @click="executeRemoveDisc"
+            >
+              <AppIcon name="trash" class-name="w-4 h-4" />
+              确认删除
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <style scoped>
@@ -883,5 +950,15 @@
   }
   .animate-spin {
     animation: spin 1s linear infinite;
+  }
+
+  .fade-enter-active,
+  .fade-leave-active {
+    transition: opacity 0.2s ease;
+  }
+
+  .fade-enter-from,
+  .fade-leave-to {
+    opacity: 0;
   }
 </style>
