@@ -107,6 +107,22 @@
     onChanged: () => markChanged(),
   });
 
+  // 添加专辑时自动设置展示专辑和展示封面
+  const addAlbumToLinkWithAutoSet = (albumRecord: any) => {
+    linkedAlbums.addAlbumToLink(albumRecord);
+
+    // 如果原本没有展示专辑，自动设置为该专辑
+    if (!song.value.defaultAlbum && !song.value.defaultAlbumName) {
+      displayAlbum.selectAlbum(albumRecord);
+    }
+
+    // 如果原本没有封面（或选择的是缺省封面），且专辑有封面，自动设置为该专辑封面
+    if (!song.value.defaultCover && albumRecord.cover) {
+      song.value.defaultCover = `album_cover:${albumRecord.id}`;
+      markChanged();
+    }
+  };
+
   // === 默认封面 ===
   const defaultCoverOptions = computed(() => {
     const options: { value: string; label: string; url: string }[] = [
@@ -1452,7 +1468,7 @@
                 v-for="result in linkedAlbums.songAlbumSearchResults.value"
                 :key="result.id"
                 class="w-full text-left p-2 bg-black/20 hover:bg-red-300/10 rounded text-sm transition-colors flex items-center gap-2"
-                @click="linkedAlbums.addAlbumToLink(result)"
+                @click="addAlbumToLinkWithAutoSet(result)"
               >
                 <div v-if="result.cover" class="w-8 h-8 rounded overflow-hidden shrink-0">
                   <img
