@@ -21,6 +21,9 @@
 | `defaultAlbum`     | relation | 关联到 albums（可选，站内有此专辑时使用）                |
 | `defaultAlbumName` | text     | 专辑名称文本（可选，站内无此专辑时使用）                 |
 | `defaultCover`     | text     | 默认封面：空=缺省封面, `album`=专辑封面, `song_cover:ID` |
+| `qqId`             | text     | QQ音乐ID                                                 |
+| `neteaseId`        | text     | 网易云音乐ID                                             |
+| `enabledPlatform`  | text     | 启用的平台: `qq`, `netease`, 或空字符串                  |
 | `created`          | autodate | 创建时间                                                 |
 | `updated`          | autodate | 更新时间                                                 |
 

@@ -8,8 +8,6 @@
 
 ## 常用命令
 
-**修改代码后必须先进行类型检查和格式化。**
-
 ```bash
 pnpm type-check
 pnpm format
@@ -77,9 +75,10 @@ await editLock.createEditLock();
 
 ## 开发注意
 
-- **上传逻辑修改**: 确保调用 `cancelUploadBatch()`，后端钩子会清理残留
-- **PocketBase 修改**: 复制到服务目录后执行 `pocketbase migrate up` 并重启
+- **上传逻辑修改**: 确保调用 `cancelUploadBatch()`，后端钩子会清理残留。
+- **PocketBase 结构修改**: 必须在 `PocketBaseSchema.md` 中更新。
 - **样式**: 保持和主站设计一致。
+- **代码规范**: 修改代码后必须先进行类型检查和格式化。
 
 ## 图标使用规范
 
