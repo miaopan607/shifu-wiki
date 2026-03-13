@@ -154,9 +154,7 @@
                       <h3 class="text-xl text-[#c9c9c9] group-hover:text-red-300 transition-colors tracking-wide">{{
                         song.title
                       }}</h3>
-                      <div
-                        class="flex gap-4 mt-1 text-xs text-[#888] tracking-wider opacity-70 md:opacity-0 md:group-hover:opacity-70 transition-opacity"
-                      >
+                      <div class="flex gap-4 mt-1 text-xs text-[#888] tracking-wider opacity-70 transition-opacity">
                         <span>{{
                           Array.isArray(song.artist) ? song.artist.join(' / ') : song.artist || '黄诗扶'
                         }}</span>
