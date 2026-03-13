@@ -306,7 +306,7 @@
                 </div>
               </div>
               <span
-                class="accent-text opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0"
+                class="accent-text opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all translate-x-0 md:translate-x-4 md:group-hover:translate-x-0"
                 >详情 →</span
               >
             </div>

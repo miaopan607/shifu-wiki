@@ -174,7 +174,7 @@
                 </div>
               </div>
               <span
-                class="text-red-300 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0"
+                class="text-red-300 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all translate-x-0 md:translate-x-4 md:group-hover:translate-x-0"
                 >查看图集 →</span
               >
             </div>

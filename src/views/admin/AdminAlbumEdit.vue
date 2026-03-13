@@ -983,7 +983,7 @@
                 </button>
 
                 <button
-                  class="text-red-400 hover:text-red-300 opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                  class="text-red-400 hover:text-red-300 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity p-1"
                   @click="removeSongFromDisc(discIndex, songIndex)"
                 >
                   <AppIcon name="close" class-name="w-4 h-4" />
@@ -1043,7 +1043,7 @@
           <div v-if="currentCoverUrl" class="relative group aspect-square rounded-lg overflow-hidden">
             <img :src="currentCoverUrl" class="w-full h-full object-cover" />
             <div
-              class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2"
+              class="absolute inset-0 bg-black/60 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2"
             >
               <button
                 class="text-xs text-[#c9c9c9] hover:text-red-300 px-2 py-1 bg-black/40 rounded"

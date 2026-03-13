@@ -182,7 +182,7 @@
             <!-- Overlay for viewing full image hint -->
             <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300">
               <div
-                class="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/50 text-white text-xs px-2 py-1 rounded"
+                class="absolute bottom-4 right-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 bg-black/50 text-white text-xs px-2 py-1 rounded"
               >
                 查看大图
               </div>

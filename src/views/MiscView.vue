@@ -53,7 +53,7 @@
                 <p v-if="item.description" class="text-[#c9c9c9]/70 line-clamp-2 text-base">{{ item.description }}</p>
               </div>
               <span
-                class="text-red-300 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0 shrink-0"
+                class="text-red-300 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all translate-x-0 md:translate-x-4 md:group-hover:translate-x-0 shrink-0"
                 >阅读 →</span
               >
             </div>

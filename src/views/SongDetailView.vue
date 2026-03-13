@@ -457,7 +457,7 @@
                     <AppIcon v-if="getPlatformIcon(link.url)" :name="getPlatformIcon(link.url) as any" />
                     <span
                       v-else
-                      class="opacity-0 group-hover:opacity-100 transition-all duration-300 transform -translate-x-2 group-hover:translate-x-0"
+                      class="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 transform translate-x-0 md:-translate-x-2 md:group-hover:translate-x-0"
                       >→</span
                     >
                   </div>
@@ -482,7 +482,7 @@
                     <AppIcon v-if="getPlatformIcon(link.url)" :name="getPlatformIcon(link.url) as any" />
                     <span
                       v-else
-                      class="opacity-0 group-hover:opacity-100 transition-all duration-300 transform -translate-x-2 group-hover:translate-x-0"
+                      class="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 transform translate-x-0 md:-translate-x-2 md:group-hover:translate-x-0"
                       >→</span
                     >
                   </div>

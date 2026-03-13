@@ -1058,7 +1058,7 @@
                 </div>
 
                 <div
-                  class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                  class="absolute inset-0 bg-black/50 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center justify-center"
                 >
                   <button
                     class="p-2 bg-red-500/80 hover:bg-red-500 rounded-full text-white transition-colors"

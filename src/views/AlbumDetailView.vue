@@ -155,7 +155,7 @@
                         song.title
                       }}</h3>
                       <div
-                        class="flex gap-4 mt-1 text-xs text-[#888] tracking-wider opacity-0 group-hover:opacity-70 transition-opacity"
+                        class="flex gap-4 mt-1 text-xs text-[#888] tracking-wider opacity-70 md:opacity-0 md:group-hover:opacity-70 transition-opacity"
                       >
                         <span>{{
                           Array.isArray(song.artist) ? song.artist.join(' / ') : song.artist || '黄诗扶'
@@ -163,7 +163,7 @@
                       </div>
                     </div>
                     <span
-                      class="text-red-300 opacity-0 group-hover:opacity-100 transition-all text-sm tracking-widest translate-x-2 group-hover:translate-x-0"
+                      class="text-red-300 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all text-sm tracking-widest translate-x-0 md:translate-x-2 md:group-hover:translate-x-0"
                       >详情 →</span
                     >
                   </div>
@@ -189,7 +189,7 @@
                 class="text-[#c9c9c9]/80 hover:text-red-300 transition-all duration-300 text-sm tracking-[0.2em] flex items-start group whitespace-pre-line"
               >
                 <span
-                  class="mr-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform -translate-x-2 group-hover:translate-x-0"
+                  class="mr-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 transform translate-x-0 md:-translate-x-2 md:group-hover:translate-x-0"
                   >→</span
                 >
                 {{ link.name }}
@@ -210,7 +210,7 @@
                 class="text-[#c9c9c9]/80 hover:text-red-300 transition-all duration-300 text-sm tracking-[0.2em] flex items-start group whitespace-pre-line"
               >
                 <span
-                  class="mr-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform -translate-x-2 group-hover:translate-x-0"
+                  class="mr-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 transform translate-x-0 md:-translate-x-2 md:group-hover:translate-x-0"
                   >→</span
                 >
                 {{ link.name }}

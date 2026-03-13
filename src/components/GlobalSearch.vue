@@ -318,7 +318,7 @@
                       'w-4 h-4 transition-all',
                       isSelected('songs', idx)
                         ? 'text-red-300 opacity-100 translate-x-0'
-                        : 'text-[#888] opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0',
+                        : 'text-[#888] opacity-100 md:opacity-0 md:group-hover:opacity-100 translate-x-0 md:-translate-x-4 md:group-hover:translate-x-0',
                     ]"
                   />
                 </button>
@@ -360,7 +360,7 @@
                       'w-4 h-4 transition-all',
                       isSelected('albums', idx)
                         ? 'text-red-300 opacity-100 translate-x-0'
-                        : 'text-[#888] opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0',
+                        : 'text-[#888] opacity-100 md:opacity-0 md:group-hover:opacity-100 translate-x-0 md:-translate-x-4 md:group-hover:translate-x-0',
                     ]"
                   />
                 </button>
@@ -403,7 +403,7 @@
                       'w-4 h-4 transition-all',
                       isSelected('activities', idx)
                         ? 'text-red-300 opacity-100 translate-x-0'
-                        : 'text-[#888] opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0',
+                        : 'text-[#888] opacity-100 md:opacity-0 md:group-hover:opacity-100 translate-x-0 md:-translate-x-4 md:group-hover:translate-x-0',
                     ]"
                   />
                 </button>
@@ -445,7 +445,7 @@
                       'w-4 h-4 transition-all',
                       isSelected('galleries', idx)
                         ? 'text-red-300 opacity-100 translate-x-0'
-                        : 'text-[#888] opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0',
+                        : 'text-[#888] opacity-100 md:opacity-0 md:group-hover:opacity-100 translate-x-0 md:-translate-x-4 md:group-hover:translate-x-0',
                     ]"
                   />
                 </button>
@@ -485,7 +485,7 @@
                       'w-4 h-4 transition-all',
                       isSelected('misc', idx)
                         ? 'text-red-300 opacity-100 translate-x-0'
-                        : 'text-[#888] opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0',
+                        : 'text-[#888] opacity-100 md:opacity-0 md:group-hover:opacity-100 translate-x-0 md:-translate-x-4 md:group-hover:translate-x-0',
                     ]"
                   />
                 </button>

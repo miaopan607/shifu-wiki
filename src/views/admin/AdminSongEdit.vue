@@ -1519,7 +1519,7 @@
                 <p class="text-xs text-[#888]">#{{ album.index }}</p>
               </div>
               <button
-                class="text-[#888] hover:text-red-300 p-1.5 rounded hover:bg-white/5 transition-all opacity-0 group-hover:opacity-100"
+                class="text-[#888] hover:text-red-300 p-1.5 rounded hover:bg-white/5 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100"
                 title="取消关联"
                 @click.stop="removeAlbumFromLinkWithCoverCheck(album.id)"
               >
