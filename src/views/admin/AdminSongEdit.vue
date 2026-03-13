@@ -216,6 +216,15 @@
     markChanged();
   };
 
+  // 删除专辑时检查并清除默认封面
+  const removeAlbumFromLinkWithCoverCheck = (albumId: string) => {
+    if (isDefaultAlbumCover(albumId)) {
+      song.value.defaultCover = '';
+      markChanged();
+    }
+    linkedAlbums.removeAlbumFromLink(albumId);
+  };
+
   // 拖放相关
   const isDraggingOver = ref(false);
   const dragCounter = ref(0);
@@ -1512,7 +1521,7 @@
               <button
                 class="text-[#888] hover:text-red-300 p-1.5 rounded hover:bg-white/5 transition-all opacity-0 group-hover:opacity-100"
                 title="取消关联"
-                @click.stop="linkedAlbums.removeAlbumFromLink(album.id)"
+                @click.stop="removeAlbumFromLinkWithCoverCheck(album.id)"
               >
                 <AppIcon name="close" class-name="w-4 h-4" />
               </button>
