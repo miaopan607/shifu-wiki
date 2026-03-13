@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { ref, onMounted, computed } from 'vue';
+  import { ref, onMounted, computed, nextTick, onUnmounted } from 'vue';
   import { useRoute, useRouter, RouterLink } from 'vue-router';
   import { pb, decodeSongLinkNames, formatDateToDisplay } from '@/lib/pocketbase';
   import { normalizeAlbumTracks } from '@/lib/albumTracks';
@@ -13,6 +13,21 @@
   const song = ref<any>(null);
   const loading = ref(true);
   const showCredits = ref(false);
+
+  const titleRef = ref<HTMLElement | null>(null);
+  const titleContainerRef = ref<HTMLElement | null>(null);
+  const artistInline = ref(false);
+  const artistText = ref('');
+  const artistDisplay = ref('');
+  const artistTruncated = ref(false);
+  const showArtistTooltip = ref(false);
+  const tooltipX = ref(0);
+  const tooltipY = ref(0);
+
+  const artistTooltipStyle = computed(() => ({
+    left: `${tooltipX.value}px`,
+    top: `${tooltipY.value}px`,
+  }));
 
   // 封面数据
   interface CoverItem {
@@ -177,7 +192,33 @@
       router.replace('/404');
     } finally {
       loading.value = false;
+      nextTick(() => {
+        measureArtistDisplay();
+      });
     }
+  });
+
+  const handleResize = () => {
+    measureArtistDisplay();
+  };
+
+  const handleClickOutside = (e: MouseEvent) => {
+    if (showArtistTooltip.value) {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.artist-text')) {
+        showArtistTooltip.value = false;
+      }
+    }
+  };
+
+  onMounted(() => {
+    window.addEventListener('resize', handleResize);
+    document.addEventListener('click', handleClickOutside);
+  });
+
+  onUnmounted(() => {
+    window.removeEventListener('resize', handleResize);
+    document.removeEventListener('click', handleClickOutside);
   });
 
   const closeModal = () => {
@@ -210,6 +251,65 @@
     }
     return null;
   };
+
+  const measureArtistDisplay = () => {
+    if (!song.value?.artist?.length || !titleRef.value || !titleContainerRef.value) {
+      artistInline.value = false;
+      artistDisplay.value = '';
+      artistTruncated.value = false;
+      return;
+    }
+
+    artistText.value = formatArrayField(song.value.artist);
+
+    const containerWidth = titleContainerRef.value.getBoundingClientRect().width;
+    const padding = 16;
+    const availableWidth = containerWidth - padding;
+
+    const titleEl = titleRef.value;
+    const titleWidth = titleEl.getBoundingClientRect().width;
+
+    const titleStyle = window.getComputedStyle(titleEl);
+
+    const artistFontSize = 18;
+    const gap = 8;
+    const minSpace = artistFontSize * 6;
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    let fullArtistWidth = 0;
+    if (ctx) {
+      ctx.font = `normal normal ${artistFontSize}px ${titleStyle.fontFamily}`;
+      fullArtistWidth = ctx.measureText(artistText.value).width;
+    }
+
+    const remainingSpace = availableWidth - titleWidth;
+    const neededSpace = fullArtistWidth + gap;
+
+    if (remainingSpace >= minSpace || remainingSpace >= neededSpace) {
+      artistInline.value = true;
+      const maxArtistWidth = remainingSpace - gap;
+      if (fullArtistWidth <= maxArtistWidth) {
+        artistDisplay.value = artistText.value;
+        artistTruncated.value = false;
+      } else if (ctx) {
+        let truncated = '';
+        for (const char of artistText.value) {
+          if (ctx.measureText(truncated + char + '...').width > maxArtistWidth) break;
+          truncated += char;
+        }
+        artistDisplay.value = truncated + '...';
+        artistTruncated.value = true;
+      } else {
+        artistDisplay.value = artistText.value;
+        artistTruncated.value = false;
+      }
+    } else {
+      artistInline.value = false;
+      artistDisplay.value = artistText.value;
+      artistTruncated.value = true;
+    }
+  };
 </script>
 
 <template>
@@ -237,10 +337,63 @@
             </div>
 
             <!-- 标题和元数据 -->
-            <div class="flex-1 min-w-0">
-              <h1
-                class="text-4xl md:text-5xl text-[#c9c9c9] tracking-[0.2em] drop-shadow-[0_0_10px_rgba(201,201,201,0.3)]"
-                >{{ song.title }}</h1
+            <div ref="titleContainerRef" class="flex-1 min-w-0">
+              <div class="flex items-baseline gap-2">
+                <h1
+                  ref="titleRef"
+                  class="shrink-0 text-4xl md:text-5xl text-[#c9c9c9] tracking-[0.2em] drop-shadow-[0_0_10px_rgba(201,201,201,0.3)]"
+                  >{{ song.title }}</h1
+                >
+                <span
+                  v-if="artistInline && artistDisplay"
+                  class="artist-text text-lg text-[#c9c9c9]/80 tracking-[0.15em] cursor-default select-none truncate"
+                  :class="{ 'hover:text-[#c9c9c9]': artistTruncated }"
+                  @mouseenter="
+                    (e: MouseEvent) => {
+                      if (artistTruncated) {
+                        tooltipX = (e.target as HTMLElement).getBoundingClientRect().left;
+                        tooltipY = (e.target as HTMLElement).getBoundingClientRect().bottom + 8;
+                        showArtistTooltip = true;
+                      }
+                    }
+                  "
+                  @mouseleave="showArtistTooltip = false"
+                  @click="
+                    (e: MouseEvent) => {
+                      if (artistTruncated) {
+                        tooltipX = (e.target as HTMLElement).getBoundingClientRect().left;
+                        tooltipY = (e.target as HTMLElement).getBoundingClientRect().bottom + 8;
+                        showArtistTooltip = !showArtistTooltip;
+                      }
+                    }
+                  "
+                  >{{ artistDisplay }}</span
+                >
+              </div>
+              <div
+                v-if="!artistInline && artistDisplay"
+                class="artist-text text-lg text-[#c9c9c9]/80 tracking-[0.15em] mt-2 cursor-default select-none truncate"
+                :class="{ 'hover:text-[#c9c9c9]': artistTruncated }"
+                @mouseenter="
+                  (e: MouseEvent) => {
+                    if (artistTruncated) {
+                      tooltipX = (e.target as HTMLElement).getBoundingClientRect().left;
+                      tooltipY = (e.target as HTMLElement).getBoundingClientRect().bottom + 8;
+                      showArtistTooltip = true;
+                    }
+                  }
+                "
+                @mouseleave="showArtistTooltip = false"
+                @click="
+                  (e: MouseEvent) => {
+                    if (artistTruncated) {
+                      tooltipX = (e.target as HTMLElement).getBoundingClientRect().left;
+                      tooltipY = (e.target as HTMLElement).getBoundingClientRect().bottom + 8;
+                      showArtistTooltip = !showArtistTooltip;
+                    }
+                  }
+                "
+                >{{ artistDisplay }}</div
               >
               <div class="flex flex-wrap items-center gap-y-2 text-[#888] text-sm tracking-widest mt-4">
                 <template v-for="(item, index) in metaItems" :key="index">
@@ -367,6 +520,19 @@
       </div>
     </div>
   </Transition>
+
+  <!-- 艺人悬停提示 -->
+  <Teleport to="body">
+    <Transition name="fade">
+      <div
+        v-if="showArtistTooltip && artistTruncated"
+        class="fixed z-[60] bg-[rgb(40,0,0)]/95 backdrop-blur-sm px-4 py-2 rounded-lg shadow-xl border border-red-300/20 text-[#c9c9c9] text-lg tracking-widest pointer-events-none"
+        :style="artistTooltipStyle"
+      >
+        {{ artistText }}
+      </div>
+    </Transition>
+  </Teleport>
 
   <!-- 封面灯箱 -->
   <Lightbox
