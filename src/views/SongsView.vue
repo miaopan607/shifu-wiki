@@ -42,19 +42,7 @@
 
   // 获取歌曲默认封面URL
   const getSongDefaultCoverUrl = async (song: any): Promise<string> => {
-    // 1. 如果设置了专辑封面
-    if (song.defaultCover === 'album' && song.defaultAlbum) {
-      try {
-        const album = await pb.collection('albums').getOne(song.defaultAlbum, { fields: 'id,cover,collectionId' });
-        if (album.cover) {
-          return pb.files.getURL(album, album.cover, { thumb: '400x400' });
-        }
-      } catch {
-        // 专辑可能已删除
-      }
-    }
-
-    // 2. 如果设置了特定的song_cover
+    // 如果设置了特定的song_cover
     if (song.defaultCover?.startsWith('song_cover:')) {
       const coverId = song.defaultCover.replace('song_cover:', '');
       try {
@@ -67,10 +55,11 @@
       }
     }
 
-    // 3. 如果没有设置默认封面，但有关联专辑，尝试获取专辑封面作为默认
-    if (!song.defaultCover && song.defaultAlbum) {
+    // 如果设置了专辑封面
+    if (song.defaultCover?.startsWith('album_cover:')) {
+      const albumId = song.defaultCover.replace('album_cover:', '');
       try {
-        const album = await pb.collection('albums').getOne(song.defaultAlbum, { fields: 'id,cover,collectionId' });
+        const album = await pb.collection('albums').getOne(albumId, { fields: 'id,cover,collectionId' });
         if (album.cover) {
           return pb.files.getURL(album, album.cover, { thumb: '400x400' });
         }

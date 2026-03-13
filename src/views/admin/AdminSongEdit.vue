@@ -240,10 +240,6 @@
     song.value.defaultAlbum = '';
     song.value.defaultAlbumName = '';
     selectedAlbumTitle.value = '';
-    // If default cover was 'album', reset it
-    if (song.value.defaultCover === 'album') {
-      song.value.defaultCover = '';
-    }
     markChanged();
   };
 
@@ -298,13 +294,6 @@
     if (!song.value.defaultCover) return '';
 
     // 专辑封面
-    if (song.value.defaultCover === 'album' && song.value.defaultAlbum) {
-      const album = allLinkedAlbums.value.find(a => a.id === song.value.defaultAlbum);
-      if (album?.cover) {
-        return pb.files.getURL(album, album.cover, { thumb: '400x400' });
-      }
-    }
-
     if (song.value.defaultCover.startsWith('album_cover:')) {
       const albumId = song.value.defaultCover.replace('album_cover:', '');
       const album = allLinkedAlbums.value.find(a => a.id === albumId);
@@ -333,9 +322,6 @@
 
   // 检查专辑是否是默认封面
   const isDefaultAlbumCover = (albumId: string) => {
-    if (song.value.defaultCover === 'album') {
-      return song.value.defaultAlbum === albumId;
-    }
     return song.value.defaultCover === `album_cover:${albumId}`;
   };
 
