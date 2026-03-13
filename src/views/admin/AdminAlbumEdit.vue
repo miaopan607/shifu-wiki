@@ -116,7 +116,7 @@
     return value;
   };
 
-    const getSongArtist = (songId: string) => {
+  const getSongArtist = (songId: string) => {
     const artist = songCache.value.get(songId)?.artist;
     return formatArrayField(artist);
   };
@@ -187,7 +187,9 @@
         const allSongIds = (album.value.tracks || []).flatMap(d => d.songs);
         if (allSongIds.length > 0) {
           const filter = allSongIds.map(id => `id="${id}"`).join(' || ');
-          const songs = await pb.collection('songs').getFullList({ filter, fields: 'id,title,artist,defaultAlbum,defaultAlbumName' });
+          const songs = await pb
+            .collection('songs')
+            .getFullList({ filter, fields: 'id,title,artist,defaultAlbum,defaultAlbumName' });
           songs.forEach(s => {
             songCache.value.set(s.id, s);
             // 初始化展示专辑勾选状态：如果当前专辑就是该歌曲的展示专辑，则勾选
@@ -480,7 +482,7 @@
     if (!disc) return;
     disc.songs.push(song.id);
     songCache.value.set(song.id, song);
-    
+
     // 如果没有指定展示专辑，默认勾选
     if (!song.defaultAlbum && !song.defaultAlbumName) {
       songShowAlbumFlags.value.set(song.id, true);
@@ -575,12 +577,12 @@
       // 更新选中的歌曲的展示专辑
       const albumTitle = normalizedTitle;
       const flagsEntries = Array.from(songShowAlbumFlags.value.entries());
-      
+
       const updatePromises = flagsEntries.map(async ([songId, flag]) => {
         try {
           const currentSong = songCache.value.get(songId);
           const isCurrentlySet = currentSong?.defaultAlbum === albumId;
-          
+
           // 如果勾选状态与当前数据一致，则跳过更新
           if (flag === isCurrentlySet) {
             // 注意：还要检查标题是否有变化（针对勾选状态下专辑改名的情况）
@@ -789,7 +791,7 @@
               <AppIcon name="music" class-name="w-5 h-5 text-red-300" /> 曲目管理
             </h2>
             <button
-              class="text-sm text-red-300 hover:text-[#fca5a5] transition-colors inline-flex items-center gap-1"
+              class="text-sm text-red-300/70 hover:text-red-300 transition-colors inline-flex items-center gap-1"
               @click="addDisc"
             >
               <AppIcon name="plus" class-name="w-4 h-4" /> 添加 Disc
@@ -891,11 +893,7 @@
                 >
                   <div
                     class="w-3.5 h-3.5 rounded-full border flex items-center justify-center transition-colors"
-                    :class="
-                      songShowAlbumFlags.get(songId)
-                        ? 'border-[rgb(77,0,0)] bg-[rgb(77,0,0)]'
-                        : 'border-[#888]'
-                    "
+                    :class="songShowAlbumFlags.get(songId) ? 'border-[rgb(77,0,0)] bg-[rgb(77,0,0)]' : 'border-[#888]'"
                   >
                     <svg
                       v-if="songShowAlbumFlags.get(songId)"
@@ -949,7 +947,7 @@
             </div>
             <button
               v-else
-              class="text-sm text-red-300/70 hover:text-red-300 transition-colors inline-flex items-center gap-1"
+              class="text-sm text-red-300 hover:text-[#fca5a5] transition-colors inline-flex items-center gap-1"
               @click="
                 searchingDisc = discIndex;
                 songSearchQuery = '';
