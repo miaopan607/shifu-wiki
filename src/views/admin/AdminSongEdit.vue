@@ -1358,10 +1358,23 @@
                 <button
                   v-for="result in displayAlbum.albumSearchResults.value"
                   :key="result.id"
-                  class="w-full text-left p-2 bg-black/10 hover:bg-white/5 rounded text-sm transition-colors"
+                  class="w-full text-left p-2 bg-black/10 hover:bg-white/5 rounded text-sm transition-colors flex items-center gap-2"
                   @click="displayAlbum.selectAlbum(result)"
                 >
-                  <span class="text-[#c9c9c9]">{{ result.title }}</span>
+                  <div v-if="result.cover" class="w-8 h-8 rounded overflow-hidden shrink-0">
+                    <img
+                      :src="
+                        pb.files.getURL({ collectionId: result.collectionId, id: result.id }, result.cover, {
+                          thumb: '100x100',
+                        })
+                      "
+                      class="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div v-else class="w-8 h-8 rounded bg-black/30 shrink-0 flex items-center justify-center">
+                    <AppIcon name="album" class-name="w-4 h-4 text-[#888]" />
+                  </div>
+                  <span class="text-[#c9c9c9] truncate">{{ result.title }}</span>
                 </button>
               </div>
               <div
