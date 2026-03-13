@@ -217,6 +217,7 @@
       </div>
       <div class="flex gap-3">
         <button
+          tabindex="-1"
           class="px-4 py-2 text-[#c9c9c9] hover:bg-white/5 rounded-lg transition-colors inline-flex items-center gap-2"
           @click="cancel"
         >
@@ -224,6 +225,7 @@
           取消
         </button>
         <button
+          tabindex="-1"
           class="px-6 py-2 bg-red-300 text-[rgb(77,0,0)] font-semibold rounded-lg hover:bg-[#fca5a5] transition-colors flex items-center gap-2"
           :disabled="saving"
           @click="saveActivity"
@@ -285,6 +287,7 @@
                 <div class="flex items-center gap-2">
                   <!-- 仅日期切换按钮 -->
                   <button
+                    tabindex="-1"
                     class="flex items-center gap-2 px-3 py-1.5 text-sm rounded transition-colors"
                     :class="
                       slot.type === 'date'
@@ -312,6 +315,7 @@
                     <span>仅日期</span>
                   </button>
                   <button
+                    tabindex="-1"
                     class="p-1.5 text-[#888] hover:text-red-500 transition-colors"
                     title="删除"
                     @click="removeTimeSlot(index)"
@@ -354,6 +358,7 @@
           </div>
 
           <button
+            tabindex="-1"
             class="w-full py-3 border border-dashed border-[#c9c9c9]/30 rounded-lg text-[#888] hover:text-red-300 hover:border-red-300/50 transition-colors flex items-center justify-center gap-2"
             @click="addTimeSlot"
           >
@@ -375,7 +380,7 @@
               class="inline-flex items-center gap-1 px-3 py-1 bg-red-300/10 text-red-300 rounded-full text-sm"
             >
               {{ tag }}
-              <button class="-m-1 p-1 hover:text-white transition-colors" @click="removeTag(tag)">
+              <button tabindex="-1" class="-m-1 p-1 hover:text-white transition-colors" @click="removeTag(tag)">
                 <AppIcon name="close" class-name="w-4 h-4" />
               </button>
             </span>
@@ -389,6 +394,7 @@
               @keyup.enter="addTag"
             />
             <button
+              tabindex="-1"
               class="px-4 py-2 bg-white/5 text-[#c9c9c9] rounded-lg hover:bg-white/10 transition-colors inline-flex items-center gap-1"
               @click="addTag"
             >

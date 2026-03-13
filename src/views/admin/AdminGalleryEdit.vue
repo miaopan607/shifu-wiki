@@ -817,6 +817,7 @@
       </div>
       <div class="flex gap-3">
         <button
+          tabindex="-1"
           class="px-4 py-2 text-[#c9c9c9] hover:bg-white/5 rounded-lg transition-colors inline-flex items-center gap-2"
           @click="cancelEdit"
         >
@@ -824,6 +825,7 @@
           取消
         </button>
         <button
+          tabindex="-1"
           :disabled="!canSave"
           class="px-6 py-2 bg-red-300 text-[rgb(77,0,0)] font-semibold rounded-lg hover:bg-[#fca5a5] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
           @click="saveGallery"
@@ -889,6 +891,7 @@
               <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
                 <button
                   v-if="form.date"
+                  tabindex="-1"
                   class="p-1.5 text-[#888] hover:text-red-300 transition-colors"
                   title="清空"
                   @click="
@@ -899,6 +902,7 @@
                   <AppIcon name="close" class-name="w-4 h-4" />
                 </button>
                 <button
+                  tabindex="-1"
                   class="p-1.5 text-[#888] hover:text-red-300 transition-colors"
                   title="选择日期"
                   @click="openDatePicker"
@@ -908,6 +912,7 @@
                 <input
                   ref="datePicker"
                   type="date"
+                  tabindex="-1"
                   class="absolute opacity-0 pointer-events-none w-0 h-0"
                   @change="
                     (e: any) => {
@@ -935,6 +940,7 @@
               <button
                 type="button"
                 role="switch"
+                tabindex="-1"
                 :aria-checked="form.published"
                 :class="[
                   'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
@@ -982,6 +988,7 @@
             <span class="text-sm text-[#888]">{{ images.length }} 张图片</span>
           </div>
           <button
+            tabindex="-1"
             class="flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-[#c9c9c9]/20 rounded-lg text-sm text-[#c9c9c9] transition-colors group"
             @click="triggerFileInput"
           >
@@ -1061,6 +1068,7 @@
                   class="absolute inset-0 bg-black/50 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center justify-center"
                 >
                   <button
+                    tabindex="-1"
                     class="p-2 bg-red-500/80 hover:bg-red-500 rounded-full text-white transition-colors"
                     title="删除"
                     @click.stop="removeImage(slot.originalIndex)"

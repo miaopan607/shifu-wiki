@@ -728,12 +728,14 @@
       </div>
       <div class="flex gap-3">
         <button
+          tabindex="-1"
           class="px-4 py-2 text-[#c9c9c9] hover:bg-white/5 rounded-lg transition-colors inline-flex items-center gap-2"
           @click="cancel"
         >
           <AppIcon name="close" class-name="w-4 h-4" /> 取消
         </button>
         <button
+          tabindex="-1"
           class="px-6 py-2 bg-red-300 text-[rgb(77,0,0)] font-semibold rounded-lg hover:bg-[#fca5a5] transition-colors flex items-center gap-2"
           :disabled="saving"
           @click="saveAlbum"
@@ -791,16 +793,21 @@
               <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
                 <button
                   v-if="album.releaseDate"
+                  tabindex="-1"
                   class="p-1.5 text-[#888] hover:text-red-300 transition-colors"
                   @click="album.releaseDate = ''"
                   ><AppIcon name="close" class-name="w-4 h-4"
                 /></button>
-                <button class="p-1.5 text-[#888] hover:text-red-300 transition-colors" @click="openDatePicker"
+                <button
+                  tabindex="-1"
+                  class="p-1.5 text-[#888] hover:text-red-300 transition-colors"
+                  @click="openDatePicker"
                   ><AppIcon name="calendar" class-name="w-5 h-5"
                 /></button>
                 <input
                   ref="datePicker"
                   type="date"
+                  tabindex="-1"
                   class="absolute opacity-0 pointer-events-none w-0 h-0"
                   @change="(e: any) => (album.releaseDate = e.target.value)"
                 />
@@ -832,6 +839,7 @@
               <AppIcon name="music" class-name="w-5 h-5 text-red-300" /> 曲目管理
             </h2>
             <button
+              tabindex="-1"
               class="text-sm text-red-300/70 hover:text-red-300 transition-colors inline-flex items-center gap-1"
               @click="addDisc"
             >
@@ -877,6 +885,7 @@
                   />
                   <button
                     v-if="album.tracks?.[discIndex]?.name && album.tracks[discIndex].name !== `Disc ${disc.disc}`"
+                    tabindex="-1"
                     class="absolute right-2 top-1/2 -translate-y-1/2 text-[#888] hover:text-red-300 transition-colors p-0.5"
                     title="还原为默认名称"
                     @click="
@@ -894,6 +903,7 @@
               </div>
               <button
                 v-if="(previewTracks.length || 0) > 1"
+                tabindex="-1"
                 class="text-red-400 hover:text-red-300 p-1 ml-2"
                 @click="confirmRemoveDisc(discIndex)"
               >
@@ -923,6 +933,7 @@
 
                 <!-- 作为展示专辑按钮 -->
                 <button
+                  tabindex="-1"
                   class="flex items-center gap-2 px-2 py-1 text-xs rounded transition-colors shrink-0"
                   :class="
                     songShowAlbumFlags.get(songId)
@@ -953,6 +964,7 @@
                 <!-- 作为默认封面按钮 -->
                 <button
                   v-if="hasAlbumCover"
+                  tabindex="-1"
                   class="flex items-center gap-2 px-2 py-1 text-xs rounded transition-colors shrink-0"
                   :class="
                     songDefaultCoverFlags.get(songId)
@@ -983,6 +995,7 @@
                 </button>
 
                 <button
+                  tabindex="-1"
                   class="text-red-400 hover:text-red-300 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity p-1"
                   @click="removeSongFromDisc(discIndex, songIndex)"
                 >
@@ -1004,6 +1017,7 @@
                 <button
                   v-for="result in songSearchResults"
                   :key="result.id"
+                  tabindex="-1"
                   class="w-full text-left p-2 bg-black/10 hover:bg-white/5 rounded text-sm transition-colors"
                   @click="addSongToDisc(discIndex, result)"
                 >
@@ -1014,12 +1028,16 @@
               <div v-else-if="songSearchQuery.trim() && !isSearchingSongs" class="text-xs text-[#888] py-2"
                 >未找到匹配的歌曲</div
               >
-              <button class="text-xs text-[#888] hover:text-[#c9c9c9] transition-colors" @click="closeSearch"
+              <button
+                tabindex="-1"
+                class="text-xs text-[#888] hover:text-[#c9c9c9] transition-colors"
+                @click="closeSearch"
                 >关闭搜索</button
               >
             </div>
             <button
               v-else
+              tabindex="-1"
               class="text-sm text-red-300 hover:text-[#fca5a5] transition-colors inline-flex items-center gap-1"
               @click="
                 searchingDisc = discIndex;
@@ -1046,11 +1064,15 @@
               class="absolute inset-0 bg-black/60 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2"
             >
               <button
+                tabindex="-1"
                 class="text-xs text-[#c9c9c9] hover:text-red-300 px-2 py-1 bg-black/40 rounded"
                 @click="fileInput?.click()"
                 >更换</button
               >
-              <button class="text-xs text-red-400 hover:text-red-300 px-2 py-1 bg-black/40 rounded" @click="removeCover"
+              <button
+                tabindex="-1"
+                class="text-xs text-red-400 hover:text-red-300 px-2 py-1 bg-black/40 rounded"
+                @click="removeCover"
                 >删除</button
               >
             </div>
@@ -1101,12 +1123,14 @@
           </p>
           <div class="flex justify-end gap-3">
             <button
+              tabindex="-1"
               class="px-4 py-2 text-[#c9c9c9] hover:bg-white/5 rounded-lg transition-colors"
               @click="cancelRemoveDisc"
             >
               取消
             </button>
             <button
+              tabindex="-1"
               class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors flex items-center gap-2"
               @click="executeRemoveDisc"
             >

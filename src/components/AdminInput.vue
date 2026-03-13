@@ -135,6 +135,7 @@
       <div v-if="isMultiline" class="flex items-center gap-2">
         <button
           v-if="type === 'markdown'"
+          tabindex="-1"
           class="px-3 py-1.5 text-sm text-red-300 bg-black/20 rounded-lg hover:bg-black/30 hover:text-[#fca5a5] transition-colors"
           @click="showPreview = !showPreview"
         >
@@ -142,6 +143,7 @@
         </button>
         <button
           v-if="hasContent && showClear"
+          tabindex="-1"
           class="p-1.5 text-[#888] bg-black/20 rounded-lg hover:bg-black/30 hover:text-red-300 transition-colors"
           title="清空"
           @click="handleClear"
@@ -187,6 +189,7 @@
       />
       <button
         v-if="showClear && hasContent && type === 'text'"
+        tabindex="-1"
         class="absolute right-3 top-3 text-[#888] hover:text-red-300 transition-colors"
         title="清空"
         @click="handleClear"

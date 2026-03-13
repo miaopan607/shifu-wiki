@@ -787,6 +787,7 @@
       </div>
       <div class="flex gap-3">
         <button
+          tabindex="-1"
           class="px-4 py-2 text-[#c9c9c9] hover:bg-white/5 rounded-lg transition-colors inline-flex items-center gap-2"
           @click="cancel"
         >
@@ -794,6 +795,7 @@
           取消
         </button>
         <button
+          tabindex="-1"
           class="px-6 py-2 bg-red-300 text-[rgb(77,0,0)] font-semibold rounded-lg hover:bg-[#fca5a5] transition-colors flex items-center gap-2"
           :disabled="saving"
           @click="saveSong"
@@ -850,7 +852,11 @@
                   class="inline-flex items-center gap-1 px-3 py-1 bg-red-300/10 text-red-300 rounded-full text-sm"
                 >
                   {{ tag }}
-                  <button class="-m-1 p-1 hover:text-white transition-colors" @click="removeTag('artist', tag)">
+                  <button
+                    tabindex="-1"
+                    class="-m-1 p-1 hover:text-white transition-colors"
+                    @click="removeTag('artist', tag)"
+                  >
                     <AppIcon name="close" class-name="w-4 h-4" />
                   </button>
                 </span>
@@ -864,6 +870,7 @@
                   @keyup.enter="addTag('artist')"
                 />
                 <button
+                  tabindex="-1"
                   class="px-4 py-2 bg-white/5 text-[#c9c9c9] rounded-lg hover:bg-white/10 transition-colors inline-flex items-center gap-1"
                   @click="addTag('artist')"
                 >
@@ -886,7 +893,11 @@
                   class="inline-flex items-center gap-1 px-3 py-1 bg-red-300/10 text-red-300 rounded-full text-sm"
                 >
                   {{ tag }}
-                  <button class="-m-1 p-1 hover:text-white transition-colors" @click="removeTag('lyricist', tag)">
+                  <button
+                    tabindex="-1"
+                    class="-m-1 p-1 hover:text-white transition-colors"
+                    @click="removeTag('lyricist', tag)"
+                  >
                     <AppIcon name="close" class-name="w-4 h-4" />
                   </button>
                 </span>
@@ -900,6 +911,7 @@
                   @keyup.enter="addTag('lyricist')"
                 />
                 <button
+                  tabindex="-1"
                   class="px-4 py-2 bg-white/5 text-[#c9c9c9] rounded-lg hover:bg-white/10 transition-colors inline-flex items-center gap-1"
                   @click="addTag('lyricist')"
                 >
@@ -918,7 +930,11 @@
                   class="inline-flex items-center gap-1 px-3 py-1 bg-red-300/10 text-red-300 rounded-full text-sm"
                 >
                   {{ tag }}
-                  <button class="-m-1 p-1 hover:text-white transition-colors" @click="removeTag('composer', tag)">
+                  <button
+                    tabindex="-1"
+                    class="-m-1 p-1 hover:text-white transition-colors"
+                    @click="removeTag('composer', tag)"
+                  >
                     <AppIcon name="close" class-name="w-4 h-4" />
                   </button>
                 </span>
@@ -932,6 +948,7 @@
                   @keyup.enter="addTag('composer')"
                 />
                 <button
+                  tabindex="-1"
                   class="px-4 py-2 bg-white/5 text-[#c9c9c9] rounded-lg hover:bg-white/10 transition-colors inline-flex items-center gap-1"
                   @click="addTag('composer')"
                 >
@@ -955,6 +972,7 @@
               <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
                 <button
                   v-if="song.releaseDate"
+                  tabindex="-1"
                   class="p-1.5 text-[#888] hover:text-red-300 transition-colors"
                   title="清空"
                   @click="song.releaseDate = ''"
@@ -962,6 +980,7 @@
                   <AppIcon name="close" class-name="w-4 h-4" />
                 </button>
                 <button
+                  tabindex="-1"
                   class="p-1.5 text-[#888] hover:text-red-300 transition-colors"
                   title="选择日期"
                   @click="openDatePicker"
@@ -971,6 +990,7 @@
                 <input
                   ref="datePicker"
                   type="date"
+                  tabindex="-1"
                   class="absolute opacity-0 pointer-events-none w-0 h-0"
                   @change="(e: any) => (song.releaseDate = e.target.value)"
                 />
@@ -999,6 +1019,7 @@
               平台链接
             </h2>
             <button
+              tabindex="-1"
               class="text-sm text-red-300 hover:text-[#fca5a5] transition-colors inline-flex items-center gap-1"
               @click="addLink"
             >
@@ -1018,6 +1039,7 @@
                   />
                   <button
                     type="button"
+                    tabindex="-1"
                     class="px-2 py-2 bg-black/20 border border-[#c9c9c9]/20 rounded text-[#888] hover:text-red-300 hover:border-red-300/50 transition-colors"
                     @click.stop="togglePlatformDropdown(index)"
                   >
@@ -1048,7 +1070,7 @@
                 placeholder="链接地址"
                 class="flex-1 px-3 py-2 bg-black/20 border border-[#c9c9c9]/20 rounded text-[#e0e0e0] text-sm"
               />
-              <button class="text-red-400 hover:text-red-300 p-2" @click="removeLink(index)">
+              <button tabindex="-1" class="text-red-400 hover:text-red-300 p-2" @click="removeLink(index)">
                 <AppIcon name="trash" class-name="w-5 h-5" />
               </button>
             </div>
@@ -1063,6 +1085,7 @@
               其他相关链接
             </h2>
             <button
+              tabindex="-1"
               class="text-sm text-red-300 hover:text-[#fca5a5] transition-colors inline-flex items-center gap-1"
               @click="addOtherLink"
             >
@@ -1085,7 +1108,7 @@
                 placeholder="链接地址"
                 class="flex-1 px-3 py-2 bg-black/20 border border-[#c9c9c9]/20 rounded text-[#e0e0e0] text-sm"
               />
-              <button class="text-red-400 hover:text-red-300 p-2" @click="removeOtherLink(index)">
+              <button tabindex="-1" class="text-red-400 hover:text-red-300 p-2" @click="removeOtherLink(index)">
                 <AppIcon name="trash" class-name="w-5 h-5" />
               </button>
             </div>
@@ -1149,6 +1172,7 @@
             </div>
             <div v-if="song.enabledPlatform" class="flex justify-end">
               <button
+                tabindex="-1"
                 class="text-xs text-[#888] hover:text-red-300 transition-colors"
                 @click="
                   song.enabledPlatform = '';
@@ -1203,6 +1227,7 @@
           <div class="space-y-2">
             <!-- 缺省封面选项 -->
             <button
+              tabindex="-1"
               class="w-full flex items-center gap-3 p-2 rounded-lg border transition-all text-left"
               :class="
                 !song.defaultCover ? 'border-red-300 bg-red-300/10' : 'border-[#c9c9c9]/10 hover:border-[#c9c9c9]/30'
@@ -1226,6 +1251,7 @@
             <template v-for="album in linkedAlbums.allLinkedAlbums.value" :key="album.id">
               <button
                 v-if="album.cover"
+                tabindex="-1"
                 class="w-full flex items-center gap-3 p-2 rounded-lg border transition-all text-left group"
                 :class="
                   isDefaultAlbumCover(album.id)
@@ -1292,6 +1318,7 @@
                 <!-- 删除按钮 - 只有自有封面可删除（不是待上传状态的） -->
                 <button
                   v-if="!cover.id.startsWith('pending-')"
+                  tabindex="-1"
                   class="text-red-400 hover:text-red-300 p-1.5 rounded hover:bg-white/5 transition-all"
                   :class="cover.showDelete ? 'opacity-100' : 'opacity-0'"
                   title="删除"
@@ -1301,6 +1328,7 @@
                 </button>
                 <button
                   v-else
+                  tabindex="-1"
                   class="text-[#888] hover:text-red-300 p-1.5 rounded hover:bg-white/5 transition-all"
                   :class="cover.showDelete ? 'opacity-100' : 'opacity-0'"
                   title="取消"
@@ -1313,6 +1341,7 @@
 
             <!-- 上传按钮 -->
             <button
+              tabindex="-1"
               class="w-full flex items-center justify-center gap-2 p-3 rounded-lg border border-dashed border-[#c9c9c9]/20 hover:border-red-300/50 hover:bg-red-300/5 transition-all text-[#888] hover:text-red-300"
               @click="fileInput?.click()"
             >
@@ -1356,7 +1385,7 @@
                   >未关联</p
                 >
               </div>
-              <button class="text-red-400 hover:text-red-300 p-1" @click="displayAlbum.clearAlbum()">
+              <button tabindex="-1" class="text-red-400 hover:text-red-300 p-1" @click="displayAlbum.clearAlbum()">
                 <AppIcon name="close" class-name="w-4 h-4" />
               </button>
             </div>
@@ -1372,7 +1401,10 @@
               @input="markChanged"
             />
             <p class="text-xs text-[#888]">本站暂无此专辑，仅显示名称不提供链接</p>
-            <button class="text-xs text-[#888] hover:text-red-300 transition-colors" @click="displayAlbum.clearAlbum()"
+            <button
+              tabindex="-1"
+              class="text-xs text-[#888] hover:text-red-300 transition-colors"
+              @click="displayAlbum.clearAlbum()"
               >清除</button
             >
           </div>
@@ -1392,6 +1424,7 @@
                 <button
                   v-for="result in displayAlbum.albumSearchResults.value"
                   :key="result.id"
+                  tabindex="-1"
                   class="w-full text-left p-2 bg-black/10 hover:bg-white/5 rounded text-sm transition-colors flex items-center gap-2"
                   @click="displayAlbum.selectAlbum(result)"
                 >
@@ -1417,11 +1450,13 @@
                 >未找到匹配的专辑</div
               >
               <button
+                tabindex="-1"
                 class="text-xs text-red-300/70 hover:text-red-300 transition-colors"
                 @click="displayAlbum.setManualAlbum()"
                 >本站无此专辑，手动填写名称</button
               >
               <button
+                tabindex="-1"
                 class="text-xs text-[#888] hover:text-[#c9c9c9] transition-colors ml-3"
                 @click="displayAlbum.showAlbumSearch.value = false"
                 >取消</button
@@ -1429,6 +1464,7 @@
             </div>
             <button
               v-else
+              tabindex="-1"
               class="text-sm text-red-300/70 hover:text-red-300 transition-colors inline-flex items-center gap-1"
               @click="openDisplayAlbumSearch"
             >
@@ -1445,6 +1481,7 @@
             </h2>
             <button
               v-if="!linkedAlbums.showSongAlbumSearch.value"
+              tabindex="-1"
               class="text-sm text-red-300 hover:text-[#fca5a5] transition-colors inline-flex items-center gap-1"
               @click="linkedAlbums.showSongAlbumSearch.value = true"
             >
@@ -1466,6 +1503,7 @@
                 @input="linkedAlbums.searchSongAlbums()"
               />
               <button
+                tabindex="-1"
                 class="text-[#888] hover:text-[#c9c9c9] transition-colors"
                 @click="linkedAlbums.closeSongAlbumSearch()"
               >
@@ -1476,6 +1514,7 @@
               <button
                 v-for="result in linkedAlbums.songAlbumSearchResults.value"
                 :key="result.id"
+                tabindex="-1"
                 class="w-full text-left p-2 bg-black/20 hover:bg-red-300/10 rounded text-sm transition-colors flex items-center gap-2"
                 @click="addAlbumToLinkWithAutoSet(result)"
               >
@@ -1519,6 +1558,7 @@
                 <p class="text-xs text-[#888]">#{{ album.index }}</p>
               </div>
               <button
+                tabindex="-1"
                 class="text-[#888] hover:text-red-300 p-1.5 rounded hover:bg-white/5 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100"
                 title="取消关联"
                 @click.stop="removeAlbumFromLinkWithCoverCheck(album.id)"
@@ -1526,6 +1566,7 @@
                 <AppIcon name="close" class-name="w-4 h-4" />
               </button>
               <button
+                tabindex="-1"
                 title="在专辑管理中编辑"
                 class="text-[#888] hover:text-red-300 p-1.5"
                 @click="linkedAlbums.navigateToAlbumEdit(album.id)"

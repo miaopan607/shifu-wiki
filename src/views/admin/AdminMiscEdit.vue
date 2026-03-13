@@ -103,6 +103,7 @@
       </div>
       <div class="flex gap-3">
         <button
+          tabindex="-1"
           class="px-4 py-2 text-[#c9c9c9] hover:bg-white/5 rounded-lg transition-colors inline-flex items-center gap-2"
           @click="cancel"
         >
@@ -110,6 +111,7 @@
           取消
         </button>
         <button
+          tabindex="-1"
           class="px-6 py-2 bg-red-300 text-[rgb(77,0,0)] font-semibold rounded-lg hover:bg-[#fca5a5] transition-colors flex items-center gap-2"
           :disabled="saving"
           @click="saveMisc"
