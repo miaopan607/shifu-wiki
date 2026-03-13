@@ -705,21 +705,42 @@
                   >Disc {{ disc.disc }}</h3
                 >
                 <h3 v-else class="text-[#c9c9c9] font-medium shrink-0">曲目</h3>
-                <input
-                  v-if="(previewTracks.length || 0) > 1"
-                  :value="album.tracks?.[discIndex]?.name || disc.name"
-                  type="text"
-                  placeholder="Disc 名称"
-                  class="flex-1 min-w-0 px-3 py-1.5 bg-black/20 border border-[#c9c9c9]/20 rounded text-[#e0e0e0] text-sm focus:outline-none focus:border-red-300/50"
-                  @input="
-                    (e: Event) => {
-                      if (album.tracks?.[discIndex]) {
-                        album.tracks[discIndex].name = (e.target as HTMLInputElement).value;
-                        markChanged();
+                <div v-if="(previewTracks.length || 0) > 1" class="flex-1 min-w-0 relative">
+                  <input
+                    :value="album.tracks?.[discIndex]?.name || disc.name"
+                    type="text"
+                    placeholder="Disc 名称"
+                    :class="[
+                      'w-full px-3 py-1.5 bg-black/20 border border-[#c9c9c9]/20 rounded text-[#e0e0e0] text-sm focus:outline-none focus:border-red-300/50',
+                      album.tracks?.[discIndex]?.name && album.tracks[discIndex].name !== `Disc ${disc.disc}`
+                        ? 'pr-8'
+                        : '',
+                    ]"
+                    @input="
+                      (e: Event) => {
+                        if (album.tracks?.[discIndex]) {
+                          album.tracks[discIndex].name = (e.target as HTMLInputElement).value;
+                          markChanged();
+                        }
                       }
-                    }
-                  "
-                />
+                    "
+                  />
+                  <button
+                    v-if="album.tracks?.[discIndex]?.name && album.tracks[discIndex].name !== `Disc ${disc.disc}`"
+                    class="absolute right-2 top-1/2 -translate-y-1/2 text-[#888] hover:text-red-300 transition-colors p-0.5"
+                    title="还原为默认名称"
+                    @click="
+                      () => {
+                        if (album.tracks?.[discIndex]) {
+                          album.tracks[discIndex].name = `Disc ${disc.disc}`;
+                          markChanged();
+                        }
+                      }
+                    "
+                  >
+                    <AppIcon name="close" class-name="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
               <button
                 v-if="(previewTracks.length || 0) > 1"
