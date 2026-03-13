@@ -139,9 +139,7 @@
           fields: 'id,title,index,cover,collectionId',
         });
         // 过滤掉已经关联的
-        songAlbumSearchResults.value = results.items.filter(
-          item => !allLinkedAlbums.value.some(a => a.id === item.id)
-        );
+        songAlbumSearchResults.value = results.items.filter(item => !allLinkedAlbums.value.some(a => a.id === item.id));
       } catch (err) {
         console.error(err);
       } finally {
@@ -261,7 +259,7 @@
         options.push({
           value: `album_cover:${album.id}`,
           label: `专辑封面 (${album.title})`,
-          url
+          url,
         });
       }
     });
@@ -298,7 +296,7 @@
   // 获取默认封面URL（用于预览区域）
   const defaultCoverPreviewUrl = computed(() => {
     if (!song.value.defaultCover) return '';
-    
+
     // 专辑封面
     if (song.value.defaultCover === 'album' && song.value.defaultAlbum) {
       const album = allLinkedAlbums.value.find(a => a.id === song.value.defaultAlbum);
@@ -306,7 +304,7 @@
         return pb.files.getURL(album, album.cover, { thumb: '400x400' });
       }
     }
-    
+
     if (song.value.defaultCover.startsWith('album_cover:')) {
       const albumId = song.value.defaultCover.replace('album_cover:', '');
       const album = allLinkedAlbums.value.find(a => a.id === albumId);
@@ -1428,11 +1426,17 @@
                 @click="setAlbumCoverAsDefault(album.id)"
               >
                 <div class="w-12 h-12 rounded overflow-hidden shrink-0">
-                  <img :src="pb.files.getURL(album, album.cover, { thumb: '400x400' })" class="w-full h-full object-cover" />
+                  <img
+                    :src="pb.files.getURL(album, album.cover, { thumb: '400x400' })"
+                    class="w-full h-full object-cover"
+                  />
                 </div>
                 <div class="flex-1 min-w-0">
                   <p class="text-xs text-[#888] mb-0.5">专辑封面</p>
-                  <p class="text-sm truncate" :class="isDefaultAlbumCover(album.id) ? 'text-red-300' : 'text-[#c9c9c9]'">
+                  <p
+                    class="text-sm truncate"
+                    :class="isDefaultAlbumCover(album.id) ? 'text-red-300' : 'text-[#c9c9c9]'"
+                  >
                     {{ album.title }}
                   </p>
                 </div>
@@ -1522,8 +1526,20 @@
           <div v-if="albumMode === 'linked'" class="space-y-3">
             <div class="flex items-center gap-3 p-3 bg-black/20 rounded-lg">
               <template v-if="song.defaultAlbum">
-                <div v-if="allLinkedAlbums.find(a => a.id === song.defaultAlbum)?.cover" class="w-10 h-10 rounded overflow-hidden shrink-0">
-                  <img :src="pb.files.getURL(allLinkedAlbums.find(a => a.id === song.defaultAlbum)!, allLinkedAlbums.find(a => a.id === song.defaultAlbum)!.cover!, { thumb: '400x400' })" class="w-full h-full object-cover" />
+                <div
+                  v-if="allLinkedAlbums.find(a => a.id === song.defaultAlbum)?.cover"
+                  class="w-10 h-10 rounded overflow-hidden shrink-0"
+                >
+                  <img
+                    :src="
+                      pb.files.getURL(
+                        allLinkedAlbums.find(a => a.id === song.defaultAlbum)!,
+                        allLinkedAlbums.find(a => a.id === song.defaultAlbum)!.cover!,
+                        { thumb: '400x400' }
+                      )
+                    "
+                    class="w-full h-full object-cover"
+                  />
                 </div>
               </template>
               <span class="text-[#c9c9c9] text-sm flex-1">{{ selectedAlbumTitle }}</span>
@@ -1604,9 +1620,7 @@
             </button>
           </div>
 
-          <p class="text-xs text-[#888]">
-            以下是包含此音乐的全部专辑。添加或删除后，需保存后才会提交到数据库。
-          </p>
+          <p class="text-xs text-[#888]"> 以下是包含此音乐的全部专辑。添加或删除后，需保存后才会提交到数据库。 </p>
 
           <!-- 添加专辑搜索 -->
           <div v-if="showSongAlbumSearch" class="space-y-2 p-3 bg-black/10 rounded-lg">
@@ -1638,14 +1652,20 @@
               >
                 <div v-if="result.cover" class="w-8 h-8 rounded overflow-hidden shrink-0">
                   <img
-                    :src="pb.files.getURL({ collectionId: result.collectionId, id: result.id }, result.cover, { thumb: '100x100' })"
+                    :src="
+                      pb.files.getURL({ collectionId: result.collectionId, id: result.id }, result.cover, {
+                        thumb: '100x100',
+                      })
+                    "
                     class="w-full h-full object-cover"
                   />
                 </div>
                 <span class="text-[#c9c9c9]">{{ result.title }}</span>
               </button>
             </div>
-            <div v-else-if="songAlbumSearchQuery.trim() && !isSearchingSongAlbums" class="text-xs text-[#888] py-1 text-center"
+            <div
+              v-else-if="songAlbumSearchQuery.trim() && !isSearchingSongAlbums"
+              class="text-xs text-[#888] py-1 text-center"
               >未找到匹配的专辑 (或专辑已在关联列表中)</div
             >
           </div>
