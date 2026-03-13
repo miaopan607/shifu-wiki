@@ -1302,15 +1302,12 @@
           <div v-if="displayAlbum.albumMode.value === 'linked'" class="space-y-3">
             <div class="flex items-center gap-3 p-3 bg-black/20 rounded-lg">
               <template v-if="song.defaultAlbum">
-                <div
-                  v-if="linkedAlbums.allLinkedAlbums.value.find(a => a.id === song.defaultAlbum)?.cover"
-                  class="w-10 h-10 rounded overflow-hidden shrink-0"
-                >
+                <div v-if="displayAlbum.selectedAlbumCover.value" class="w-10 h-10 rounded overflow-hidden shrink-0">
                   <img
                     :src="
                       pb.files.getURL(
-                        linkedAlbums.allLinkedAlbums.value.find(a => a.id === song.defaultAlbum)!,
-                        linkedAlbums.allLinkedAlbums.value.find(a => a.id === song.defaultAlbum)!.cover!,
+                        { collectionId: displayAlbum.selectedAlbumCollectionId.value, id: song.defaultAlbum },
+                        displayAlbum.selectedAlbumCover.value,
                         { thumb: '400x400' }
                       )
                     "

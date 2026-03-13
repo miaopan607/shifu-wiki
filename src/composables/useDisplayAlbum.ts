@@ -25,6 +25,8 @@ export function useDisplayAlbum(options: DisplayAlbumOptions) {
   const isSearchingAlbums = ref(false);
   const showAlbumSearch = ref(false);
   const selectedAlbumTitle = ref('');
+  const selectedAlbumCover = ref<string>('');
+  const selectedAlbumCollectionId = ref<string>('');
   const albumMode = ref<DisplayAlbumMode>('none');
 
   let albumSearchDebounce: ReturnType<typeof setTimeout> | null = null;
@@ -56,6 +58,8 @@ export function useDisplayAlbum(options: DisplayAlbumOptions) {
     defaultAlbum.value = albumRecord.id;
     defaultAlbumName.value = albumRecord.title;
     selectedAlbumTitle.value = albumRecord.title;
+    selectedAlbumCover.value = albumRecord.cover || '';
+    selectedAlbumCollectionId.value = albumRecord.collectionId;
     albumMode.value = 'linked';
     showAlbumSearch.value = false;
     albumSearchQuery.value = '';
@@ -75,6 +79,8 @@ export function useDisplayAlbum(options: DisplayAlbumOptions) {
     defaultAlbum.value = '';
     defaultAlbumName.value = '';
     selectedAlbumTitle.value = '';
+    selectedAlbumCover.value = '';
+    selectedAlbumCollectionId.value = '';
     onChanged?.();
   };
 
@@ -82,8 +88,12 @@ export function useDisplayAlbum(options: DisplayAlbumOptions) {
     if (defaultAlbum.value) {
       albumMode.value = 'linked';
       try {
-        const linkedAlbum = await pb.collection('albums').getOne(defaultAlbum.value);
+        const linkedAlbum = await pb.collection('albums').getOne(defaultAlbum.value, {
+          fields: 'id,title,cover,collectionId',
+        });
         selectedAlbumTitle.value = linkedAlbum.title;
+        selectedAlbumCover.value = linkedAlbum.cover || '';
+        selectedAlbumCollectionId.value = linkedAlbum.collectionId;
       } catch {
         /* album might have been deleted */
       }
@@ -100,6 +110,8 @@ export function useDisplayAlbum(options: DisplayAlbumOptions) {
     isSearchingAlbums,
     showAlbumSearch,
     selectedAlbumTitle,
+    selectedAlbumCover,
+    selectedAlbumCollectionId,
     albumMode,
 
     searchAlbums,
