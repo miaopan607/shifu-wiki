@@ -88,6 +88,7 @@
   });
 
   const songCache = ref<Map<string, any>>(new Map());
+  const songShowAlbumFlags = ref<Map<string, boolean>>(new Map());
 
   // 拖拽排序状态
   const draggedItem = ref<DragState | null>(null);
@@ -115,9 +116,19 @@
     return value;
   };
 
-  const getSongArtist = (songId: string) => {
+    const getSongArtist = (songId: string) => {
     const artist = songCache.value.get(songId)?.artist;
     return formatArrayField(artist);
+  };
+
+  const getSongDefaultAlbum = (songId: string) => {
+    return songCache.value.get(songId)?.defaultAlbum || songCache.value.get(songId)?.defaultAlbumName;
+  };
+
+  const toggleSongShowAlbum = (songId: string) => {
+    const current = !!songShowAlbumFlags.value.get(songId);
+    songShowAlbumFlags.value.set(songId, !current);
+    markChanged();
   };
 
   // === 版本冲突 ===
@@ -176,8 +187,16 @@
         const allSongIds = (album.value.tracks || []).flatMap(d => d.songs);
         if (allSongIds.length > 0) {
           const filter = allSongIds.map(id => `id="${id}"`).join(' || ');
-          const songs = await pb.collection('songs').getFullList({ filter, fields: 'id,title,artist' });
-          songs.forEach(s => songCache.value.set(s.id, s));
+          const songs = await pb.collection('songs').getFullList({ filter, fields: 'id,title,artist,defaultAlbum,defaultAlbumName' });
+          songs.forEach(s => {
+            songCache.value.set(s.id, s);
+            // 初始化展示专辑勾选状态：如果当前专辑就是该歌曲的展示专辑，则勾选
+            if (s.defaultAlbum === route.params.id) {
+              songShowAlbumFlags.value.set(s.id, true);
+            } else {
+              songShowAlbumFlags.value.set(s.id, false);
+            }
+          });
         }
       } catch (err) {
         console.error('Failed to fetch album:', err);
@@ -461,6 +480,14 @@
     if (!disc) return;
     disc.songs.push(song.id);
     songCache.value.set(song.id, song);
+    
+    // 如果没有指定展示专辑，默认勾选
+    if (!song.defaultAlbum && !song.defaultAlbumName) {
+      songShowAlbumFlags.value.set(song.id, true);
+    } else {
+      songShowAlbumFlags.value.set(song.id, false);
+    }
+
     songSearchResults.value = songSearchResults.value.filter(s => s.id !== song.id);
     hasChanges.value = true;
   };
@@ -537,10 +564,37 @@
         payload.cover = '';
       }
 
+      let albumId = (route.params.id as string) || '';
       if (isEdit.value) {
-        await pb.collection('albums').update(route.params.id as string, payload);
+        await pb.collection('albums').update(albumId, payload);
       } else {
-        await pb.collection('albums').create(payload);
+        const created = await pb.collection('albums').create(payload);
+        albumId = created.id;
+      }
+
+      // 更新选中的歌曲的展示专辑
+      const albumTitle = normalizedTitle;
+      const flagsEntries = Array.from(songShowAlbumFlags.value.entries());
+      
+      for (const [songId, flag] of flagsEntries) {
+        try {
+          const currentSong = songCache.value.get(songId);
+          if (flag) {
+            // 勾选了：设置为当前专辑
+            await pb.collection('songs').update(songId, {
+              defaultAlbum: albumId,
+              defaultAlbumName: albumTitle,
+            });
+          } else if (currentSong?.defaultAlbum === albumId) {
+            // 未勾选，但原来是当前专辑：清除
+            await pb.collection('songs').update(songId, {
+              defaultAlbum: '',
+              defaultAlbumName: '',
+            });
+          }
+        } catch (err) {
+          console.error(`Failed to update song ${songId} defaultAlbum:`, err);
+        }
       }
 
       await editLock.removeEditLock();
@@ -809,6 +863,40 @@
                   <p class="text-[#c9c9c9] text-sm truncate">{{ getSongName(songId) }}</p>
                   <p v-if="getSongArtist(songId)" class="text-[#888] text-xs truncate">{{ getSongArtist(songId) }}</p>
                 </div>
+
+                <!-- 展示专辑按钮 -->
+                <button
+                  class="flex items-center gap-2 px-2 py-1 text-xs rounded transition-colors shrink-0"
+                  :class="
+                    songShowAlbumFlags.get(songId)
+                      ? 'bg-red-300 text-[rgb(77,0,0)]'
+                      : 'bg-white/5 text-[#888] hover:bg-white/10'
+                  "
+                  title="以此专辑作为展示专辑"
+                  @click.stop="toggleSongShowAlbum(songId)"
+                >
+                  <div
+                    class="w-3.5 h-3.5 rounded-full border flex items-center justify-center transition-colors"
+                    :class="
+                      songShowAlbumFlags.get(songId)
+                        ? 'border-[rgb(77,0,0)] bg-[rgb(77,0,0)]'
+                        : 'border-[#888]'
+                    "
+                  >
+                    <svg
+                      v-if="songShowAlbumFlags.get(songId)"
+                      class="w-2.5 h-2.5 text-red-300"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      stroke-width="4"
+                    >
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <span>展示专辑</span>
+                </button>
+
                 <button
                   class="text-red-400 hover:text-red-300 opacity-0 group-hover:opacity-100 transition-opacity p-1"
                   @click="removeSongFromDisc(discIndex, songIndex)"
