@@ -1315,7 +1315,14 @@
                   />
                 </div>
               </template>
-              <span class="text-[#c9c9c9] text-sm flex-1">{{ displayAlbum.selectedAlbumTitle.value }}</span>
+              <div class="flex-1 min-w-0">
+                <p class="text-[#c9c9c9] text-sm truncate">{{ displayAlbum.selectedAlbumTitle.value }}</p>
+                <p
+                  v-if="!linkedAlbums.allLinkedAlbums.value.some(a => a.id === song.defaultAlbum)"
+                  class="text-xs text-yellow-400"
+                  >未关联</p
+                >
+              </div>
               <button class="text-red-400 hover:text-red-300 p-1" @click="displayAlbum.clearAlbum()">
                 <AppIcon name="close" class-name="w-4 h-4" />
               </button>
