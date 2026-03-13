@@ -576,7 +576,7 @@
       const albumTitle = normalizedTitle;
       const flagsEntries = Array.from(songShowAlbumFlags.value.entries());
       
-      for (const [songId, flag] of flagsEntries) {
+      const updatePromises = flagsEntries.map(async ([songId, flag]) => {
         try {
           const currentSong = songCache.value.get(songId);
           if (flag) {
@@ -595,6 +595,10 @@
         } catch (err) {
           console.error(`Failed to update song ${songId} defaultAlbum:`, err);
         }
+      });
+
+      if (updatePromises.length > 0) {
+        await Promise.all(updatePromises);
       }
 
       await editLock.removeEditLock();
