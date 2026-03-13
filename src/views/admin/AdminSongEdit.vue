@@ -9,13 +9,15 @@
     normalizeDateForStorage,
   } from '@/lib/pocketbase';
   import { useEditLock } from '@/composables/useEditLock';
+  import { useDisplayAlbum } from '@/composables/useDisplayAlbum';
+  import { useLinkedAlbums } from '@/composables/useLinkedAlbums';
   import { uploadStore } from '@/stores/uploadStore';
   import EditLockConflictDialog from '@/components/EditLockConflictDialog.vue';
   import EditLockWarning from '@/components/EditLockWarning.vue';
   import VersionConflictDialog from '@/components/VersionConflictDialog.vue';
   import AdminInput from '@/components/AdminInput.vue';
   import AppIcon from '@/components/AppIcon.vue';
-  import type { Song, Album, AlbumDisc } from '@/types';
+  import type { Song } from '@/types';
   import type { SongCoverWithFile } from '@/types/admin';
   import type { BatchUploadTask } from '@/types/upload';
 
@@ -67,181 +69,39 @@
     enabledPlatform: '',
   });
 
-  // === 专辑选择 ===
-  const albumSearchQuery = ref('');
-  const albumSearchResults = ref<any[]>([]);
-  const isSearchingAlbums = ref(false);
-  const showAlbumSearch = ref(false);
-  const selectedAlbumTitle = ref(''); // 已选专辑的标题
-  const albumMode = ref<'none' | 'linked' | 'manual'>('none'); // none=无专辑, linked=关联站内, manual=手动填写
-  let albumSearchDebounce: ReturnType<typeof setTimeout> | null = null;
-
-  // === 关联的全部专辑（只读，通过albums.tracks反查）===
-  interface LinkedAlbumInfo {
-    id: string;
-    collectionId: string;
-    title: string;
-    index: number;
-    cover?: string;
-  }
-  const allLinkedAlbums = ref<LinkedAlbumInfo[]>([]);
-  const albumsToLink = ref<string[]>([]); // 待关联的专辑 ID
-  const albumsToUnlink = ref<string[]>([]); // 待取消关联的专辑 ID
-
-  const loadAllLinkedAlbums = async (songId: string) => {
-    try {
-      const albumsResult = await pb.collection('albums').getFullList({
-        fields: 'id,collectionId,title,index,cover,tracks',
-      });
-      const linked: LinkedAlbumInfo[] = [];
-      for (const album of albumsResult) {
-        const tracks = Array.isArray(album.tracks) ? album.tracks : [];
-        const isInAlbum = tracks.some((disc: any) => Array.isArray(disc.songs) && disc.songs.includes(songId));
-        if (isInAlbum) {
-          linked.push({
-            id: album.id,
-            collectionId: album.collectionId,
-            title: album.title,
-            index: album.index,
-            cover: album.cover,
-          });
-        }
-      }
-      allLinkedAlbums.value = linked;
-    } catch (err) {
-      console.error('Failed to load linked albums:', err);
-    }
+  // === 变更追踪 ===
+  const hasChanges = ref(false);
+  const markChanged = () => {
+    hasChanges.value = true;
   };
 
-  const navigateToAlbumEdit = (albumId: string) => {
-    router.push(`/admin/albums/${albumId}`);
-  };
-
-  // === 关联专辑搜索与添加 ===
-  const songAlbumSearchQuery = ref('');
-  const songAlbumSearchResults = ref<any[]>([]);
-  const showSongAlbumSearch = ref(false);
-  const isSearchingSongAlbums = ref(false);
-  let songAlbumSearchDebounce: ReturnType<typeof setTimeout> | null = null;
-
-  const searchSongAlbums = () => {
-    if (songAlbumSearchDebounce) clearTimeout(songAlbumSearchDebounce);
-    const query = songAlbumSearchQuery.value.trim();
-    if (!query) {
-      songAlbumSearchResults.value = [];
-      return;
-    }
-    isSearchingSongAlbums.value = true;
-    songAlbumSearchDebounce = setTimeout(async () => {
-      try {
-        const results = await pb.collection('albums').getList(1, 10, {
-          filter: `title ~ "${query}"`,
-          fields: 'id,title,index,cover,collectionId',
-        });
-        // 过滤掉已经关联的
-        songAlbumSearchResults.value = results.items.filter(item => !allLinkedAlbums.value.some(a => a.id === item.id));
-      } catch (err) {
-        console.error(err);
-      } finally {
-        isSearchingSongAlbums.value = false;
-      }
-    }, 300);
-  };
-
-  const addAlbumToLink = (albumRecord: any) => {
-    // 添加到临时列表
-    allLinkedAlbums.value.push({
-      id: albumRecord.id,
-      collectionId: albumRecord.collectionId,
-      title: albumRecord.title,
-      index: albumRecord.index,
-      cover: albumRecord.cover,
-    });
-
-    // 如果之前在待删除列表中，移除
-    albumsToUnlink.value = albumsToUnlink.value.filter(id => id !== albumRecord.id);
-    // 如果不在已保存的关联中，记录为待添加
-    albumsToLink.value.push(albumRecord.id);
-
-    showSongAlbumSearch.value = false;
-    songAlbumSearchQuery.value = '';
-    songAlbumSearchResults.value = [];
+  // === 清除默认封面 ===
+  const clearDefaultCover = () => {
+    song.value.defaultCover = '';
     markChanged();
   };
 
-  const removeAlbumFromLink = (albumId: string) => {
-    const index = allLinkedAlbums.value.findIndex(a => a.id === albumId);
-    if (index !== -1) {
-      allLinkedAlbums.value.splice(index, 1);
-    }
+  // === 展示专辑 Composable ===
+  const displayAlbum = useDisplayAlbum({
+    defaultAlbum: computed({
+      get: () => song.value.defaultAlbum || '',
+      set: val => (song.value.defaultAlbum = val),
+    }),
+    defaultAlbumName: computed({
+      get: () => song.value.defaultAlbumName || '',
+      set: val => (song.value.defaultAlbumName = val),
+    }),
+    onChanged: () => markChanged(),
+  });
 
-    // 如果在待添加列表中，直接移除
-    if (albumsToLink.value.includes(albumId)) {
-      albumsToLink.value = albumsToLink.value.filter(id => id !== albumId);
-    } else {
-      // 否则记录为待取消关联
-      albumsToUnlink.value.push(albumId);
-    }
-
-    // 如果该专辑被选为默认封面或展示专辑，需要清理
-    if (song.value.defaultAlbum === albumId) {
-      clearAlbum();
-    }
-    if (song.value.defaultCover === `album_cover:${albumId}`) {
-      clearDefaultCover();
-    }
-
-    markChanged();
-  };
-
-  const searchAlbums = () => {
-    if (albumSearchDebounce) clearTimeout(albumSearchDebounce);
-    const query = albumSearchQuery.value.trim();
-    if (!query) {
-      albumSearchResults.value = [];
-      return;
-    }
-    isSearchingAlbums.value = true;
-    albumSearchDebounce = setTimeout(async () => {
-      try {
-        const results = await pb.collection('albums').getList(1, 10, {
-          filter: `title ~ "${query}"`,
-          fields: 'id,title,index,cover,collectionId',
-        });
-        albumSearchResults.value = results.items;
-      } catch (err) {
-        console.error(err);
-      } finally {
-        isSearchingAlbums.value = false;
-      }
-    }, 300);
-  };
-
-  const selectAlbum = (albumRecord: any) => {
-    song.value.defaultAlbum = albumRecord.id;
-    song.value.defaultAlbumName = albumRecord.title;
-    selectedAlbumTitle.value = albumRecord.title;
-    albumMode.value = 'linked';
-    showAlbumSearch.value = false;
-    albumSearchQuery.value = '';
-    albumSearchResults.value = [];
-    markChanged();
-  };
-
-  const setManualAlbum = () => {
-    albumMode.value = 'manual';
-    song.value.defaultAlbum = '';
-    showAlbumSearch.value = false;
-    markChanged();
-  };
-
-  const clearAlbum = () => {
-    albumMode.value = 'none';
-    song.value.defaultAlbum = '';
-    song.value.defaultAlbumName = '';
-    selectedAlbumTitle.value = '';
-    markChanged();
-  };
+  // === 关联专辑 Composable ===
+  const linkedAlbums = useLinkedAlbums({
+    defaultAlbum: computed(() => song.value.defaultAlbum || ''),
+    defaultCover: computed(() => song.value.defaultCover || ''),
+    onChanged: () => markChanged(),
+    onClearAlbum: () => displayAlbum.clearAlbum(),
+    onClearDefaultCover: () => clearDefaultCover(),
+  });
 
   // === 默认封面 ===
   const defaultCoverOptions = computed(() => {
@@ -249,7 +109,7 @@
       { value: '', label: '不展示封面（缺省封面）', url: '' },
     ];
     // 专辑封面选项
-    allLinkedAlbums.value.forEach(album => {
+    linkedAlbums.allLinkedAlbums.value.forEach(album => {
       if (album.cover) {
         const url = pb.files.getURL(album, album.cover, { thumb: '400x400' });
         options.push({
@@ -277,7 +137,6 @@
   const covers = ref<SongCoverWithFile[]>([]);
   const coversToDelete = ref<string[]>([]);
   const fileInput = ref<HTMLInputElement | null>(null);
-  const hasChanges = ref(false);
 
   const hasUnsavedFiles = computed(() => currentBatchTask.value !== null);
 
@@ -296,7 +155,7 @@
     // 专辑封面
     if (song.value.defaultCover.startsWith('album_cover:')) {
       const albumId = song.value.defaultCover.replace('album_cover:', '');
-      const album = allLinkedAlbums.value.find(a => a.id === albumId);
+      const album = linkedAlbums.allLinkedAlbums.value.find(a => a.id === albumId);
       if (album?.cover) {
         return pb.files.getURL(album, album.cover, { thumb: '400x400' });
       }
@@ -334,12 +193,6 @@
   // 设置专辑封面为默认
   const setAlbumCoverAsDefault = (albumId: string) => {
     song.value.defaultCover = `album_cover:${albumId}`;
-    markChanged();
-  };
-
-  // 清除默认封面
-  const clearDefaultCover = () => {
-    song.value.defaultCover = '';
     markChanged();
   };
 
@@ -454,23 +307,11 @@
           sort: c.sort,
         })) as SongCoverWithFile[];
 
-        // 设置专辑模式
-        if (song.value.defaultAlbum) {
-          albumMode.value = 'linked';
-          try {
-            const linkedAlbum = await pb.collection('albums').getOne(song.value.defaultAlbum as string);
-            selectedAlbumTitle.value = linkedAlbum.title;
-          } catch {
-            /* album might have been deleted */
-          }
-        } else if (song.value.defaultAlbumName) {
-          albumMode.value = 'manual';
-        } else {
-          albumMode.value = 'none';
-        }
+        // 初始化展示专辑
+        await displayAlbum.initDisplayAlbum();
 
         // 加载关联的全部专辑
-        await loadAllLinkedAlbums(route.params.id as string);
+        await linkedAlbums.loadAllLinkedAlbums(route.params.id as string);
       } catch (err) {
         console.error('Failed to fetch song:', err);
         alert('获取音乐详情失败');
@@ -627,10 +468,6 @@
 
   const removeOtherLink = (index: number) => {
     song.value.otherLinks?.splice(index, 1);
-  };
-
-  const markChanged = () => {
-    hasChanges.value = true;
   };
 
   // === 版本冲突 ===
@@ -805,50 +642,7 @@
       }
 
       // 5.5. 关联/取消关联专辑
-      const handleAlbumTrackUpdate = async () => {
-        // 取消关联
-        for (const albumId of albumsToUnlink.value) {
-          try {
-            const album = await pb.collection('albums').getOne<Album>(albumId);
-            const tracks = Array.isArray(album.tracks) ? album.tracks : [];
-            let changed = false;
-            tracks.forEach((disc: AlbumDisc) => {
-              if (disc.songs.includes(targetSongId)) {
-                disc.songs = disc.songs.filter((id: string) => id !== targetSongId);
-                changed = true;
-              }
-            });
-            if (changed) {
-              await pb.collection('albums').update(albumId, { tracks });
-            }
-          } catch (err) {
-            console.error(`Failed to unlink album ${albumId}:`, err);
-          }
-        }
-
-        // 添加关联
-        for (const albumId of albumsToLink.value) {
-          try {
-            const album = await pb.collection('albums').getOne<Album>(albumId);
-            const tracks = Array.isArray(album.tracks) ? [...album.tracks] : [];
-            // 检查是否已经在某个碟片中
-            const alreadyIn = tracks.some((disc: AlbumDisc) => disc.songs.includes(targetSongId));
-            if (!alreadyIn) {
-              // 默认加到第一张碟的最后
-              if (tracks.length === 0) {
-                tracks.push({ disc: 1, songs: [targetSongId] });
-              } else if (tracks[0]) {
-                tracks[0].songs.push(targetSongId);
-              }
-              await pb.collection('albums').update(albumId, { tracks });
-            }
-          } catch (err) {
-            console.error(`Failed to link album ${albumId}:`, err);
-          }
-        }
-      };
-
-      await handleAlbumTrackUpdate();
+      await linkedAlbums.handleAlbumTrackUpdate(targetSongId);
 
       // 6. 上传封面
       if (currentBatchTask.value) {
@@ -1400,7 +1194,7 @@
             </button>
 
             <!-- 专辑封面选项 (从关联专辑中选) -->
-            <template v-for="album in allLinkedAlbums" :key="album.id">
+            <template v-for="album in linkedAlbums.allLinkedAlbums.value" :key="album.id">
               <button
                 v-if="album.cover"
                 class="w-full flex items-center gap-3 p-2 rounded-lg border transition-all text-left group"
@@ -1509,18 +1303,18 @@
           >
 
           <!-- 已关联专辑 -->
-          <div v-if="albumMode === 'linked'" class="space-y-3">
+          <div v-if="displayAlbum.albumMode.value === 'linked'" class="space-y-3">
             <div class="flex items-center gap-3 p-3 bg-black/20 rounded-lg">
               <template v-if="song.defaultAlbum">
                 <div
-                  v-if="allLinkedAlbums.find(a => a.id === song.defaultAlbum)?.cover"
+                  v-if="linkedAlbums.allLinkedAlbums.value.find(a => a.id === song.defaultAlbum)?.cover"
                   class="w-10 h-10 rounded overflow-hidden shrink-0"
                 >
                   <img
                     :src="
                       pb.files.getURL(
-                        allLinkedAlbums.find(a => a.id === song.defaultAlbum)!,
-                        allLinkedAlbums.find(a => a.id === song.defaultAlbum)!.cover!,
+                        linkedAlbums.allLinkedAlbums.value.find(a => a.id === song.defaultAlbum)!,
+                        linkedAlbums.allLinkedAlbums.value.find(a => a.id === song.defaultAlbum)!.cover!,
                         { thumb: '400x400' }
                       )
                     "
@@ -1528,15 +1322,15 @@
                   />
                 </div>
               </template>
-              <span class="text-[#c9c9c9] text-sm flex-1">{{ selectedAlbumTitle }}</span>
-              <button class="text-red-400 hover:text-red-300 p-1" @click="clearAlbum">
+              <span class="text-[#c9c9c9] text-sm flex-1">{{ displayAlbum.selectedAlbumTitle.value }}</span>
+              <button class="text-red-400 hover:text-red-300 p-1" @click="displayAlbum.clearAlbum()">
                 <AppIcon name="close" class-name="w-4 h-4" />
               </button>
             </div>
           </div>
 
           <!-- 手动填写 -->
-          <div v-else-if="albumMode === 'manual'" class="space-y-3">
+          <div v-else-if="displayAlbum.albumMode.value === 'manual'" class="space-y-3">
             <input
               v-model="song.defaultAlbumName"
               type="text"
@@ -1545,45 +1339,51 @@
               @input="markChanged"
             />
             <p class="text-xs text-[#888]">本站暂无此专辑，仅显示名称不提供链接</p>
-            <button class="text-xs text-[#888] hover:text-red-300 transition-colors" @click="clearAlbum">清除</button>
+            <button class="text-xs text-[#888] hover:text-red-300 transition-colors" @click="displayAlbum.clearAlbum()"
+              >清除</button
+            >
           </div>
 
           <!-- 选择界面 -->
           <div v-else class="space-y-3">
-            <div v-if="showAlbumSearch" class="space-y-2">
+            <div v-if="displayAlbum.showAlbumSearch.value" class="space-y-2">
               <input
-                v-model="albumSearchQuery"
+                v-model="displayAlbum.albumSearchQuery.value"
                 type="text"
                 placeholder="搜索专辑名"
                 class="w-full px-3 py-2 bg-black/20 border border-[#c9c9c9]/20 rounded text-[#e0e0e0] text-sm focus:outline-none focus:border-red-300/50"
-                @input="searchAlbums"
+                @input="displayAlbum.searchAlbums()"
               />
-              <div v-if="albumSearchResults.length > 0" class="max-h-40 overflow-y-auto space-y-1">
+              <div v-if="displayAlbum.albumSearchResults.value.length > 0" class="max-h-40 overflow-y-auto space-y-1">
                 <button
-                  v-for="result in albumSearchResults"
+                  v-for="result in displayAlbum.albumSearchResults.value"
                   :key="result.id"
                   class="w-full text-left p-2 bg-black/10 hover:bg-white/5 rounded text-sm transition-colors"
-                  @click="selectAlbum(result)"
+                  @click="displayAlbum.selectAlbum(result)"
                 >
                   <span class="text-[#c9c9c9]">{{ result.title }}</span>
                 </button>
               </div>
-              <div v-else-if="albumSearchQuery.trim() && !isSearchingAlbums" class="text-xs text-[#888] py-1"
+              <div
+                v-else-if="displayAlbum.albumSearchQuery.value.trim() && !displayAlbum.isSearchingAlbums.value"
+                class="text-xs text-[#888] py-1"
                 >未找到匹配的专辑</div
               >
-              <button class="text-xs text-red-300/70 hover:text-red-300 transition-colors" @click="setManualAlbum"
+              <button
+                class="text-xs text-red-300/70 hover:text-red-300 transition-colors"
+                @click="displayAlbum.setManualAlbum()"
                 >本站无此专辑，手动填写名称</button
               >
               <button
                 class="text-xs text-[#888] hover:text-[#c9c9c9] transition-colors ml-3"
-                @click="showAlbumSearch = false"
+                @click="displayAlbum.showAlbumSearch.value = false"
                 >取消</button
               >
             </div>
             <button
               v-else
               class="text-sm text-red-300/70 hover:text-red-300 transition-colors inline-flex items-center gap-1"
-              @click="showAlbumSearch = true"
+              @click="displayAlbum.showAlbumSearch.value = true"
             >
               <AppIcon name="plus" class-name="w-3 h-3" /> 选择展示专辑
             </button>
@@ -1597,9 +1397,9 @@
               <AppIcon name="album" class-name="w-5 h-5 text-red-300" /> 关联的全部专辑
             </h2>
             <button
-              v-if="!showSongAlbumSearch"
+              v-if="!linkedAlbums.showSongAlbumSearch.value"
               class="text-sm text-red-300 hover:text-[#fca5a5] transition-colors inline-flex items-center gap-1"
-              @click="showSongAlbumSearch = true"
+              @click="linkedAlbums.showSongAlbumSearch.value = true"
             >
               <AppIcon name="plus" class-name="w-4 h-4" />
               添加关联
@@ -1609,32 +1409,28 @@
           <p class="text-xs text-[#888]"> 以下是包含此音乐的全部专辑。添加或删除后，需保存后才会提交到数据库。 </p>
 
           <!-- 添加专辑搜索 -->
-          <div v-if="showSongAlbumSearch" class="space-y-2 p-3 bg-black/10 rounded-lg">
+          <div v-if="linkedAlbums.showSongAlbumSearch.value" class="space-y-2 p-3 bg-black/10 rounded-lg">
             <div class="flex items-center gap-2">
               <input
-                v-model="songAlbumSearchQuery"
+                v-model="linkedAlbums.songAlbumSearchQuery.value"
                 type="text"
                 placeholder="搜索要添加的专辑名"
                 class="flex-1 px-3 py-2 bg-black/20 border border-[#c9c9c9]/20 rounded text-[#e0e0e0] text-sm focus:outline-none focus:border-red-300/50"
-                @input="searchSongAlbums"
+                @input="linkedAlbums.searchSongAlbums()"
               />
               <button
                 class="text-[#888] hover:text-[#c9c9c9] transition-colors"
-                @click="
-                  showSongAlbumSearch = false;
-                  songAlbumSearchQuery = '';
-                  songAlbumSearchResults = [];
-                "
+                @click="linkedAlbums.closeSongAlbumSearch()"
               >
                 <AppIcon name="close" class-name="w-5 h-5" />
               </button>
             </div>
-            <div v-if="songAlbumSearchResults.length > 0" class="max-h-40 overflow-y-auto space-y-1">
+            <div v-if="linkedAlbums.songAlbumSearchResults.value.length > 0" class="max-h-40 overflow-y-auto space-y-1">
               <button
-                v-for="result in songAlbumSearchResults"
+                v-for="result in linkedAlbums.songAlbumSearchResults.value"
                 :key="result.id"
                 class="w-full text-left p-2 bg-black/20 hover:bg-red-300/10 rounded text-sm transition-colors flex items-center gap-2"
-                @click="addAlbumToLink(result)"
+                @click="linkedAlbums.addAlbumToLink(result)"
               >
                 <div v-if="result.cover" class="w-8 h-8 rounded overflow-hidden shrink-0">
                   <img
@@ -1650,15 +1446,15 @@
               </button>
             </div>
             <div
-              v-else-if="songAlbumSearchQuery.trim() && !isSearchingSongAlbums"
+              v-else-if="linkedAlbums.songAlbumSearchQuery.value.trim() && !linkedAlbums.isSearchingSongAlbums.value"
               class="text-xs text-[#888] py-1 text-center"
               >未找到匹配的专辑 (或专辑已在关联列表中)</div
             >
           </div>
 
-          <div v-if="allLinkedAlbums.length > 0" class="space-y-2">
+          <div v-if="linkedAlbums.allLinkedAlbums.value.length > 0" class="space-y-2">
             <div
-              v-for="album in allLinkedAlbums"
+              v-for="album in linkedAlbums.allLinkedAlbums.value"
               :key="album.id"
               class="flex items-center gap-3 p-3 bg-black/20 rounded-lg group"
             >
@@ -1678,14 +1474,14 @@
               <button
                 class="text-[#888] hover:text-red-300 p-1.5 rounded hover:bg-white/5 transition-all opacity-0 group-hover:opacity-100"
                 title="取消关联"
-                @click.stop="removeAlbumFromLink(album.id)"
+                @click.stop="linkedAlbums.removeAlbumFromLink(album.id)"
               >
                 <AppIcon name="close" class-name="w-4 h-4" />
               </button>
               <button
                 title="在专辑管理中编辑"
                 class="text-[#888] hover:text-red-300 p-1.5"
-                @click="navigateToAlbumEdit(album.id)"
+                @click="linkedAlbums.navigateToAlbumEdit(album.id)"
               >
                 <AppIcon name="external-link" class-name="w-4 h-4" />
               </button>
