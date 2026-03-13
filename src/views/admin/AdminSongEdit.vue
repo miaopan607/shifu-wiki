@@ -1557,6 +1557,17 @@
                 <p class="text-[#c9c9c9] text-sm truncate">{{ album.title }}</p>
                 <p class="text-xs text-[#888]">#{{ album.index }}</p>
               </div>
+              <select
+                v-if="album.discs.length > 0"
+                :value="album.disc"
+                tabindex="-1"
+                class="px-2 py-1 bg-black/30 border border-[#c9c9c9]/20 rounded text-[#c9c9c9] text-sm focus:outline-none focus:border-red-300/50"
+                @change="linkedAlbums.setAlbumDisc(album.id, Number(($event.target as HTMLSelectElement).value))"
+              >
+                <option v-for="disc in album.discs" :key="disc.disc" :value="disc.disc">
+                  {{ disc.name }}
+                </option>
+              </select>
               <button
                 tabindex="-1"
                 class="text-[#888] hover:text-red-300 p-1.5 rounded hover:bg-white/5 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100"
