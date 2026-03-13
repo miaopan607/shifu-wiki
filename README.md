@@ -26,6 +26,29 @@
 └── vite.config.ts         # Vite 配置
 ```
 
+## 技术栈
+
+### 核心依赖
+
+| 依赖                                     | 版本    | 说明                       |
+| ---------------------------------------- | ------- | -------------------------- |
+| [Vue](https://vuejs.org/)                | ^3.5.27 | 前端框架                   |
+| [Vue Router](https://router.vuejs.org/)  | ^4.6.4  | 路由管理                   |
+| [Tailwind CSS](https://tailwindcss.com/) | ^4.1.18 | CSS 框架                   |
+| [PocketBase](https://pocketbase.io/)     | ^0.26.8 | 后端数据库                 |
+| [VueUse](https://vueuse.org/)            | ^14.2.1 | Vue Composition API 工具集 |
+| [marked](https://marked.js.org/)         | ^17.0.2 | Markdown 解析器            |
+
+### 开发依赖
+
+| 依赖                                                          | 版本   | 说明                  |
+| ------------------------------------------------------------- | ------ | --------------------- |
+| [Vite](https://vitejs.dev/)                                   | ^7.3.1 | 构建工具              |
+| [TypeScript](https://www.typescriptlang.org/)                 | ~5.9.3 | 类型支持              |
+| [vue-tsc](https://github.com/vuejs/language-tools)            | ^3.2.4 | Vue TypeScript 编译器 |
+| [Prettier](https://prettier.io/)                              | ^3.8.1 | 代码格式化            |
+| [vite-plugin-vue-devtools](https://github.com/vuejs/devtools) | ^8.0.5 | Vue 开发者工具        |
+
 ## 开发指南
 
 ### 数据库配置
