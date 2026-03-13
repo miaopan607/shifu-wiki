@@ -96,11 +96,7 @@
 
   // === 关联专辑 Composable ===
   const linkedAlbums = useLinkedAlbums({
-    defaultAlbum: computed(() => song.value.defaultAlbum || ''),
-    defaultCover: computed(() => song.value.defaultCover || ''),
     onChanged: () => markChanged(),
-    onClearAlbum: () => displayAlbum.clearAlbum(),
-    onClearDefaultCover: () => clearDefaultCover(),
   });
 
   // === 默认封面 ===

@@ -1,4 +1,4 @@
-import { ref, type Ref } from 'vue';
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { pb } from '@/lib/pocketbase';
 import type { Album, AlbumDisc } from '@/types';
@@ -12,15 +12,11 @@ export interface LinkedAlbumInfo {
 }
 
 export interface UseLinkedAlbumsOptions {
-  defaultAlbum: Ref<string>;
-  defaultCover: Ref<string>;
   onChanged?: () => void;
-  onClearAlbum?: () => void;
-  onClearDefaultCover?: () => void;
 }
 
-export function useLinkedAlbums(options: UseLinkedAlbumsOptions) {
-  const { defaultAlbum, defaultCover, onChanged, onClearAlbum, onClearDefaultCover } = options;
+export function useLinkedAlbums(options: UseLinkedAlbumsOptions = {}) {
+  const { onChanged } = options;
 
   const router = useRouter();
 
@@ -111,13 +107,6 @@ export function useLinkedAlbums(options: UseLinkedAlbumsOptions) {
       albumsToLink.value = albumsToLink.value.filter(id => id !== albumId);
     } else {
       albumsToUnlink.value.push(albumId);
-    }
-
-    if (defaultAlbum.value === albumId) {
-      onClearAlbum?.();
-    }
-    if (defaultCover.value === `album_cover:${albumId}`) {
-      onClearDefaultCover?.();
     }
 
     onChanged?.();
