@@ -79,6 +79,7 @@
   // === 关联的全部专辑（只读，通过albums.tracks反查）===
   interface LinkedAlbumInfo {
     id: string;
+    collectionId: string;
     title: string;
     index: number;
     cover?: string;
@@ -88,7 +89,7 @@
   const loadAllLinkedAlbums = async (songId: string) => {
     try {
       const albumsResult = await pb.collection('albums').getFullList({
-        fields: 'id,title,index,cover,tracks',
+        fields: 'id,collectionId,title,index,cover,tracks',
       });
       const linked: LinkedAlbumInfo[] = [];
       for (const album of albumsResult) {
@@ -97,6 +98,7 @@
         if (isInAlbum) {
           linked.push({
             id: album.id,
+            collectionId: album.collectionId,
             title: album.title,
             index: album.index,
             cover: album.cover,
@@ -167,20 +169,22 @@
   };
 
   // === 默认封面 ===
-  const getAlbumCoverUrl = computed(() => {
-    if (!song.value.defaultAlbum) return '';
-    // We need the linked album's cover - stored when loaded
-    return linkedAlbumCoverUrl.value;
-  });
-  const linkedAlbumCoverUrl = ref('');
-
   const defaultCoverOptions = computed(() => {
     const options: { value: string; label: string; url: string }[] = [
       { value: '', label: '不展示封面（缺省封面）', url: '' },
     ];
-    if (song.value.defaultAlbum && linkedAlbumCoverUrl.value) {
-      options.push({ value: 'album', label: `专辑封面 (${selectedAlbumTitle.value})`, url: linkedAlbumCoverUrl.value });
-    }
+    // 专辑封面选项
+    allLinkedAlbums.value.forEach(album => {
+      if (album.cover) {
+        const url = pb.files.getURL(album, album.cover, { thumb: '400x400' });
+        options.push({
+          value: `album_cover:${album.id}`,
+          label: `专辑封面 (${album.title})`,
+          url
+        });
+      }
+    });
+    // 自有封面选项
     for (const cover of covers.value) {
       if (cover.id.startsWith('pending-')) continue;
       const url = getCoverUrl(cover);
@@ -213,9 +217,24 @@
   // 获取默认封面URL（用于预览区域）
   const defaultCoverPreviewUrl = computed(() => {
     if (!song.value.defaultCover) return '';
-    if (song.value.defaultCover === 'album') {
-      return linkedAlbumCoverUrl.value;
+    
+    // 专辑封面
+    if (song.value.defaultCover === 'album' && song.value.defaultAlbum) {
+      const album = allLinkedAlbums.value.find(a => a.id === song.value.defaultAlbum);
+      if (album?.cover) {
+        return pb.files.getURL(album, album.cover, { thumb: '400x400' });
+      }
     }
+    
+    if (song.value.defaultCover.startsWith('album_cover:')) {
+      const albumId = song.value.defaultCover.replace('album_cover:', '');
+      const album = allLinkedAlbums.value.find(a => a.id === albumId);
+      if (album?.cover) {
+        return pb.files.getURL(album, album.cover, { thumb: '400x400' });
+      }
+    }
+
+    // 自有封面
     if (song.value.defaultCover?.startsWith('song_cover:')) {
       const coverId = song.value.defaultCover.replace('song_cover:', '');
       const cover = covers.value.find(c => c.id === coverId);
@@ -233,6 +252,14 @@
     return false;
   };
 
+  // 检查专辑是否是默认封面
+  const isDefaultAlbumCover = (albumId: string) => {
+    if (song.value.defaultCover === 'album') {
+      return song.value.defaultAlbum === albumId;
+    }
+    return song.value.defaultCover === `album_cover:${albumId}`;
+  };
+
   // 设置默认封面
   const setDefaultCover = (coverId: string) => {
     song.value.defaultCover = `song_cover:${coverId}`;
@@ -240,8 +267,8 @@
   };
 
   // 设置专辑封面为默认
-  const setAlbumCoverAsDefault = () => {
-    song.value.defaultCover = 'album';
+  const setAlbumCoverAsDefault = (albumId: string) => {
+    song.value.defaultCover = `album_cover:${albumId}`;
     markChanged();
   };
 
@@ -368,9 +395,6 @@
           try {
             const linkedAlbum = await pb.collection('albums').getOne(song.value.defaultAlbum as string);
             selectedAlbumTitle.value = linkedAlbum.title;
-            if (linkedAlbum.cover) {
-              linkedAlbumCoverUrl.value = pb.files.getURL(linkedAlbum, linkedAlbum.cover, { thumb: '400x400' });
-            }
           } catch {
             /* album might have been deleted */
           }
@@ -1264,29 +1288,32 @@
               </span>
             </button>
 
-            <!-- 专辑封面选项 -->
-            <button
-              v-if="song.defaultAlbum && linkedAlbumCoverUrl"
-              class="w-full flex items-center gap-3 p-2 rounded-lg border transition-all text-left group"
-              :class="
-                song.defaultCover === 'album'
-                  ? 'border-red-300 bg-red-300/10'
-                  : 'border-[#c9c9c9]/10 hover:border-[#c9c9c9]/30'
-              "
-              @click="setAlbumCoverAsDefault"
-            >
-              <div class="w-12 h-12 rounded overflow-hidden shrink-0">
-                <img :src="linkedAlbumCoverUrl" class="w-full h-full object-cover" />
-              </div>
-              <div class="flex-1 min-w-0">
-                <p class="text-sm truncate" :class="song.defaultCover === 'album' ? 'text-red-300' : 'text-[#c9c9c9]'">
-                  专辑封面（{{ selectedAlbumTitle }}）
-                </p>
-              </div>
-              <span v-if="song.defaultCover === 'album'" class="text-red-300 text-sm flex items-center gap-1">
-                <AppIcon name="check" class-name="w-4 h-4" /> 默认展示
-              </span>
-            </button>
+            <!-- 专辑封面选项 (从关联专辑中选) -->
+            <template v-for="album in allLinkedAlbums" :key="album.id">
+              <button
+                v-if="album.cover"
+                class="w-full flex items-center gap-3 p-2 rounded-lg border transition-all text-left group"
+                :class="
+                  isDefaultAlbumCover(album.id)
+                    ? 'border-red-300 bg-red-300/10'
+                    : 'border-[#c9c9c9]/10 hover:border-[#c9c9c9]/30'
+                "
+                @click="setAlbumCoverAsDefault(album.id)"
+              >
+                <div class="w-12 h-12 rounded overflow-hidden shrink-0">
+                  <img :src="pb.files.getURL(album, album.cover, { thumb: '400x400' })" class="w-full h-full object-cover" />
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-xs text-[#888] mb-0.5">专辑封面</p>
+                  <p class="text-sm truncate" :class="isDefaultAlbumCover(album.id) ? 'text-red-300' : 'text-[#c9c9c9]'">
+                    {{ album.title }}
+                  </p>
+                </div>
+                <span v-if="isDefaultAlbumCover(album.id)" class="text-red-300 text-sm flex items-center gap-1">
+                  <AppIcon name="check" class-name="w-4 h-4" /> 默认展示
+                </span>
+              </button>
+            </template>
 
             <!-- 自有封面列表 -->
             <div
@@ -1367,9 +1394,11 @@
           <!-- 已关联专辑 -->
           <div v-if="albumMode === 'linked'" class="space-y-3">
             <div class="flex items-center gap-3 p-3 bg-black/20 rounded-lg">
-              <div v-if="linkedAlbumCoverUrl" class="w-10 h-10 rounded overflow-hidden shrink-0">
-                <img :src="linkedAlbumCoverUrl" class="w-full h-full object-cover" />
-              </div>
+              <template v-if="song.defaultAlbum">
+                <div v-if="allLinkedAlbums.find(a => a.id === song.defaultAlbum)?.cover" class="w-10 h-10 rounded overflow-hidden shrink-0">
+                  <img :src="pb.files.getURL(allLinkedAlbums.find(a => a.id === song.defaultAlbum)!, allLinkedAlbums.find(a => a.id === song.defaultAlbum)!.cover!, { thumb: '400x400' })" class="w-full h-full object-cover" />
+                </div>
+              </template>
               <span class="text-[#c9c9c9] text-sm flex-1">{{ selectedAlbumTitle }}</span>
               <button class="text-red-400 hover:text-red-300 p-1" @click="clearAlbum">
                 <AppIcon name="close" class-name="w-4 h-4" />
