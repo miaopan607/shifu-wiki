@@ -9,12 +9,12 @@
 | `id`               | text     | 主键                                                     |
 | `index`            | number   | 索引                                                     |
 | `title`            | text     | 标题 (必填)                                              |
-| `artist`           | text     | 艺人 (必填)                                              |
-| `releaseDate`      | date     | 发布日期                                                 |
-| `lyricist`         | text     | 词作                                                     |
-| `composer`         | text     | 曲作                                                     |
+| `artist`           | json     | 艺人标签数组 (必填)                                      |
+| `lyricist`         | json     | 词作标签数组                                             |
+| `composer`         | json     | 曲作标签数组                                             |
 | `lyrics`           | text     | 歌词                                                     |
 | `credits`          | text     | 制作人员名单                                             |
+| `releaseDate`      | date     | 发布日期                                                 |
 | `links`            | json     | 平台链接                                                 |
 | `otherLinks`       | json     | 其他相关链接                                             |
 | `description`      | text     | 描述                                                     |
