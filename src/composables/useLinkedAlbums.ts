@@ -113,7 +113,7 @@ export function useLinkedAlbums(options: UseLinkedAlbumsOptions = {}) {
   };
 
   const navigateToAlbumEdit = (albumId: string) => {
-    router.push(`/admin/albums/${albumId}`);
+    window.open(`/admin/albums/${albumId}`, '_blank');
   };
 
   const handleAlbumTrackUpdate = async (targetSongId: string) => {
