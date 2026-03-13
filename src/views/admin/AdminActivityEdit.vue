@@ -141,6 +141,12 @@
 
   const saveActivity = async () => {
     titleError.value = '';
+
+    // 自动添加未点击添加按钮的标签
+    if (tagInput.value.trim()) {
+      addTag();
+    }
+
     if (!activity.value.title?.trim()) {
       titleError.value = '活动名称不能为空';
       return;

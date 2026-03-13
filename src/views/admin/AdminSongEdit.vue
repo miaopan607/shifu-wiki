@@ -562,6 +562,17 @@
     artistError.value = '';
     error.value = '';
 
+    // 自动添加未点击添加按钮的创作人员
+    if (artistInput.value.trim()) {
+      addTag('artist');
+    }
+    if (lyricistInput.value.trim()) {
+      addTag('lyricist');
+    }
+    if (composerInput.value.trim()) {
+      addTag('composer');
+    }
+
     const normalizedTitle = song.value.title?.trim() || '';
 
     if (!normalizedTitle) {
