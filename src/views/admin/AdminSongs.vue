@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { ref, onMounted, computed } from 'vue';
   import { useRouter } from 'vue-router';
-  import { pb } from '@/lib/pocketbase';
+  import { pb, formatDateToDisplay } from '@/lib/pocketbase';
   import AppIcon from '@/components/AppIcon.vue';
   import type { Song } from '@/types';
 
@@ -13,8 +13,8 @@
   const searchQuery = ref('');
   const deleteConfirm = ref<string | null>(null);
   const deleting = ref(false);
+  const songCoverUrls = ref<Map<string, string>>(new Map());
 
-  // 将数组转换为 / 分隔的字符串
   const formatArrayField = (value: string | string[] | undefined): string => {
     if (!value) return '';
     if (Array.isArray(value)) return value.join(' / ');
@@ -26,14 +26,14 @@
     const query = searchQuery.value.toLowerCase();
     return songs.value.filter(s => {
       const titleMatch = s.title.toLowerCase().includes(query);
-      // 支持数组或字符串形式的 artist
       let artistMatch = false;
       if (Array.isArray(s.artist)) {
         artistMatch = s.artist.some(a => (a as string).toLowerCase().includes(query));
       } else if (typeof s.artist === 'string') {
         artistMatch = (s.artist as string).toLowerCase().includes(query);
       }
-      return titleMatch || artistMatch;
+      const albumMatch = s.defaultAlbumName?.toLowerCase().includes(query);
+      return titleMatch || artistMatch || albumMatch;
     });
   });
 
@@ -54,9 +54,10 @@
     try {
       const result = await pb.collection('songs').getFullList({
         sort: '-releaseDate',
-        fields: 'id,title,index,releaseDate,artist',
+        fields: 'id,title,index,releaseDate,artist,defaultAlbum,defaultCover,defaultAlbumName',
       });
       songs.value = result as unknown as Song[];
+      await loadSongCovers();
     } catch (error) {
       console.error('Failed to fetch songs:', error);
     } finally {
@@ -65,7 +66,47 @@
     }
   };
 
-  import { formatDateToDisplay } from '@/lib/pocketbase';
+  const loadSongCovers = async () => {
+    const coverPromises = songs.value.map(async song => {
+      const coverUrl = await getSongDefaultCoverUrl(song);
+      if (coverUrl) {
+        songCoverUrls.value.set(song.id, coverUrl);
+      }
+    });
+    await Promise.all(coverPromises);
+  };
+
+  const getSongDefaultCoverUrl = async (song: Song): Promise<string> => {
+    if (song.defaultCover?.startsWith('song_cover:')) {
+      const coverId = song.defaultCover.replace('song_cover:', '');
+      try {
+        const cover = await pb.collection('song_covers').getOne(coverId, { fields: 'id,image,collectionId' });
+        if (cover.image) {
+          return pb.files.getURL(cover, cover.image, { thumb: '100x100' });
+        }
+      } catch {
+        // 封面可能已删除
+      }
+    }
+
+    if (song.defaultCover?.startsWith('album_cover:')) {
+      const albumId = song.defaultCover.replace('album_cover:', '');
+      try {
+        const album = await pb.collection('albums').getOne(albumId, { fields: 'id,cover,collectionId' });
+        if (album.cover) {
+          return pb.files.getURL(album, album.cover, { thumb: '100x100' });
+        }
+      } catch {
+        // 专辑可能已删除
+      }
+    }
+
+    return '';
+  };
+
+  const getSongCoverUrl = (songId: string): string => {
+    return songCoverUrls.value.get(songId) || '';
+  };
 
   const formatDate = (dateStr: string) => {
     return formatDateToDisplay(dateStr);
@@ -164,6 +205,7 @@
         <table class="w-full text-left">
           <thead class="bg-white/5">
             <tr>
+              <th class="px-4 py-3 text-sm font-medium text-[#888] w-16">封面</th>
               <th class="px-4 py-3 text-sm font-medium text-[#888]">
                 <div class="flex items-center gap-1.5">
                   <AppIcon name="music" class-name="w-4 h-4 opacity-60" />
@@ -178,6 +220,12 @@
               </th>
               <th class="px-4 py-3 text-sm font-medium text-[#888]">
                 <div class="flex items-center gap-1.5">
+                  <AppIcon name="album" class-name="w-4 h-4 opacity-60" />
+                  专辑
+                </div>
+              </th>
+              <th class="px-4 py-3 text-sm font-medium text-[#888]">
+                <div class="flex items-center gap-1.5">
                   <AppIcon name="date" class-name="w-4 h-4 opacity-60" />
                   发布日期
                 </div>
@@ -188,11 +236,24 @@
           <tbody class="divide-y divide-[#c9c9c9]/10">
             <tr v-for="song in filteredSongs" :key="song.id" class="hover:bg-white/5 transition-colors">
               <td class="px-4 py-3">
+                <div class="w-10 h-10 rounded overflow-hidden bg-[#c9c9c9]/10 flex items-center justify-center">
+                  <img
+                    v-if="getSongCoverUrl(song.id)"
+                    :src="getSongCoverUrl(song.id)"
+                    :alt="song.title"
+                    class="w-full h-full object-cover"
+                  />
+                  <AppIcon v-else name="image-placeholder" class-name="w-5 h-5 text-[#888]" />
+                </div>
+              </td>
+              <td class="px-4 py-3">
                 <p class="font-medium text-[#c9c9c9]">{{ song.title }}</p>
-                <p class="text-xs text-[#888]">{{ formatArrayField(song.artist) }}</p>
               </td>
               <td class="px-4 py-3">
                 <p class="text-sm text-[#888]">{{ formatArrayField(song.artist) }}</p>
+              </td>
+              <td class="px-4 py-3">
+                <p class="text-sm text-[#888]">{{ song.defaultAlbumName || '-' }}</p>
               </td>
               <td class="px-4 py-3 text-sm text-[#888]">
                 {{ formatDate(song.releaseDate) }}
