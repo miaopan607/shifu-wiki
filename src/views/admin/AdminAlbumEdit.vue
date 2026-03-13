@@ -89,6 +89,14 @@
 
   const songCache = ref<Map<string, any>>(new Map());
   const songShowAlbumFlags = ref<Map<string, boolean>>(new Map());
+  const songDefaultCoverFlags = ref<Map<string, boolean>>(new Map());
+
+  const hasAlbumCover = computed(() => {
+    if (removeCoverFlag.value) return false;
+    if (coverFile.value) return true;
+    if (isEdit.value && album.value.cover && album.value.collectionId) return true;
+    return false;
+  });
 
   // 拖拽排序状态
   const draggedItem = ref<DragState | null>(null);
@@ -128,6 +136,12 @@
   const toggleSongShowAlbum = (songId: string) => {
     const current = !!songShowAlbumFlags.value.get(songId);
     songShowAlbumFlags.value.set(songId, !current);
+    markChanged();
+  };
+
+  const toggleSongDefaultCover = (songId: string) => {
+    const current = !!songDefaultCoverFlags.value.get(songId);
+    songDefaultCoverFlags.value.set(songId, !current);
     markChanged();
   };
 
@@ -189,7 +203,7 @@
           const filter = allSongIds.map(id => `id="${id}"`).join(' || ');
           const songs = await pb
             .collection('songs')
-            .getFullList({ filter, fields: 'id,title,artist,defaultAlbum,defaultAlbumName' });
+            .getFullList({ filter, fields: 'id,title,artist,defaultAlbum,defaultAlbumName,defaultCover' });
           songs.forEach(s => {
             songCache.value.set(s.id, s);
             // 初始化展示专辑勾选状态：如果当前专辑就是该歌曲的展示专辑，则勾选
@@ -197,6 +211,12 @@
               songShowAlbumFlags.value.set(s.id, true);
             } else {
               songShowAlbumFlags.value.set(s.id, false);
+            }
+            // 初始化展示封面勾选状态：如果歌曲的 defaultCover 是当前专辑的封面，则勾选
+            if (s.defaultCover === `album_cover:${route.params.id}`) {
+              songDefaultCoverFlags.value.set(s.id, true);
+            } else {
+              songDefaultCoverFlags.value.set(s.id, false);
             }
           });
         }
@@ -466,7 +486,7 @@
       try {
         const results = await pb.collection('songs').getList(1, 15, {
           filter: `title ~ "${query}" || artist ~ "${query}"`,
-          fields: 'id,title,artist,defaultAlbum,defaultAlbumName',
+          fields: 'id,title,artist,defaultAlbum,defaultAlbumName,defaultCover',
         });
         songSearchResults.value = results.items.filter(s => !allLinkedSongIds.value.has(s.id));
       } catch (err) {
@@ -488,6 +508,13 @@
       songShowAlbumFlags.value.set(song.id, true);
     } else {
       songShowAlbumFlags.value.set(song.id, false);
+    }
+
+    // 如果没有封面或使用的是缺省封面（空字符串），且专辑有封面，默认勾选
+    if (!song.defaultCover && hasAlbumCover.value) {
+      songDefaultCoverFlags.value.set(song.id, true);
+    } else {
+      songDefaultCoverFlags.value.set(song.id, false);
     }
 
     songSearchResults.value = songSearchResults.value.filter(s => s.id !== song.id);
@@ -574,38 +601,52 @@
         albumId = created.id;
       }
 
-      // 更新选中的歌曲的展示专辑
+      // 更新选中的歌曲的展示专辑和展示封面
       const albumTitle = normalizedTitle;
-      const flagsEntries = Array.from(songShowAlbumFlags.value.entries());
+      const showAlbumEntries = Array.from(songShowAlbumFlags.value.entries());
+      const defaultCoverEntries = Array.from(songDefaultCoverFlags.value.entries());
 
-      const updatePromises = flagsEntries.map(async ([songId, flag]) => {
+      const allSongIds = new Set([...showAlbumEntries.map(([id]) => id), ...defaultCoverEntries.map(([id]) => id)]);
+
+      const updatePromises = Array.from(allSongIds).map(async songId => {
         try {
           const currentSong = songCache.value.get(songId);
-          const isCurrentlySet = currentSong?.defaultAlbum === albumId;
+          const showAlbumFlag = songShowAlbumFlags.value.get(songId) ?? false;
+          const defaultCoverFlag = songDefaultCoverFlags.value.get(songId) ?? false;
 
-          // 如果勾选状态与当前数据一致，则跳过更新
-          if (flag === isCurrentlySet) {
-            // 注意：还要检查标题是否有变化（针对勾选状态下专辑改名的情况）
-            if (!flag || currentSong?.defaultAlbumName === albumTitle) {
-              return;
+          const isCurrentlyShowAlbum = currentSong?.defaultAlbum === albumId;
+          const isCurrentlyDefaultCover = currentSong?.defaultCover === `album_cover:${albumId}`;
+
+          const updates: Record<string, string> = {};
+
+          // 处理展示专辑
+          if (
+            showAlbumFlag !== isCurrentlyShowAlbum ||
+            (showAlbumFlag && currentSong?.defaultAlbumName !== albumTitle)
+          ) {
+            if (showAlbumFlag) {
+              updates.defaultAlbum = albumId;
+              updates.defaultAlbumName = albumTitle;
+            } else if (isCurrentlyShowAlbum) {
+              updates.defaultAlbum = '';
+              updates.defaultAlbumName = '';
             }
           }
 
-          if (flag) {
-            // 勾选了：设置为当前专辑
-            await pb.collection('songs').update(songId, {
-              defaultAlbum: albumId,
-              defaultAlbumName: albumTitle,
-            });
-          } else if (isCurrentlySet) {
-            // 未勾选，但原来是当前专辑：清除
-            await pb.collection('songs').update(songId, {
-              defaultAlbum: '',
-              defaultAlbumName: '',
-            });
+          // 处理展示封面
+          if (defaultCoverFlag !== isCurrentlyDefaultCover) {
+            if (defaultCoverFlag && hasAlbumCover.value) {
+              updates.defaultCover = `album_cover:${albumId}`;
+            } else if (isCurrentlyDefaultCover) {
+              updates.defaultCover = '';
+            }
+          }
+
+          if (Object.keys(updates).length > 0) {
+            await pb.collection('songs').update(songId, updates);
           }
         } catch (err) {
-          console.error(`Failed to update song ${songId} defaultAlbum:`, err);
+          console.error(`Failed to update song ${songId}:`, err);
         }
       });
 
@@ -880,7 +921,7 @@
                   <p v-if="getSongArtist(songId)" class="text-[#888] text-xs truncate">{{ getSongArtist(songId) }}</p>
                 </div>
 
-                <!-- 展示专辑按钮 -->
+                <!-- 作为展示专辑按钮 -->
                 <button
                   class="flex items-center gap-2 px-2 py-1 text-xs rounded transition-colors shrink-0"
                   :class="
@@ -906,7 +947,39 @@
                       <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
-                  <span>展示专辑</span>
+                  <span>作为展示专辑</span>
+                </button>
+
+                <!-- 作为默认封面按钮 -->
+                <button
+                  v-if="hasAlbumCover"
+                  class="flex items-center gap-2 px-2 py-1 text-xs rounded transition-colors shrink-0"
+                  :class="
+                    songDefaultCoverFlags.get(songId)
+                      ? 'bg-red-300 text-[rgb(77,0,0)]'
+                      : 'bg-white/5 text-[#888] hover:bg-white/10'
+                  "
+                  title="以此专辑封面作为默认封面"
+                  @click.stop="toggleSongDefaultCover(songId)"
+                >
+                  <div
+                    class="w-3.5 h-3.5 rounded-full border flex items-center justify-center transition-colors"
+                    :class="
+                      songDefaultCoverFlags.get(songId) ? 'border-[rgb(77,0,0)] bg-[rgb(77,0,0)]' : 'border-[#888]'
+                    "
+                  >
+                    <svg
+                      v-if="songDefaultCoverFlags.get(songId)"
+                      class="w-2.5 h-2.5 text-red-300"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      stroke-width="4"
+                    >
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <span>作为默认封面</span>
                 </button>
 
                 <button
