@@ -579,13 +579,23 @@
       const updatePromises = flagsEntries.map(async ([songId, flag]) => {
         try {
           const currentSong = songCache.value.get(songId);
+          const isCurrentlySet = currentSong?.defaultAlbum === albumId;
+          
+          // 如果勾选状态与当前数据一致，则跳过更新
+          if (flag === isCurrentlySet) {
+            // 注意：还要检查标题是否有变化（针对勾选状态下专辑改名的情况）
+            if (!flag || currentSong?.defaultAlbumName === albumTitle) {
+              return;
+            }
+          }
+
           if (flag) {
             // 勾选了：设置为当前专辑
             await pb.collection('songs').update(songId, {
               defaultAlbum: albumId,
               defaultAlbumName: albumTitle,
             });
-          } else if (currentSong?.defaultAlbum === albumId) {
+          } else if (isCurrentlySet) {
             // 未勾选，但原来是当前专辑：清除
             await pb.collection('songs').update(songId, {
               defaultAlbum: '',
