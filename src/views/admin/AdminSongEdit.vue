@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { ref, computed, onMounted, onUnmounted } from 'vue';
+  import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
   import {
     pb,
@@ -27,6 +27,7 @@
   const loading = ref(false);
   const saving = ref(false);
   const datePicker = ref<HTMLInputElement | null>(null);
+  const displayAlbumSearchInput = ref<HTMLInputElement | null>(null);
   const titleError = ref('');
   const artistError = ref('');
   const error = ref('');
@@ -93,6 +94,13 @@
     }),
     onChanged: () => markChanged(),
   });
+
+  const openDisplayAlbumSearch = () => {
+    displayAlbum.showAlbumSearch.value = true;
+    nextTick(() => {
+      displayAlbumSearchInput.value?.focus();
+    });
+  };
 
   // === 关联专辑 Composable ===
   const linkedAlbums = useLinkedAlbums({
@@ -1348,6 +1356,7 @@
           <div v-else class="space-y-3">
             <div v-if="displayAlbum.showAlbumSearch.value" class="space-y-2">
               <input
+                ref="displayAlbumSearchInput"
                 v-model="displayAlbum.albumSearchQuery.value"
                 type="text"
                 placeholder="搜索专辑名"
@@ -1396,7 +1405,7 @@
             <button
               v-else
               class="text-sm text-red-300/70 hover:text-red-300 transition-colors inline-flex items-center gap-1"
-              @click="displayAlbum.showAlbumSearch.value = true"
+              @click="openDisplayAlbumSearch"
             >
               <AppIcon name="plus" class-name="w-3 h-3" /> 选择展示专辑
             </button>
