@@ -93,6 +93,8 @@
   const draggedItem = ref<DragState | null>(null);
   // tempTracks: 拖拽过程中的临时状态，用于实时预览
   const tempTracks = ref<AlbumDisc[] | null>(null);
+  // activeDropTarget: 当前拖拽悬停的 Disc 索引
+  const activeDropTarget = ref<number | null>(null);
 
   const getSongName = (songId: string) => {
     return songCache.value.get(songId)?.title || songId;
@@ -292,11 +294,13 @@
   const handleDragEnd = () => {
     draggedItem.value = null;
     tempTracks.value = null;
+    activeDropTarget.value = null;
   };
 
   const handleGlobalDragOver = (event: DragEvent) => {
     event.preventDefault();
-    // 如果鼠标不在任何 Disc 容器上，恢复原始预览状态
+    // 如果鼠标不在任何 Disc 容器上，恢复原始预览状态并清除悬停状态
+    activeDropTarget.value = null;
     if (draggedItem.value && album.value.tracks) {
       tempTracks.value = album.value.tracks.map(d => ({
         ...d,
@@ -309,6 +313,9 @@
     event.preventDefault();
     event.stopPropagation(); // 阻止冒泡到 handleGlobalDragOver
     if (!draggedItem.value || !tempTracks.value) return;
+
+    // 设置当前悬停的 Disc
+    activeDropTarget.value = discIndex;
 
     // 获取当前 Disc 中的所有歌曲元素
     const targetDiscEl = event.currentTarget as HTMLElement;
@@ -726,9 +733,7 @@
             :key="disc.disc"
             class="border border-[#c9c9c9]/10 rounded-lg p-4 space-y-3"
             :class="{
-              'bg-red-300/5':
-                draggedItem !== null &&
-                draggedItem.songId !== (disc.songs.length > 0 ? disc.songs[disc.songs.length - 1] : ''),
+              'bg-red-300/5': activeDropTarget === discIndex,
             }"
             @dragover="handleDragOver(discIndex, $event)"
             @drop="handleDrop(discIndex, $event)"
