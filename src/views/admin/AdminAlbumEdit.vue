@@ -7,9 +7,18 @@
   import EditLockWarning from '@/components/EditLockWarning.vue';
   import VersionConflictDialog from '@/components/VersionConflictDialog.vue';
   import AdminInput from '@/components/AdminInput.vue';
-  import type { Album } from '@/types';
+  import type { Album, AlbumDisc } from '@/types';
   import { normalizeAlbumTracks } from '@/lib/albumTracks';
   import AppIcon from '@/components/AppIcon.vue';
+
+  interface DragState {
+    songId: string;
+  }
+
+  interface DropTarget {
+    discIndex: number;
+    songIndex: number;
+  }
 
   const route = useRoute();
   const router = useRouter();
@@ -74,9 +83,22 @@
 
   const songCache = ref<Map<string, any>>(new Map());
 
+  // 拖拽排序状态
+  const draggedItem = ref<DragState | null>(null);
+  // tempTracks: 拖拽过程中的临时状态，用于实时预览
+  const tempTracks = ref<AlbumDisc[] | null>(null);
+
   const getSongName = (songId: string) => {
     return songCache.value.get(songId)?.title || songId;
   };
+
+  // 计算预览状态的曲目列表
+  const previewTracks = computed<AlbumDisc[]>(() => {
+    if (tempTracks.value) {
+      return tempTracks.value;
+    }
+    return album.value.tracks || [];
+  });
 
   // 将数组转换为 / 分隔的字符串
   const formatArrayField = (value: string | string[] | undefined): string => {
@@ -202,6 +224,170 @@
   const removeSongFromDisc = (discIndex: number, songIndex: number) => {
     album.value.tracks?.[discIndex]?.songs.splice(songIndex, 1);
     hasChanges.value = true;
+  };
+
+  // === 拖拽排序功能 ===
+  const handleDragStart = (discIndex: number, songIndex: number, event: DragEvent) => {
+    // 使用 previewTracks 获取当前显示的歌曲ID（因为用户看到的是预览列表）
+    const disc = previewTracks.value[discIndex];
+    if (!disc) return;
+
+    const songId = disc.songs[songIndex];
+    if (!songId) return;
+
+    // 初始化临时状态
+    if (album.value.tracks) {
+      tempTracks.value = album.value.tracks.map(d => ({
+        ...d,
+        songs: [...d.songs],
+      }));
+    }
+
+    draggedItem.value = { songId };
+
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.dropEffect = 'move';
+      // 使用透明图片作为拖拽图像（隐藏默认拖拽效果）
+      const transparentImg = new Image();
+      transparentImg.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+      event.dataTransfer.setDragImage(transparentImg, 0, 0);
+    }
+  };
+
+  const handleDragEnd = () => {
+    draggedItem.value = null;
+    tempTracks.value = null;
+  };
+
+  const handleGlobalDragOver = (event: DragEvent) => {
+    event.preventDefault();
+    // 如果鼠标不在任何 Disc 容器上，恢复原始预览状态
+    if (draggedItem.value && album.value.tracks) {
+      tempTracks.value = album.value.tracks.map(d => ({
+        ...d,
+        songs: [...d.songs],
+      }));
+    }
+  };
+
+  const handleDragOver = (discIndex: number, event: DragEvent) => {
+    event.preventDefault();
+    event.stopPropagation(); // 阻止冒泡到 handleGlobalDragOver
+    if (!draggedItem.value || !tempTracks.value) return;
+
+    // 获取当前 Disc 中的所有歌曲元素
+    const targetDiscEl = event.currentTarget as HTMLElement;
+    const songElements = Array.from(targetDiscEl.querySelectorAll('[data-song-id]'));
+
+    // 计算鼠标相对于这些元素的位置，找到插入点
+    let insertIndex = songElements.length;
+
+    // 如果没有歌曲，直接插入到末尾（index=0）
+    if (songElements.length === 0) {
+      insertIndex = 0;
+    } else {
+      // 先找到被拖拽元素的当前 DOM 索引（如果在这个 Disc 里）
+      let currentDragIndex = -1;
+      for (let i = 0; i < songElements.length; i++) {
+        if (songElements[i]?.getAttribute('data-song-id') === draggedItem.value.songId) {
+          currentDragIndex = i;
+          break;
+        }
+      }
+
+      // 遍历所有歌曲元素，找到插入点
+      // 这里的逻辑是：如果是向下拖拽，我们希望只要碰到下一个元素的头部就交换
+      // 如果是向上拖拽，我们希望只要碰到上一个元素的底部就交换
+      for (let i = 0; i < songElements.length; i++) {
+        const el = songElements[i];
+        if (!el) continue;
+        const rect = el.getBoundingClientRect();
+
+        let threshold = rect.top + rect.height / 2; // 默认 50%
+
+        // 动态调整阈值
+        if (currentDragIndex !== -1) {
+          if (i < currentDragIndex) {
+            // 向上拖拽的目标元素：只要鼠标没超过底部太多，都算“前面”
+            // 即更容易判定为插入到该元素之前
+            // 设为 rect.bottom - 5px，意味着只要鼠标进入该元素底部 5px 区域，就视为“之前”
+            threshold = rect.bottom - 5;
+          } else if (i > currentDragIndex) {
+            // 向下拖拽的目标元素：只要鼠标超过顶部一点点，就算“后面”（即继续循环）
+            // 即“插入到该元素之前”的区域变小
+            // 设为 rect.top + 5px，意味着只要鼠标超过顶部 5px，就视为“之后”
+            threshold = rect.top + 5;
+          }
+        } else {
+          // 跨 Disc 拖拽：保持默认 50% 或者更激进一点？
+          // 如果是从别的 Disc 拖过来，通常希望它是“挤进来”的
+          // 这里保持默认逻辑比较稳妥
+        }
+
+        // 如果鼠标在阈值上方，则插入到该元素之前
+        if (event.clientY < threshold) {
+          insertIndex = i;
+          break;
+        }
+      }
+    }
+
+    // 查找被拖拽元素在 tempTracks 中的位置
+    let dragDiscIndex = -1;
+    let dragSongIndex = -1;
+    if (tempTracks.value) {
+      for (let i = 0; i < tempTracks.value.length; i++) {
+        const disc = tempTracks.value[i];
+        if (!disc) continue;
+        const idx = disc.songs.indexOf(draggedItem.value.songId);
+        if (idx !== -1) {
+          dragDiscIndex = i;
+          dragSongIndex = idx;
+          break;
+        }
+      }
+    }
+    if (dragDiscIndex === -1) return;
+
+    // 如果已经在正确的位置，不操作
+    // 情况1：同一个Disc，dragIndex == insertIndex (插在自己原来的位置)
+    // 情况2：同一个Disc，dragIndex == insertIndex - 1 (插在自己后面的位置，实际上位置没变)
+    if (dragDiscIndex === discIndex) {
+      if (dragSongIndex === insertIndex || dragSongIndex === insertIndex - 1) {
+        return;
+      }
+    }
+
+    // 执行移动操作
+    const dragDisc = tempTracks.value[dragDiscIndex];
+    if (!dragDisc) return;
+
+    // 1. 移除
+    dragDisc.songs.splice(dragSongIndex, 1);
+
+    // 2. 插入
+    // 如果是在同一个 Disc，且 dragIndex < insertIndex，移除后后面的元素索引减小了1
+    let finalInsertIndex = insertIndex;
+    if (dragDiscIndex === discIndex && dragSongIndex < insertIndex) {
+      finalInsertIndex--;
+    }
+
+    // 插入到目标 Disc
+    const targetDisc = tempTracks.value[discIndex];
+    if (!targetDisc) return;
+    // 确保索引有效
+    finalInsertIndex = Math.max(0, Math.min(finalInsertIndex, targetDisc.songs.length));
+    targetDisc.songs.splice(finalInsertIndex, 0, draggedItem.value.songId);
+  };
+
+  const handleDrop = (discIndex: number, event: DragEvent) => {
+    event.preventDefault();
+    if (tempTracks.value) {
+      album.value.tracks = JSON.parse(JSON.stringify(tempTracks.value));
+      hasChanges.value = true;
+    }
+    handleDragEnd();
   };
 
   let searchDebounce: ReturnType<typeof setTimeout> | null = null;
@@ -485,7 +671,10 @@
         </div>
 
         <!-- 曲目管理 -->
-        <div class="bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-xl p-6 space-y-4">
+        <div
+          class="bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-xl p-6 space-y-4"
+          @dragover="handleGlobalDragOver"
+        >
           <div class="flex items-center justify-between">
             <h2 class="text-lg font-medium text-[#c9c9c9] flex items-center gap-2">
               <AppIcon name="music" class-name="w-5 h-5 text-red-300" /> 曲目管理
@@ -499,27 +688,41 @@
           </div>
 
           <div
-            v-for="(disc, discIndex) in album.tracks"
+            v-for="(disc, discIndex) in previewTracks"
             :key="disc.disc"
             class="border border-[#c9c9c9]/10 rounded-lg p-4 space-y-3"
+            :class="{
+              'bg-red-300/5':
+                draggedItem !== null &&
+                draggedItem.songId !== (disc.songs.length > 0 ? disc.songs[disc.songs.length - 1] : ''),
+            }"
+            @dragover="handleDragOver(discIndex, $event)"
+            @drop="handleDrop(discIndex, $event)"
           >
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-3 flex-1">
-                <h3 v-if="(album.tracks?.length || 0) > 1" class="text-[#c9c9c9] font-medium shrink-0"
+                <h3 v-if="(previewTracks.length || 0) > 1" class="text-[#c9c9c9] font-medium shrink-0"
                   >Disc {{ disc.disc }}</h3
                 >
                 <h3 v-else class="text-[#c9c9c9] font-medium shrink-0">曲目</h3>
                 <input
-                  v-if="(album.tracks?.length || 0) > 1"
-                  v-model="disc.name"
+                  v-if="(previewTracks.length || 0) > 1"
+                  :value="album.tracks?.[discIndex]?.name || disc.name"
                   type="text"
                   placeholder="Disc 名称"
                   class="flex-1 min-w-0 px-3 py-1.5 bg-black/20 border border-[#c9c9c9]/20 rounded text-[#e0e0e0] text-sm focus:outline-none focus:border-red-300/50"
-                  @input="markChanged"
+                  @input="
+                    (e: Event) => {
+                      if (album.tracks?.[discIndex]) {
+                        album.tracks[discIndex].name = (e.target as HTMLInputElement).value;
+                        markChanged();
+                      }
+                    }
+                  "
                 />
               </div>
               <button
-                v-if="(album.tracks?.length || 0) > 1"
+                v-if="(previewTracks.length || 0) > 1"
                 class="text-red-400 hover:text-red-300 p-1 ml-2"
                 @click="removeDisc(discIndex)"
               >
@@ -531,8 +734,16 @@
               <div
                 v-for="(songId, songIndex) in disc.songs"
                 :key="songId"
-                class="flex items-center gap-3 p-2 bg-black/20 rounded group"
+                class="flex items-center gap-3 p-2 bg-black/20 rounded group cursor-move transition-all"
+                :class="{
+                  'opacity-40': draggedItem?.songId === songId,
+                }"
+                :data-song-id="songId"
+                draggable="true"
+                @dragstart="handleDragStart(discIndex, songIndex, $event)"
+                @dragend="handleDragEnd"
               >
+                <AppIcon name="drag" class-name="w-4 h-4 text-[#666] shrink-0" />
                 <span class="text-[#888] text-xs w-5 text-right">{{ songIndex + 1 }}</span>
                 <div class="flex-1 min-w-0">
                   <p class="text-[#c9c9c9] text-sm truncate">{{ getSongName(songId) }}</p>

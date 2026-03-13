@@ -58,7 +58,9 @@
       | 'chevron-right'
       | 'save'
       // 时间图标
-      | 'clock';
+      | 'clock'
+      // 拖拽图标
+      | 'drag';
     className?: string;
   }>();
 </script>
@@ -833,5 +835,15 @@
   >
     <circle cx="12" cy="12" r="10" />
     <polyline points="12 6 12 12 16 14" />
+  </svg>
+
+  <!-- 拖拽图标 - 六点网格 -->
+  <svg v-else-if="name === 'drag'" :class="className || 'w-5 h-5'" viewBox="0 0 24 24" fill="currentColor">
+    <circle cx="9" cy="6" r="1.5" />
+    <circle cx="15" cy="6" r="1.5" />
+    <circle cx="9" cy="12" r="1.5" />
+    <circle cx="15" cy="12" r="1.5" />
+    <circle cx="9" cy="18" r="1.5" />
+    <circle cx="15" cy="18" r="1.5" />
   </svg>
 </template>
