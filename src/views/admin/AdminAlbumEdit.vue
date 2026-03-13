@@ -466,7 +466,7 @@
       try {
         const results = await pb.collection('songs').getList(1, 15, {
           filter: `title ~ "${query}" || artist ~ "${query}"`,
-          fields: 'id,title,artist',
+          fields: 'id,title,artist,defaultAlbum,defaultAlbumName',
         });
         songSearchResults.value = results.items.filter(s => !allLinkedSongIds.value.has(s.id));
       } catch (err) {
