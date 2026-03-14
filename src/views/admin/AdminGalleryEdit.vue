@@ -1017,6 +1017,10 @@
               <div
                 class="aspect-square rounded-lg border-2 border-dashed border-[#c9c9c9]/30 hover:border-red-300/50 hover:bg-white/5 flex flex-col items-center justify-center cursor-pointer transition-all group"
                 @click="triggerFileInput"
+                @dragenter="handleDragEnter"
+                @dragover="handleDragOver"
+                @dragleave="handleDragLeave"
+                @drop="handleDrop"
               >
                 <AppIcon name="plus" class-name="w-8 h-8 text-[#888] group-hover:text-red-300 mb-2 transition-colors" />
                 <span class="text-sm text-[#888] group-hover:text-red-300 transition-colors">点击或拖动添加图片</span>
