@@ -66,7 +66,8 @@
       | 'kuwo'
       | 'bilibili'
       // 拖拽图标
-      | 'drag';
+      | 'drag'
+      | 'mic';
     className?: string;
   }>();
 </script>
@@ -890,5 +891,22 @@
     <circle cx="15" cy="12" r="1.5" />
     <circle cx="9" cy="18" r="1.5" />
     <circle cx="15" cy="18" r="1.5" />
+  </svg>
+
+  <!-- 麦克风图标 -->
+  <svg
+    v-else-if="name === 'mic'"
+    :class="className || 'w-5 h-5'"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+  >
+    <path
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="2"
+      d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+    />
   </svg>
 </template>

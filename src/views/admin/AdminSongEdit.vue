@@ -11,6 +11,7 @@
   import { useEditLock } from '@/composables/useEditLock';
   import { useDisplayAlbum } from '@/composables/useDisplayAlbum';
   import { useLinkedAlbums } from '@/composables/useLinkedAlbums';
+  import { useLinkedInstrumentals } from '@/composables/useLinkedInstrumentals';
   import { uploadStore } from '@/stores/uploadStore';
   import EditLockConflictDialog from '@/components/EditLockConflictDialog.vue';
   import EditLockWarning from '@/components/EditLockWarning.vue';
@@ -104,6 +105,11 @@
 
   // === 关联专辑 Composable ===
   const linkedAlbums = useLinkedAlbums({
+    onChanged: () => markChanged(),
+  });
+
+  // === 关联伴奏 Composable ===
+  const linkedInstrumentals = useLinkedInstrumentals({
     onChanged: () => markChanged(),
   });
 
@@ -341,6 +347,11 @@
 
         // 加载关联的全部专辑
         await linkedAlbums.loadAllLinkedAlbums(route.params.id as string);
+
+        // 加载关联的伴奏
+        await linkedInstrumentals.loadLinkedInstrumentals(route.params.id as string);
+        // 加载此歌曲作为伴奏关联的歌曲
+        await linkedInstrumentals.loadSongsAsInstrumentalFor(route.params.id as string);
       } catch (err) {
         console.error('Failed to fetch song:', err);
         alert('获取音乐详情失败');
@@ -683,6 +694,9 @@
 
       // 5.5. 关联/取消关联专辑
       await linkedAlbums.handleAlbumTrackUpdate(targetSongId);
+
+      // 5.6. 关联/取消关联伴奏
+      await linkedInstrumentals.handleInstrumentalUpdate(targetSongId);
 
       // 6. 上传封面
       if (currentBatchTask.value) {
@@ -1598,6 +1612,126 @@
             </div>
           </div>
           <p v-else class="text-sm text-[#888] text-center py-4">暂无关联专辑</p>
+        </div>
+
+        <!-- 伴奏关联 -->
+        <div class="bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-xl p-6 space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-medium text-[#c9c9c9] flex items-center gap-2">
+              <AppIcon name="music" class-name="w-5 h-5 text-red-300" /> 伴奏关联
+            </h2>
+            <button
+              v-if="!linkedInstrumentals.showSongSearch.value"
+              tabindex="-1"
+              class="text-sm text-red-300 hover:text-[#fca5a5] transition-colors inline-flex items-center gap-1"
+              @click="linkedInstrumentals.showSongSearch.value = true"
+            >
+              <AppIcon name="plus" class-name="w-4 h-4" />
+              添加关联
+            </button>
+          </div>
+
+          <p class="text-xs text-[#888]"> 若本曲是伴奏，可关联对应的人声版本。</p>
+
+          <!-- 关联的伴奏（只读） -->
+          <div v-if="linkedInstrumentals.instrumentals.value.length > 0">
+            <p class="text-xs text-[#888] mb-2">本曲的伴奏版本：</p>
+            <div class="flex flex-wrap gap-2">
+              <div
+                v-for="inst in linkedInstrumentals.instrumentals.value"
+                :key="inst.id"
+                class="inline-flex items-center gap-2 px-3 py-1.5 bg-black/20 rounded-lg group"
+              >
+                <span class="text-[#c9c9c9] text-sm">{{ inst.title }}</span>
+                <button
+                  tabindex="-1"
+                  title="在歌曲管理中编辑"
+                  class="text-[#888] hover:text-red-300"
+                  @click="linkedInstrumentals.navigateToSongEdit(inst.id)"
+                >
+                  <AppIcon name="external-link" class-name="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 作为伴奏关联的歌曲（可编辑） -->
+          <div>
+            <p class="text-xs text-[#888] mb-2">
+              本曲作为伴奏关联的歌曲：
+              <span v-if="linkedInstrumentals.songsAsInstrumentalFor.value.length === 0" class="text-[#666]">暂无</span>
+            </p>
+
+            <!-- 添加歌曲搜索 -->
+            <div v-if="linkedInstrumentals.showSongSearch.value" class="space-y-2 p-3 bg-black/10 rounded-lg mb-2">
+              <div class="flex items-center gap-2">
+                <input
+                  v-model="linkedInstrumentals.songSearchQuery.value"
+                  type="text"
+                  placeholder="搜索要关联的歌曲"
+                  class="flex-1 px-3 py-2 bg-black/20 border border-[#c9c9c9]/20 rounded text-[#e0e0e0] text-sm focus:outline-none focus:border-red-300/50"
+                  @input="linkedInstrumentals.searchSongs()"
+                />
+                <button
+                  tabindex="-1"
+                  class="text-[#888] hover:text-[#c9c9c9] transition-colors"
+                  @click="linkedInstrumentals.closeSongSearch()"
+                >
+                  <AppIcon name="close" class-name="w-5 h-5" />
+                </button>
+              </div>
+              <div
+                v-if="linkedInstrumentals.songSearchResults.value.length > 0"
+                class="max-h-40 overflow-y-auto space-y-1"
+              >
+                <button
+                  v-for="result in linkedInstrumentals.songSearchResults.value"
+                  :key="result.id"
+                  tabindex="-1"
+                  class="w-full text-left p-2 bg-black/20 hover:bg-red-300/10 rounded text-sm transition-colors flex items-center gap-2"
+                  @click="linkedInstrumentals.addSongAsInstrumentalFor(result)"
+                >
+                  <span class="text-[#c9c9c9]">{{ result.title }}</span>
+                  <span v-if="result.artist" class="text-[#888] text-xs">
+                    {{ linkedInstrumentals.formatArrayField(result.artist) }}
+                  </span>
+                </button>
+              </div>
+              <div
+                v-else-if="
+                  linkedInstrumentals.songSearchQuery.value.trim() && !linkedInstrumentals.isSearchingSongs.value
+                "
+                class="text-xs text-[#888] py-1 text-center"
+                >未找到匹配的歌曲</div
+              >
+            </div>
+
+            <div v-if="linkedInstrumentals.songsAsInstrumentalFor.value.length > 0" class="flex flex-wrap gap-2">
+              <div
+                v-for="s in linkedInstrumentals.songsAsInstrumentalFor.value"
+                :key="s.id"
+                class="inline-flex items-center gap-2 px-3 py-1.5 bg-black/20 rounded-lg group"
+              >
+                <span class="text-[#c9c9c9] text-sm">{{ s.title }}</span>
+                <button
+                  tabindex="-1"
+                  class="text-[#888] hover:text-red-300 transition-colors"
+                  title="取消关联"
+                  @click.stop="linkedInstrumentals.removeSongAsInstrumentalFor(s.id)"
+                >
+                  <AppIcon name="close" class-name="w-3.5 h-3.5" />
+                </button>
+                <button
+                  tabindex="-1"
+                  title="在歌曲管理中编辑"
+                  class="text-[#888] hover:text-red-300"
+                  @click="linkedInstrumentals.navigateToSongEdit(s.id)"
+                >
+                  <AppIcon name="external-link" class-name="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- 歌词 -->

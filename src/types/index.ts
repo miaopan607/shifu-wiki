@@ -58,17 +58,18 @@ export interface Song {
   releaseDate: string;
   lyricist?: string[];
   composer?: string[];
-  lyrics?: string; // 对应 JSON 中的 lyric
+  lyrics?: string;
   credits?: string;
   description?: string;
   links?: { name: string; url: string }[];
   otherLinks?: { name: string; url: string }[];
-  defaultAlbum?: string; // Relation ID → albums
-  defaultAlbumName?: string; // 专辑名称文本（站内无此专辑时使用）
-  defaultCover?: string; // 空=缺省封面, 'album'=专辑封面, 'song_cover:{id}'=某张自有封面
-  qqId?: string; // QQ音乐ID
-  neteaseId?: string; // 网易云音乐ID
-  enabledPlatform?: 'qq' | 'netease' | ''; // 启用的平台
+  defaultAlbum?: string;
+  defaultAlbumName?: string;
+  defaultCover?: string;
+  qqId?: string;
+  neteaseId?: string;
+  enabledPlatform?: 'qq' | 'netease' | '';
+  instrumentalFor?: string[];
 }
 
 export interface SongCover {

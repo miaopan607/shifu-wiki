@@ -24,6 +24,7 @@
 | `qqId`             | text     | QQ音乐ID                                                 |
 | `neteaseId`        | text     | 网易云音乐ID                                             |
 | `enabledPlatform`  | text     | 启用的平台: `qq`, `netease`, 或空字符串                  |
+| `instrumentalFor`  | json     | 此歌曲作为伴奏关联的歌曲ID数组                           |
 | `created`          | autodate | 创建时间                                                 |
 | `updated`          | autodate | 更新时间                                                 |
 
