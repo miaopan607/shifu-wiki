@@ -5,17 +5,17 @@ export const pb = new PocketBase(PB_URL);
 
 pb.autoCancellation(false);
 
-type SongLink = {
+type LinkItem = {
   name?: string;
   url?: string;
 };
 
-type SongLikeRecord = {
-  links?: SongLink[];
-  otherLinks?: SongLink[];
+type LinkLikeRecord = {
+  links?: LinkItem[];
+  otherLinks?: LinkItem[];
 };
 
-const mapSongLinks = (links: SongLink[] | undefined, mapName: (name: string) => string) => {
+const mapLinkNames = (links: LinkItem[] | undefined, mapName: (name: string) => string) => {
   if (!Array.isArray(links)) return links;
   return links.map(link => ({
     ...link,
@@ -23,23 +23,26 @@ const mapSongLinks = (links: SongLink[] | undefined, mapName: (name: string) => 
   }));
 };
 
-export const decodeSongLinkNames = <T>(record: T): T => {
-  const songRecord = record as T & SongLikeRecord;
+export const decodeLinkNames = <T>(record: T): T => {
+  const linkRecord = record as T & LinkLikeRecord;
   return {
     ...record,
-    links: mapSongLinks(songRecord.links, name => name.replace(/\\n/g, '\n')),
-    otherLinks: mapSongLinks(songRecord.otherLinks, name => name.replace(/\\n/g, '\n')),
+    links: mapLinkNames(linkRecord.links, name => name.replace(/\\n/g, '\n')),
+    otherLinks: mapLinkNames(linkRecord.otherLinks, name => name.replace(/\\n/g, '\n')),
   } as T;
 };
 
-export const encodeSongLinkNames = <T>(record: T): T => {
-  const songRecord = record as T & SongLikeRecord;
+export const encodeLinkNames = <T>(record: T): T => {
+  const linkRecord = record as T & LinkLikeRecord;
   return {
     ...record,
-    links: mapSongLinks(songRecord.links, name => name.replace(/\n/g, '\n')),
-    otherLinks: mapSongLinks(songRecord.otherLinks, name => name.replace(/\n/g, '\n')),
+    links: mapLinkNames(linkRecord.links, name => name.replace(/\n/g, '\n')),
+    otherLinks: mapLinkNames(linkRecord.otherLinks, name => name.replace(/\n/g, '\n')),
   } as T;
 };
+
+export const decodeSongLinkNames = decodeLinkNames;
+export const encodeSongLinkNames = encodeLinkNames;
 
 // 日期格式工具函数
 // 将各种日期格式统一转换为 YYYY/MM/DD 格式用于展示

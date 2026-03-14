@@ -50,6 +50,8 @@
 | `title`       | text     | 专辑名 (必填)                      |
 | `releaseDate` | date     | 发布日期                           |
 | `description` | text     | 描述                               |
+| `links`       | json     | 平台链接                           |
+| `otherLinks`  | json     | 其他相关链接                       |
 | `cover`       | file     | 专辑封面图片                       |
 | `tracks`      | json     | Disc 与歌曲关联 (AlbumDisc[] JSON) |
 | `created`     | autodate | 创建时间                           |

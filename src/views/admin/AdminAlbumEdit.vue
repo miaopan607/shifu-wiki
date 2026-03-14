@@ -1,7 +1,13 @@
 <script setup lang="ts">
   import { ref, computed, onMounted, onUnmounted } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
-  import { pb, parseDateFromBackend, normalizeDateForStorage } from '@/lib/pocketbase';
+  import {
+    pb,
+    parseDateFromBackend,
+    normalizeDateForStorage,
+    decodeLinkNames,
+    encodeLinkNames,
+  } from '@/lib/pocketbase';
   import { useEditLock } from '@/composables/useEditLock';
   import EditLockConflictDialog from '@/components/EditLockConflictDialog.vue';
   import EditLockWarning from '@/components/EditLockWarning.vue';
@@ -47,6 +53,8 @@
     title: '',
     releaseDate: '',
     description: '',
+    links: [],
+    otherLinks: [],
     tracks: [{ disc: 1, name: 'Disc 1', songs: [] }],
   });
 
@@ -145,6 +153,51 @@
     markChanged();
   };
 
+  // === 链接管理 ===
+  const presetPlatforms = ['网易云音乐', '酷狗音乐', 'QQ 音乐', '酷我音乐', '哔哩哔哩'];
+  const showPlatformDropdown = ref<number | null>(null);
+
+  const selectPlatform = (index: number, platform: string) => {
+    if (album.value.links && album.value.links[index]) {
+      album.value.links[index].name = platform;
+      showPlatformDropdown.value = null;
+      markChanged();
+    }
+  };
+
+  const togglePlatformDropdown = (index: number) => {
+    showPlatformDropdown.value = showPlatformDropdown.value === index ? null : index;
+  };
+
+  const closePlatformDropdown = (e: MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (!target.closest('.platform-select-container')) {
+      showPlatformDropdown.value = null;
+    }
+  };
+
+  const addLink = () => {
+    if (!album.value.links) album.value.links = [];
+    album.value.links.push({ name: '', url: '' });
+    markChanged();
+  };
+
+  const removeLink = (index: number) => {
+    album.value.links?.splice(index, 1);
+    markChanged();
+  };
+
+  const addOtherLink = () => {
+    if (!album.value.otherLinks) album.value.otherLinks = [];
+    album.value.otherLinks.push({ name: '', url: '' });
+    markChanged();
+  };
+
+  const removeOtherLink = (index: number) => {
+    album.value.otherLinks?.splice(index, 1);
+    markChanged();
+  };
+
   // === 版本冲突 ===
   const latestEditPath = computed(() => {
     if (!isEdit.value) return router.resolve({ name: 'admin-album-new' }).href;
@@ -184,16 +237,19 @@
       loading.value = true;
       try {
         const record = await pb.collection('albums').getOne(route.params.id as string);
-        originalUpdated.value = record.updated;
-        const parsedTracks = normalizeAlbumTracks((record as any).tracks);
+        const decodedRecord = decodeLinkNames(record as Album);
+        originalUpdated.value = decodedRecord.updated;
+        const parsedTracks = normalizeAlbumTracks(decodedRecord.tracks);
         // 为没有 name 的 disc 添加默认名称
         const tracksWithName = parsedTracks.map(d => ({
           ...d,
           name: d.name || `Disc ${d.disc}`,
         }));
         album.value = {
-          ...record,
-          releaseDate: record.releaseDate ? parseDateFromBackend(record.releaseDate) : '',
+          ...decodedRecord,
+          releaseDate: decodedRecord.releaseDate ? parseDateFromBackend(decodedRecord.releaseDate) : '',
+          links: Array.isArray(decodedRecord.links) ? decodedRecord.links : [],
+          otherLinks: Array.isArray(decodedRecord.otherLinks) ? decodedRecord.otherLinks : [],
           tracks: tracksWithName.length > 0 ? tracksWithName : [{ disc: 1, name: 'Disc 1', songs: [] }],
         } as unknown as Album;
 
@@ -579,14 +635,28 @@
       }
 
       const normalizedTracks = normalizeAlbumTracks(album.value.tracks);
+      const normalizedLinks = (album.value.links || [])
+        .map(link => ({
+          name: (link.name || '').trim(),
+          url: (link.url || '').trim(),
+        }))
+        .filter(link => link.name && link.url);
+      const normalizedOtherLinks = (album.value.otherLinks || [])
+        .map(link => ({
+          name: (link.name || '').trim(),
+          url: (link.url || '').trim(),
+        }))
+        .filter(link => link.name && link.url);
 
-      const payload: Record<string, unknown> = {
+      const payload = encodeLinkNames({
         title: normalizedTitle,
         index,
         releaseDate: normalizeDateForStorage(album.value.releaseDate) || '',
         description: album.value.description || '',
         tracks: normalizedTracks,
-      };
+        links: normalizedLinks,
+        otherLinks: normalizedOtherLinks,
+      }) as Record<string, unknown>;
 
       if (coverFile.value) {
         payload.cover = coverFile.value;
@@ -681,10 +751,12 @@
 
   onMounted(() => {
     window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('click', closePlatformDropdown);
   });
   onUnmounted(() => {
     isDisposed = true;
     window.removeEventListener('beforeunload', handleBeforeUnload);
+    document.removeEventListener('click', closePlatformDropdown);
     if (coverPreviewUrl.value) URL.revokeObjectURL(coverPreviewUrl.value);
     // 删除编辑锁（Composable 会自动处理，这里显式调用以确保顺序）
     void editLock.dispose();
@@ -828,6 +900,114 @@
             label-size="lg"
             @update:model-value="markChanged"
           />
+        </div>
+
+        <!-- 平台链接 -->
+        <div class="bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-xl p-6 space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-medium text-[#c9c9c9] flex items-center gap-2">
+              <AppIcon name="external-link" class-name="w-5 h-5 text-red-300" />
+              平台链接
+            </h2>
+            <button
+              tabindex="-1"
+              class="text-sm text-red-300 hover:text-[#fca5a5] transition-colors inline-flex items-center gap-1"
+              @click="addLink"
+            >
+              <AppIcon name="plus" class-name="w-4 h-4" />
+              添加
+            </button>
+          </div>
+          <div class="space-y-3">
+            <div v-for="(link, index) in album.links" :key="index" class="flex gap-3">
+              <div class="w-1/3 relative platform-select-container">
+                <div class="flex gap-1">
+                  <input
+                    v-model="link.name"
+                    type="text"
+                    placeholder="平台名称"
+                    class="flex-1 px-3 py-2 bg-black/20 border border-[#c9c9c9]/20 rounded text-[#e0e0e0] text-sm focus:outline-none focus:border-red-300/50"
+                    @input="markChanged"
+                  />
+                  <button
+                    type="button"
+                    tabindex="-1"
+                    class="px-2 py-2 bg-black/20 border border-[#c9c9c9]/20 rounded text-[#888] hover:text-red-300 hover:border-red-300/50 transition-colors"
+                    @click.stop="togglePlatformDropdown(index)"
+                  >
+                    <AppIcon
+                      name="chevron-down"
+                      class-name="w-4 h-4 transition-transform"
+                      :class="{ 'rotate-180': showPlatformDropdown === index }"
+                    />
+                  </button>
+                </div>
+                <div
+                  v-if="showPlatformDropdown === index"
+                  class="absolute top-full left-0 right-0 mt-1 bg-[rgb(50,0,0)] border border-[#c9c9c9]/20 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto"
+                >
+                  <div
+                    v-for="platform in presetPlatforms"
+                    :key="platform"
+                    class="px-3 py-2 text-sm text-[#c9c9c9] hover:bg-red-300/10 cursor-pointer transition-colors"
+                    @click="selectPlatform(index, platform)"
+                  >
+                    {{ platform }}
+                  </div>
+                </div>
+              </div>
+              <input
+                v-model="link.url"
+                type="text"
+                placeholder="链接地址"
+                class="flex-1 px-3 py-2 bg-black/20 border border-[#c9c9c9]/20 rounded text-[#e0e0e0] text-sm"
+                @input="markChanged"
+              />
+              <button tabindex="-1" class="text-red-400 hover:text-red-300 p-2" @click="removeLink(index)">
+                <AppIcon name="trash" class-name="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 其他相关链接 -->
+        <div class="bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-xl p-6 space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-medium text-[#c9c9c9] flex items-center gap-2">
+              <AppIcon name="link" class-name="w-5 h-5 text-red-300" />
+              其他相关链接
+            </h2>
+            <button
+              tabindex="-1"
+              class="text-sm text-red-300 hover:text-[#fca5a5] transition-colors inline-flex items-center gap-1"
+              @click="addOtherLink"
+            >
+              <AppIcon name="plus" class-name="w-4 h-4" />
+              添加
+            </button>
+          </div>
+          <div class="space-y-3">
+            <div v-for="(link, index) in album.otherLinks" :key="index" class="flex gap-3">
+              <textarea
+                v-model="link.name"
+                v-autosize
+                rows="1"
+                placeholder="链接描述"
+                class="w-1/3 px-3 py-2 bg-black/20 border border-[#c9c9c9]/20 rounded text-[#e0e0e0] resize-none"
+                @input="markChanged"
+              ></textarea>
+              <input
+                v-model="link.url"
+                type="text"
+                placeholder="链接地址"
+                class="flex-1 px-3 py-2 bg-black/20 border border-[#c9c9c9]/20 rounded text-[#e0e0e0] text-sm"
+                @input="markChanged"
+              />
+              <button tabindex="-1" class="text-red-400 hover:text-red-300 p-2" @click="removeOtherLink(index)">
+                <AppIcon name="trash" class-name="w-5 h-5" />
+              </button>
+            </div>
+          </div>
         </div>
 
         <!-- 曲目管理 -->

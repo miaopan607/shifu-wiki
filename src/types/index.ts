@@ -95,6 +95,8 @@ export interface Album {
   index: number;
   releaseDate: string;
   description?: string;
+  links?: { name: string; url: string }[];
+  otherLinks?: { name: string; url: string }[];
   cover?: string; // 单封面文件名
   tracks?: AlbumDisc[];
 }

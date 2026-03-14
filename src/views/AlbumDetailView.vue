@@ -1,14 +1,15 @@
 <script setup lang="ts">
   import { ref, onMounted, computed } from 'vue';
   import { useRoute, RouterLink } from 'vue-router';
-  import { pb, formatDateToDisplay } from '@/lib/pocketbase';
+  import { pb, formatDateToDisplay, decodeLinkNames } from '@/lib/pocketbase';
   import { normalizeAlbumTracks } from '@/lib/albumTracks';
   import { marked } from 'marked';
   import AppIcon from '@/components/AppIcon.vue';
+  import type { Album } from '@/types';
 
   const route = useRoute();
   const indexOrId = route.params.index as string;
-  const albumInfo = ref<any>(null);
+  const albumInfo = ref<Album | null>(null);
   const loading = ref(true);
 
   interface DiscGroup {
@@ -59,14 +60,15 @@
         return;
       }
 
-      albumInfo.value = albumRecord;
+      const decodedAlbumRecord = decodeLinkNames(albumRecord as Album);
+      albumInfo.value = decodedAlbumRecord;
 
       // 使用 album.cover 单封面
-      if (albumRecord.cover) {
-        albumCoverUrl.value = pb.files.getURL(albumRecord, albumRecord.cover);
+      if (decodedAlbumRecord.cover) {
+        albumCoverUrl.value = pb.files.getURL(decodedAlbumRecord as any, decodedAlbumRecord.cover);
       }
 
-      const tracks = normalizeAlbumTracks(albumRecord.tracks);
+      const tracks = normalizeAlbumTracks(decodedAlbumRecord.tracks);
       if (tracks.length > 0) {
         const allSongIds = tracks.flatMap(disc => disc.songs || []);
         if (allSongIds.length > 0) {
@@ -86,7 +88,7 @@
         }
       }
 
-      document.title = `${albumRecord.title} | 专辑详情 | 黄诗扶 Wiki`;
+      document.title = `${decodedAlbumRecord.title} | 专辑详情 | 黄诗扶 Wiki`;
     } catch (error) {
       console.error('Failed to fetch album data:', error);
     } finally {
