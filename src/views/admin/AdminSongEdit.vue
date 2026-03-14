@@ -472,6 +472,7 @@
   const presetPlatforms = ['网易云音乐', '酷狗音乐', 'QQ 音乐', '酷我音乐', '哔哩哔哩'];
 
   const showPlatformDropdown = ref<number | null>(null);
+  const showAlbumDiscDropdown = ref<string | null>(null);
 
   const selectPlatform = (index: number, platform: string) => {
     if (song.value.links && song.value.links[index]) {
@@ -485,10 +486,26 @@
     showPlatformDropdown.value = showPlatformDropdown.value === index ? null : index;
   };
 
+  const getAlbumDiscLabel = (album: { disc: number; discs: Array<{ disc: number; name: string }> }) => {
+    return album.discs.find(item => item.disc === album.disc)?.name || `Disc ${album.disc}`;
+  };
+
+  const selectAlbumDisc = (albumId: string, disc: number) => {
+    linkedAlbums.setAlbumDisc(albumId, disc);
+    showAlbumDiscDropdown.value = null;
+  };
+
+  const toggleAlbumDiscDropdown = (albumId: string) => {
+    showAlbumDiscDropdown.value = showAlbumDiscDropdown.value === albumId ? null : albumId;
+  };
+
   const closePlatformDropdown = (e: MouseEvent) => {
     const target = e.target as HTMLElement;
     if (!target.closest('.platform-select-container')) {
       showPlatformDropdown.value = null;
+    }
+    if (!target.closest('.album-disc-select-container')) {
+      showAlbumDiscDropdown.value = null;
     }
   };
 
@@ -1582,17 +1599,39 @@
                 <p class="text-[#c9c9c9] text-sm truncate">{{ album.title }}</p>
                 <p class="text-xs text-[#888]">#{{ album.index }}</p>
               </div>
-              <select
-                v-if="album.discs.length > 0"
-                :value="album.disc"
-                tabindex="-1"
-                class="px-2 py-1 bg-black/30 border border-[#c9c9c9]/20 rounded text-[#c9c9c9] text-sm focus:outline-none focus:border-red-300/50"
-                @change="linkedAlbums.setAlbumDisc(album.id, Number(($event.target as HTMLSelectElement).value))"
-              >
-                <option v-for="disc in album.discs" :key="disc.disc" :value="disc.disc">
-                  {{ disc.name }}
-                </option>
-              </select>
+              <div v-if="album.discs.length > 0" class="relative shrink-0 album-disc-select-container">
+                <button
+                  type="button"
+                  tabindex="-1"
+                  :title="getAlbumDiscLabel(album)"
+                  class="flex w-28 items-center justify-between gap-2 rounded-lg border border-[#c9c9c9]/20 bg-black/20 px-3 py-2 text-sm text-[#e0e0e0] transition-colors hover:border-red-300/30 hover:bg-black/30"
+                  @click.stop="toggleAlbumDiscDropdown(album.id)"
+                >
+                  <span class="truncate">{{ getAlbumDiscLabel(album) }}</span>
+                  <AppIcon
+                    name="chevron-down"
+                    class-name="w-4 h-4 shrink-0 text-[#888] transition-transform"
+                    :class="{ 'rotate-180': showAlbumDiscDropdown === album.id }"
+                  />
+                </button>
+                <div
+                  v-if="showAlbumDiscDropdown === album.id"
+                  class="absolute right-0 top-full z-10 mt-1 w-28 overflow-hidden rounded-lg border border-[#c9c9c9]/20 bg-[rgb(50,0,0)] shadow-lg"
+                >
+                  <button
+                    v-for="disc in album.discs"
+                    :key="disc.disc"
+                    type="button"
+                    tabindex="-1"
+                    :title="disc.name"
+                    class="block w-full px-3 py-2 text-left text-sm transition-colors hover:bg-red-300/10"
+                    :class="disc.disc === album.disc ? 'bg-red-300/10 text-red-200' : 'text-[#c9c9c9]'"
+                    @click.stop="selectAlbumDisc(album.id, disc.disc)"
+                  >
+                    <span class="block truncate">{{ disc.name }}</span>
+                  </button>
+                </div>
+              </div>
               <button
                 tabindex="-1"
                 class="text-[#888] hover:text-red-300 p-1.5 rounded hover:bg-white/5 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100"
