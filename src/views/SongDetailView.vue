@@ -318,8 +318,7 @@
   // 检查歌曲是否可播放
   const canPlay = computed(() => {
     if (!song.value) return false;
-    // 只要歌曲有ID就尝试播放，后端会验证是否有可用的平台
-    return !!song.value.id;
+    return !!song.value.enabledPlatform;
   });
 
   // 播放当前歌曲
