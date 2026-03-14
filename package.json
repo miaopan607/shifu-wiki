@@ -11,7 +11,8 @@
     "type-check": "vue-tsc --build",
     "format": "prettier --write .",
     "lint": "prettier --check .",
-    "deploy": "pnpm build && rsync -avz --delete ./dist/ wiki:/opt/docker/shifu-wiki/frontend/dist/"
+    "deploy": "pnpm build && rsync -avz --delete ./dist/ wiki:/opt/docker/shifu-wiki/frontend/dist/",
+    "deploy-server": "rsync -avz --delete --exclude data --exclude .env --exclude music-cache.json ./server/ wiki:/opt/docker/shifu-wiki/music-server/ && ssh wiki \"cd /opt/docker/shifu-wiki && docker compose up -d --build --no-deps shifu-wiki-music-server\""
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.18",
