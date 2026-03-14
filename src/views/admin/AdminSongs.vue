@@ -3,9 +3,11 @@
   import { useRouter } from 'vue-router';
   import { pb, formatDateToDisplay } from '@/lib/pocketbase';
   import AppIcon from '@/components/AppIcon.vue';
+  import { useSongCover } from '@/composables/useSongCover';
   import type { Song } from '@/types';
 
   const router = useRouter();
+  const { getSongDefaultCoverUrl } = useSongCover();
 
   const songs = ref<Song[]>([]);
   const loading = ref(true);
@@ -68,40 +70,12 @@
 
   const loadSongCovers = async () => {
     const coverPromises = songs.value.map(async song => {
-      const coverUrl = await getSongDefaultCoverUrl(song);
+      const coverUrl = await getSongDefaultCoverUrl(song, '100x100');
       if (coverUrl) {
         songCoverUrls.value.set(song.id, coverUrl);
       }
     });
     await Promise.all(coverPromises);
-  };
-
-  const getSongDefaultCoverUrl = async (song: Song): Promise<string> => {
-    if (song.defaultCover?.startsWith('song_cover:')) {
-      const coverId = song.defaultCover.replace('song_cover:', '');
-      try {
-        const cover = await pb.collection('song_covers').getOne(coverId, { fields: 'id,image,collectionId' });
-        if (cover.image) {
-          return pb.files.getURL(cover, cover.image, { thumb: '100x100' });
-        }
-      } catch {
-        // 封面可能已删除
-      }
-    }
-
-    if (song.defaultCover?.startsWith('album_cover:')) {
-      const albumId = song.defaultCover.replace('album_cover:', '');
-      try {
-        const album = await pb.collection('albums').getOne(albumId, { fields: 'id,cover,collectionId' });
-        if (album.cover) {
-          return pb.files.getURL(album, album.cover, { thumb: '100x100' });
-        }
-      } catch {
-        // 专辑可能已删除
-      }
-    }
-
-    return '';
   };
 
   const getSongCoverUrl = (songId: string): string => {

@@ -5,6 +5,9 @@
   import SubPageNav from '@/components/SubPageNav.vue';
   import SongsNav from '@/components/SongsNav.vue';
   import AppIcon from '@/components/AppIcon.vue';
+  import { useSongCover } from '@/composables/useSongCover';
+
+  const { getSongDefaultCoverUrl } = useSongCover();
 
   const allSongs = ref<any[]>([]);
   const loading = ref(true);
@@ -38,37 +41,6 @@
       }
     });
     await Promise.all(coverPromises);
-  };
-
-  // 获取歌曲默认封面URL
-  const getSongDefaultCoverUrl = async (song: any): Promise<string> => {
-    // 如果设置了特定的song_cover
-    if (song.defaultCover?.startsWith('song_cover:')) {
-      const coverId = song.defaultCover.replace('song_cover:', '');
-      try {
-        const cover = await pb.collection('song_covers').getOne(coverId, { fields: 'id,image,collectionId' });
-        if (cover.image) {
-          return pb.files.getURL(cover, cover.image, { thumb: '400x400' });
-        }
-      } catch {
-        // 封面可能已删除
-      }
-    }
-
-    // 如果设置了专辑封面
-    if (song.defaultCover?.startsWith('album_cover:')) {
-      const albumId = song.defaultCover.replace('album_cover:', '');
-      try {
-        const album = await pb.collection('albums').getOne(albumId, { fields: 'id,cover,collectionId' });
-        if (album.cover) {
-          return pb.files.getURL(album, album.cover, { thumb: '400x400' });
-        }
-      } catch {
-        // 专辑可能已删除
-      }
-    }
-
-    return '';
   };
 
   const filteredSongs = computed(() => {

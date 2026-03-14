@@ -7,6 +7,7 @@
   import AppIcon from '@/components/AppIcon.vue';
   import Lightbox from '@/components/Lightbox.vue';
   import { useMusicPlayer } from '@/composables/useMusicPlayer';
+  import { useSongCover } from '@/composables/useSongCover';
   import type { SongCover } from '@/types';
 
   const route = useRoute();
@@ -17,6 +18,8 @@
 
   // 音乐播放器
   const { playSong, isPlaying, isLoading, currentSong, error: playerError } = useMusicPlayer();
+  // 歌曲封面
+  const { getSongDefaultCoverUrl } = useSongCover();
 
   const titleRef = ref<HTMLElement | null>(null);
   const titleContainerRef = ref<HTMLElement | null>(null);
@@ -133,7 +136,7 @@
           const album = await pb.collection('albums').getOne(song.value.defaultAlbum);
           displayAlbumName.value = album.title;
           displayAlbumLink.value = `/albums/${album.index || album.id}`;
-          // 如果默认封面是专辑封面
+          // 兼容旧格式：defaultCover === 'album'
           if (song.value.defaultCover === 'album' && album.cover) {
             defaultCoverUrl.value = pb.files.getURL(album, album.cover, { thumb: '400x400' });
           }
@@ -142,6 +145,11 @@
         }
       } else if (song.value.defaultAlbumName) {
         displayAlbumName.value = song.value.defaultAlbumName;
+      }
+
+      // 使用 composable 获取默认封面（处理 song_cover:xxx 和 album_cover:xxx 格式）
+      if (!defaultCoverUrl.value && song.value.defaultCover) {
+        defaultCoverUrl.value = await getSongDefaultCoverUrl(song.value);
       }
 
       // 加载歌曲自有封面
@@ -157,12 +165,6 @@
         collectionId: c.collectionId,
         image: c.image,
       }));
-
-      // 如果默认封面指向特定 song_cover
-      if (song.value.defaultCover?.startsWith('song_cover:')) {
-        const coverId = song.value.defaultCover.replace('song_cover:', '');
-        defaultCoverUrl.value = songCoverItems.find((_, i) => songCovers[i]?.id === coverId)?.url || '';
-      }
 
       // 查找关联的专辑（通过 albums.tracks 反查）+ 专辑封面
       try {
@@ -349,12 +351,14 @@
           <header class="mb-6 flex gap-6 items-start">
             <!-- 封面 - 放在左侧 -->
             <div
-              v-if="defaultCoverUrl"
-              class="shrink-0 w-24 h-24 rounded-lg overflow-hidden shadow-lg cursor-pointer hover:shadow-xl transition-shadow"
-              :class="allCovers.length > 1 ? 'hover:ring-2 hover:ring-red-300/50' : ''"
-              @click="openLightbox"
+              class="shrink-0 w-24 h-24 rounded-lg overflow-hidden shadow-lg flex items-center justify-center bg-[#c9c9c9]/10"
+              :class="
+                defaultCoverUrl && allCovers.length > 1 ? 'hover:ring-2 hover:ring-red-300/50 cursor-pointer' : ''
+              "
+              @click="defaultCoverUrl && openLightbox"
             >
-              <img :src="defaultCoverUrl" :alt="song.title" class="w-full h-full object-cover" />
+              <img v-if="defaultCoverUrl" :src="defaultCoverUrl" :alt="song.title" class="w-full h-full object-cover" />
+              <AppIcon v-else name="image-placeholder" class-name="w-12 h-12 text-[#888]" />
             </div>
 
             <!-- 标题和元数据 -->
