@@ -27,6 +27,20 @@
     return marked.parse(content, { async: false }) as string;
   };
 
+  const getPlatformIcon = (url: string) => {
+    try {
+      const hostname = new URL(url).hostname.toLowerCase();
+      if (hostname.includes('163.com')) return 'netease';
+      if (hostname.includes('qq.com')) return 'qq-music';
+      if (hostname.includes('kugou.com')) return 'kugou';
+      if (hostname.includes('kuwo.cn')) return 'kuwo';
+      if (hostname.includes('bilibili.com')) return 'bilibili';
+    } catch {
+      // 如果不是有效的 URL，回退到默认展示
+    }
+    return null;
+  };
+
   interface MetaItem {
     label?: string;
     value: string;
@@ -188,11 +202,17 @@
                 rel="noopener noreferrer"
                 class="text-[#c9c9c9]/80 hover:text-red-300 transition-all duration-300 text-sm tracking-[0.2em] flex items-start group whitespace-pre-line"
               >
-                <span
-                  class="mr-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 transform translate-x-0 md:-translate-x-2 md:group-hover:translate-x-0"
-                  >→</span
-                >
-                {{ link.name }}
+                <div class="flex items-start gap-2">
+                  <div class="transition-all duration-300 transform group-hover:translate-x-1 shrink-0">
+                    <AppIcon v-if="getPlatformIcon(link.url)" :name="getPlatformIcon(link.url) as any" />
+                    <span
+                      v-else
+                      class="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 transform translate-x-0 md:-translate-x-2 md:group-hover:translate-x-0"
+                      >→</span
+                    >
+                  </div>
+                  <span class="flex-1">{{ link.name }}</span>
+                </div>
               </a>
             </div>
             <hr class="border-[#c9c9c9]/30 mt-5 mb-5" />
@@ -209,11 +229,17 @@
                 rel="noopener noreferrer"
                 class="text-[#c9c9c9]/80 hover:text-red-300 transition-all duration-300 text-sm tracking-[0.2em] flex items-start group whitespace-pre-line"
               >
-                <span
-                  class="mr-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 transform translate-x-0 md:-translate-x-2 md:group-hover:translate-x-0"
-                  >→</span
-                >
-                {{ link.name }}
+                <div class="flex items-start gap-2">
+                  <div class="transition-all duration-300 transform group-hover:translate-x-1 shrink-0 mt-[1px]">
+                    <AppIcon v-if="getPlatformIcon(link.url)" :name="getPlatformIcon(link.url) as any" />
+                    <span
+                      v-else
+                      class="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 transform translate-x-0 md:-translate-x-2 md:group-hover:translate-x-0"
+                      >→</span
+                    >
+                  </div>
+                  <span class="flex-1">{{ link.name }}</span>
+                </div>
               </a>
             </div>
             <hr class="border-[#c9c9c9]/30 mt-5" />
