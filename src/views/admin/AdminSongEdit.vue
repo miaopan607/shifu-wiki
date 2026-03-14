@@ -1311,6 +1311,7 @@
                 <div class="flex-1 min-w-0">
                   <p class="text-xs text-[#888] mb-0.5">专辑封面</p>
                   <p
+                    :title="album.title"
                     class="text-sm truncate"
                     :class="isDefaultAlbumCover(album.id) ? 'text-red-300' : 'text-[#c9c9c9]'"
                   >
@@ -1420,7 +1421,9 @@
                 </div>
               </template>
               <div class="flex-1 min-w-0">
-                <p class="text-[#c9c9c9] text-sm truncate">{{ displayAlbum.selectedAlbumTitle.value }}</p>
+                <p :title="displayAlbum.selectedAlbumTitle.value" class="text-[#c9c9c9] text-sm truncate">
+                  {{ displayAlbum.selectedAlbumTitle.value }}
+                </p>
                 <p
                   v-if="!linkedAlbums.allLinkedAlbums.value.some(a => a.id === song.defaultAlbum)"
                   class="text-xs text-yellow-400"
@@ -1483,7 +1486,7 @@
                   <div v-else class="w-8 h-8 rounded bg-black/30 shrink-0 flex items-center justify-center">
                     <AppIcon name="album" class-name="w-4 h-4 text-[#888]" />
                   </div>
-                  <span class="text-[#c9c9c9] truncate">{{ result.title }}</span>
+                  <span :title="result.title" class="text-[#c9c9c9] truncate">{{ result.title }}</span>
                 </button>
               </div>
               <div
@@ -1596,7 +1599,7 @@
                 <AppIcon name="album" class-name="w-5 h-5 text-[#888]" />
               </div>
               <div class="flex-1 min-w-0">
-                <p class="text-[#c9c9c9] text-sm truncate">{{ album.title }}</p>
+                <p :title="album.title" class="text-[#c9c9c9] text-sm truncate">{{ album.title }}</p>
                 <p class="text-xs text-[#888]">#{{ album.index }}</p>
               </div>
               <div v-if="album.discs.length > 0" class="relative shrink-0 album-disc-select-container">
