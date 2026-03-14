@@ -19,6 +19,7 @@ dist-ssr/
 .env.local
 .env.*.local
 *.local
+server/.env
 
 # TypeScript
 *.tsbuildinfo
@@ -26,6 +27,10 @@ dist-ssr/
 # Cache
 .eslintcache
 .vite/
+
+# Music server cache
+server/music-cache.json
+server/data/
 
 # Testing
 coverage/

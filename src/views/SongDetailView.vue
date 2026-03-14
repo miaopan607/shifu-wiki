@@ -6,6 +6,7 @@
   import { marked } from 'marked';
   import AppIcon from '@/components/AppIcon.vue';
   import Lightbox from '@/components/Lightbox.vue';
+  import { useMusicPlayer } from '@/composables/useMusicPlayer';
   import type { SongCover } from '@/types';
 
   const route = useRoute();
@@ -13,6 +14,9 @@
   const song = ref<any>(null);
   const loading = ref(true);
   const showCredits = ref(false);
+
+  // 音乐播放器
+  const { playSong, isPlaying, isLoading, currentSong, error: playerError } = useMusicPlayer();
 
   const titleRef = ref<HTMLElement | null>(null);
   const titleContainerRef = ref<HTMLElement | null>(null);
@@ -310,6 +314,24 @@
       artistTruncated.value = true;
     }
   };
+
+  // 检查歌曲是否可播放
+  const canPlay = computed(() => {
+    if (!song.value) return false;
+    // 只要歌曲有ID就尝试播放，后端会验证是否有可用的平台
+    return !!song.value.id;
+  });
+
+  // 播放当前歌曲
+  const handlePlay = () => {
+    if (!song.value || !canPlay.value) return;
+    playSong(song.value);
+  };
+
+  // 检查是否正在播放当前歌曲
+  const isCurrentSong = computed(() => {
+    return currentSong.value?.id === song.value?.id;
+  });
 </script>
 
 <template>
@@ -532,6 +554,39 @@
         {{ artistText }}
       </div>
     </Transition>
+  </Teleport>
+
+  <!-- 播放器错误提示 -->
+  <Teleport to="body">
+    <Transition name="fade">
+      <div
+        v-if="playerError && isCurrentSong"
+        class="fixed top-4 right-4 z-[60] bg-red-900/90 backdrop-blur-sm px-4 py-3 rounded-lg shadow-xl border border-red-300/20 text-red-300 text-sm flex items-center gap-2"
+      >
+        <AppIcon name="warning" class-name="w-5 h-5" />
+        {{ playerError }}
+      </div>
+    </Transition>
+  </Teleport>
+
+  <!-- 固定播放按钮 -->
+  <Teleport to="body">
+    <button
+      v-if="canPlay"
+      @click="handlePlay"
+      class="fixed right-8 bottom-[calc(2rem+4rem)] w-14 h-14 bg-[#c9c9c9]/10 backdrop-blur-md border border-[#c9c9c9]/20 rounded-full flex items-center justify-center text-[#c9c9c9] hover:bg-[#c9c9c9]/20 hover:border-red-300/50 transition-all duration-300 shadow-[0_4px_20px_rgba(0,0,0,0.5)] z-40 group song-play-button"
+      :title="isCurrentSong && isPlaying ? '暂停' : '播放'"
+    >
+      <div
+        v-if="isLoading && isCurrentSong"
+        class="w-6 h-6 border-2 border-[#c9c9c9] border-t-transparent rounded-full animate-spin"
+      ></div>
+      <AppIcon
+        v-else
+        :name="isCurrentSong && isPlaying ? 'pause' : 'play'"
+        class-name="w-6 h-6"
+      />
+    </button>
   </Teleport>
 
   <!-- 封面灯箱 -->

@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import { RouterView, useRoute } from 'vue-router';
   import GlobalSearch from '@/components/GlobalSearch.vue';
+  import MusicPlayer from '@/components/MusicPlayer.vue';
 
   const route = useRoute();
 </script>
@@ -11,6 +12,7 @@
       <component :is="Component" :key="route.fullPath" />
     </router-view>
     <GlobalSearch v-if="!route.path.startsWith('/admin')" />
+    <MusicPlayer />
   </div>
 </template>
 

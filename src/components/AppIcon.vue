@@ -753,30 +753,29 @@
   <!-- 暂停 -->
   <svg
     v-else-if="name === 'pause'"
-    :class="className || 'w-5 h-5'"
+    :class="className || 'w-6 h-6'"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
     stroke-width="2"
+    stroke-linecap="round"
   >
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6" />
+    <line x1="8" y1="5" x2="8" y2="19" />
+    <line x1="16" y1="5" x2="16" y2="19" />
   </svg>
 
   <!-- 播放 -->
   <svg
     v-else-if="name === 'play'"
-    :class="className || 'w-5 h-5'"
+    :class="className || 'w-6 h-6'"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
     stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
   >
-    <path
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      stroke-width="2"
-      d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
-    />
+    <polygon points="6,4 20,12 6,20" />
   </svg>
 
   <!-- 链接 -->

@@ -18,6 +18,7 @@
 │   │   └── admin/         # 管理后台页面
 │   ├── App.vue            # 根组件
 │   └── main.ts            # 入口文件
+├── server/                # 音乐播放后端服务
 ├── pocketbase/            # PocketBase hooks
 ├── public/                # 公共静态资源
 ├── index.html             # 入口 HTML
@@ -59,6 +60,22 @@
 2. 在 `src/lib/pocketbase.ts` 中配置数据库连接地址，或通过 `.env` 文件配置。
 3. 如果修改了 `pocketbase/pb_hooks` 或 `pocketbase/pb_migrations`，需要同步到 PocketBase 服务目录并重启服务。
 
+### 音乐播放服务
+
+项目支持在线音乐播放功能（QQ音乐、网易云音乐）。
+
+1. 进入 `server/` 目录安装依赖并启动服务：
+
+```bash
+cd server
+pnpm install
+pnpm dev  # 开发模式（支持热重载）
+# 或
+pnpm start  # 生产模式
+```
+
+2. 在 `.env` 文件中配置音乐服务器地址（默认为 `http://localhost:3001`）
+
 ### 快速开始
 
 ```bash
@@ -92,6 +109,7 @@ pnpm type-check
 ## 备注
 
 - 后台有一套基于 `upload_batches` 的上传队列，用于处理图库图片和专辑封面的取消、回滚与兜底清理。
+- 音乐播放功能需要启动 `server/` 目录下的音乐服务器，详见 `server/README.md`。
 - PocketBase 侧的部署说明见 `pocketbase/README.md`。
 - 数据库结构定义见 `PocketBaseSchema.md`。
 

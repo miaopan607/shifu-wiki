@@ -19,7 +19,8 @@ pnpm format
 src/
 ├── components/       # 公用组件
 ├── composables/      # Vue Composables (可复用逻辑)
-│   └── useEditLock.ts
+│   ├── useEditLock.ts
+│   └── useMusicPlayer.ts
 ├── lib/              # 工具库
 │   ├── pocketbase.ts
 │   ├── editLock.ts
@@ -33,6 +34,11 @@ src/
 └── views/
     ├── [public]/     # 公开页面
     └── admin/        # 管理后台 (Admin*.vue)
+
+server/              # 音乐播放后端服务
+├── index.js         # Express 服务器
+├── package.json
+└── README.md
 
 pocketbase/
 ├── pb_hooks/         # 服务端钩子
@@ -65,7 +71,24 @@ const editLock = useEditLock({
 await editLock.createEditLock();
 ```
 
-### 3. 数据模型
+### 3. 音乐播放系统
+
+为歌曲提供在线播放功能。
+
+- 支持QQ音乐和网易云音乐
+- 通过后端服务获取播放直链
+- 前端: `useMusicPlayer.ts` (播放状态管理), `MusicPlayer.vue` (播放器组件)
+- 后端: `server/` 目录下的 Express 服务
+- 配置: 需要在 `.env` 中设置 `VITE_MUSIC_SERVER_URL`
+
+```typescript
+import { useMusicPlayer } from '@/composables/useMusicPlayer';
+
+const { playSong, isPlaying, isLoading } = useMusicPlayer();
+await playSong(song);
+```
+
+### 4. 数据模型
 
 - `songs`, `albums`, `galleries`, `gallery_images`
 - `activities`, `misc`
@@ -79,6 +102,7 @@ await editLock.createEditLock();
 - **PocketBase 结构修改**: 必须在 `PocketBaseSchema.md` 中更新。
 - **样式**: 保持和主站设计一致。
 - **代码规范**: 修改代码后必须先进行类型检查和格式化。
+- **音乐播放**: 需要启动 `server/` 目录下的音乐服务器 (见 server/README.md)
 
 ## 图标使用规范
 

@@ -1,0 +1,17 @@
+{
+  "name": "shifu-wiki-music-server",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "音乐播放后端服务 - 获取QQ音乐和网易云直链",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "pocketbase": "^0.26.8"
+  }
+}

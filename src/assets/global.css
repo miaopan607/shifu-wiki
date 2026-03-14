@@ -97,6 +97,26 @@
   width: 100%;
 }
 
+/* 播放器显示时，为页面底部留出空间 - 使用 margin 而不是 padding */
+body.has-music-player main::after {
+  content: '';
+  display: block;
+  height: 90px;
+  width: 100%;
+}
+
+/* 播放器显示时，全局搜索按钮上移 */
+body.has-music-player button[aria-label='全局搜索'] {
+  bottom: calc(2rem + 90px) !important;
+  transition: bottom 0.3s ease;
+}
+
+/* 播放器显示时，歌曲播放按钮上移 */
+body.has-music-player .song-play-button {
+  bottom: calc(2rem + 4rem + 90px) !important;
+  transition: bottom 0.3s ease;
+}
+
 /* Custom scrollbar matching the theme */
 html,
 .overflow-y-auto,
