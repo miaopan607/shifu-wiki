@@ -581,11 +581,7 @@
         v-if="isLoading && isCurrentSong"
         class="w-6 h-6 border-2 border-[#c9c9c9] border-t-transparent rounded-full animate-spin"
       ></div>
-      <AppIcon
-        v-else
-        :name="isCurrentSong && isPlaying ? 'pause' : 'play'"
-        class-name="w-6 h-6"
-      />
+      <AppIcon v-else :name="isCurrentSong && isPlaying ? 'pause' : 'play'" class-name="w-6 h-6" />
     </button>
   </Teleport>
 

@@ -100,7 +100,11 @@
       >
         <!-- 进度条 -->
         <div ref="progressRef" class="h-1 bg-[#c9c9c9]/20 cursor-pointer group select-none" @mousedown="startDrag">
-          <div class="h-full bg-red-400 relative" :class="{ 'transition-all': !isDragging }" :style="{ width: `${displayProgress}%` }">
+          <div
+            class="h-full bg-red-400 relative"
+            :class="{ 'transition-all': !isDragging }"
+            :style="{ width: `${displayProgress}%` }"
+          >
             <div
               class="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-red-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
             ></div>

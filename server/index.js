@@ -20,9 +20,7 @@ app.use(express.json());
 // PocketBase 客户端
 const pb = new PocketBase(process.env.POCKETBASE_URL || 'http://localhost:8090');
 
-const CACHE_DIR = process.env.CACHE_DIR
-  ? path.resolve(process.env.CACHE_DIR)
-  : path.join(__dirname, 'data');
+const CACHE_DIR = process.env.CACHE_DIR ? path.resolve(process.env.CACHE_DIR) : path.join(__dirname, 'data');
 const CACHE_FILE = process.env.CACHE_FILE
   ? path.resolve(process.env.CACHE_FILE)
   : path.join(CACHE_DIR, 'music-cache.json');
