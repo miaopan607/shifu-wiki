@@ -44,6 +44,22 @@ pnpm start
 pnpm dev
 ```
 
+## 更新代码后如何应用
+
+将更新后的音乐后端代码同步到服务器的 `music-server/` 目录后，在部署目录执行：
+
+```bash
+docker compose up -d --build shifu-wiki-music-server
+```
+
+如需查看是否启动成功：
+
+```bash
+docker compose logs -f shifu-wiki-music-server
+```
+
+说明：缓存目录已挂载到宿主机，重新部署不会清空已有缓存数据。
+
 ## API接口
 
 ### 获取音乐播放链接
