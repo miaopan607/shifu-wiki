@@ -518,6 +518,7 @@
     }
 
     songSearchResults.value = songSearchResults.value.filter(s => s.id !== song.id);
+    songSearchQuery.value = '';
     hasChanges.value = true;
   };
 
