@@ -4,6 +4,7 @@
   import { pb, parseDateFromBackend, normalizeDateForStorage } from '@/lib/pocketbase';
   import { useEditLock } from '@/composables/useEditLock';
   import { uploadStore } from '@/stores/uploadStore';
+  import { batchDeleteGalleryImages, batchUpdateGalleryImageSort } from '@/lib/batchOperations';
   import EditLockConflictDialog from '@/components/EditLockConflictDialog.vue';
   import EditLockWarning from '@/components/EditLockWarning.vue';
   import VersionConflictDialog from '@/components/VersionConflictDialog.vue';
@@ -615,14 +616,12 @@
 
       // 3. 删除标记为删除的图片
       const imageIdsToDelete = [...imagesToDelete.value];
-      const deleteResults = await Promise.allSettled(
-        imageIdsToDelete.map(imageId => pb.collection('gallery_images').delete(imageId))
-      );
-      deleteResults.forEach((result, index) => {
-        if (result.status === 'rejected') {
-          console.warn('Failed to delete image:', imageIdsToDelete[index], result.reason);
+      if (imageIdsToDelete.length > 0) {
+        const result = await batchDeleteGalleryImages(imageIdsToDelete);
+        if (result.failed.length > 0) {
+          console.warn('Failed to delete images:', result.failed);
         }
-      });
+      }
       imagesToDelete.value = [];
 
       // 4. 保存图集基本信息
@@ -677,23 +676,21 @@
       // 7. 更新现有图片的排序
       if (!isNew.value) {
         const sortTargets = imagesForSave
-          .map((img, index) => ({ img, sort: index + 1 }))
+          .map((img, index) => ({ id: img.id, sort: index + 1 }))
           .filter(
-            ({ img }) =>
-              img &&
-              !img.isNew &&
-              !img.id.startsWith('pending-') &&
-              (!serverImageIdsForSave || serverImageIdsForSave.has(img.id))
+            (item, index) =>
+              imagesForSave[index] &&
+              !imagesForSave[index].isNew &&
+              !imagesForSave[index].id.startsWith('pending-') &&
+              (!serverImageIdsForSave || serverImageIdsForSave.has(item.id))
           );
 
-        const sortResults = await Promise.allSettled(
-          sortTargets.map(({ img, sort }) => pb.collection('gallery_images').update(img.id, { sort }))
-        );
-        sortResults.forEach((result, index) => {
-          if (result.status === 'rejected') {
-            console.warn('Failed to update sort order:', sortTargets[index]?.img.id, result.reason);
+        if (sortTargets.length > 0) {
+          const result = await batchUpdateGalleryImageSort(sortTargets);
+          if (result.failed.length > 0) {
+            console.warn('Failed to update sort order:', result.failed);
           }
-        });
+        }
       }
 
       if (currentBatchTask.value) {
