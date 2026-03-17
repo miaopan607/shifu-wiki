@@ -2,6 +2,7 @@
   import { ref, onMounted, computed } from 'vue';
   import { useRouter } from 'vue-router';
   import { pb } from '@/lib/pocketbase';
+  import { batchDeleteGalleryImages } from '@/lib/batchOperations';
   import AppIcon from '@/components/AppIcon.vue';
   import type { AdminGallery } from '@/types/admin';
 
@@ -111,19 +112,12 @@
         filter: `gallery = "${gallery.id}"`,
       });
 
-      const deleteResults = await Promise.allSettled(images.map(img => pb.collection('gallery_images').delete(img.id)));
-      const failedDeletes = deleteResults
-        .map((result, index) => ({ result, imageId: images[index]?.id }))
-        .filter(item => item.result.status === 'rejected');
-
-      deleteResults.forEach((result, index) => {
-        if (result.status === 'rejected') {
-          console.warn('Failed to delete gallery image:', images[index]?.id, result.reason);
+      if (images.length > 0) {
+        const imageIds = images.map(img => img.id);
+        const result = await batchDeleteGalleryImages(imageIds);
+        if (result.failed.length > 0) {
+          throw new Error('部分图片删除失败');
         }
-      });
-
-      if (failedDeletes.length > 0) {
-        throw new Error('部分图片删除失败');
       }
 
       await pb.collection('galleries').delete(gallery.id);

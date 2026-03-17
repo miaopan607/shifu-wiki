@@ -13,6 +13,7 @@
   import { useLinkedAlbums } from '@/composables/useLinkedAlbums';
   import { useLinkedInstrumentals } from '@/composables/useLinkedInstrumentals';
   import { uploadStore } from '@/stores/uploadStore';
+  import { batchDeleteSongCovers } from '@/lib/batchOperations';
   import EditLockConflictDialog from '@/components/EditLockConflictDialog.vue';
   import EditLockWarning from '@/components/EditLockWarning.vue';
   import VersionConflictDialog from '@/components/VersionConflictDialog.vue';
@@ -661,18 +662,16 @@
       }
 
       // 3. 删除标记删除的封面
-      await Promise.allSettled(coversToDelete.value.map(id => pb.collection('song_covers').delete(id)));
+      if (coversToDelete.value.length > 0) {
+        const result = await batchDeleteSongCovers(coversToDelete.value);
+        if (result.failed.length > 0) {
+          console.warn('Failed to delete song covers:', result.failed);
+        }
+      }
       coversToDelete.value = [];
 
-      // 4. 更新已有封面
+      // 4. 计算已有封面数量（用于新封面排序）
       const existingCovers = covers.value.filter(c => !c.id.startsWith('pending-') && !c.isNew);
-      await Promise.allSettled(
-        existingCovers.map((cover, index) =>
-          pb.collection('song_covers').update(cover.id, {
-            sort: index + 1,
-          })
-        )
-      );
 
       // 5. 保存歌曲
       let index = song.value.index;

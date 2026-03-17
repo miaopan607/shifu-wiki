@@ -15,6 +15,7 @@
   import AdminInput from '@/components/AdminInput.vue';
   import type { Album, AlbumDisc } from '@/types';
   import { normalizeAlbumTracks } from '@/lib/albumTracks';
+  import { batchUpdateSongsDisplay, type SongDisplayUpdateItem } from '@/lib/batchOperations';
   import AppIcon from '@/components/AppIcon.vue';
 
   interface DragState {
@@ -679,50 +680,48 @@
 
       const allSongIds = new Set([...showAlbumEntries.map(([id]) => id), ...defaultCoverEntries.map(([id]) => id)]);
 
-      const updatePromises = Array.from(allSongIds).map(async songId => {
-        try {
-          const currentSong = songCache.value.get(songId);
-          const showAlbumFlag = songShowAlbumFlags.value.get(songId) ?? false;
-          const defaultCoverFlag = songDefaultCoverFlags.value.get(songId) ?? false;
+      const updateItems: SongDisplayUpdateItem[] = [];
 
-          const isCurrentlyShowAlbum = currentSong?.defaultAlbum === albumId;
-          const isCurrentlyDefaultCover = currentSong?.defaultCover === `album_cover:${albumId}`;
+      for (const songId of allSongIds) {
+        const currentSong = songCache.value.get(songId);
+        const showAlbumFlag = songShowAlbumFlags.value.get(songId) ?? false;
+        const defaultCoverFlag = songDefaultCoverFlags.value.get(songId) ?? false;
 
-          const updates: Record<string, string> = {};
+        const isCurrentlyShowAlbum = currentSong?.defaultAlbum === albumId;
+        const isCurrentlyDefaultCover = currentSong?.defaultCover === `album_cover:${albumId}`;
 
-          // 处理展示专辑
-          if (
-            showAlbumFlag !== isCurrentlyShowAlbum ||
-            (showAlbumFlag && currentSong?.defaultAlbumName !== albumTitle)
-          ) {
-            if (showAlbumFlag) {
-              updates.defaultAlbum = albumId;
-              updates.defaultAlbumName = albumTitle;
-            } else if (isCurrentlyShowAlbum) {
-              updates.defaultAlbum = '';
-              updates.defaultAlbumName = '';
-            }
+        const updates: SongDisplayUpdateItem = { id: songId };
+
+        // 处理展示专辑
+        if (showAlbumFlag !== isCurrentlyShowAlbum || (showAlbumFlag && currentSong?.defaultAlbumName !== albumTitle)) {
+          if (showAlbumFlag) {
+            updates.defaultAlbum = albumId;
+            updates.defaultAlbumName = albumTitle;
+          } else if (isCurrentlyShowAlbum) {
+            updates.defaultAlbum = '';
+            updates.defaultAlbumName = '';
           }
-
-          // 处理展示封面
-          if (defaultCoverFlag !== isCurrentlyDefaultCover) {
-            if (defaultCoverFlag && hasAlbumCover.value) {
-              updates.defaultCover = `album_cover:${albumId}`;
-            } else if (isCurrentlyDefaultCover) {
-              updates.defaultCover = '';
-            }
-          }
-
-          if (Object.keys(updates).length > 0) {
-            await pb.collection('songs').update(songId, updates);
-          }
-        } catch (err) {
-          console.error(`Failed to update song ${songId}:`, err);
         }
-      });
 
-      if (updatePromises.length > 0) {
-        await Promise.all(updatePromises);
+        // 处理展示封面
+        if (defaultCoverFlag !== isCurrentlyDefaultCover) {
+          if (defaultCoverFlag && hasAlbumCover.value) {
+            updates.defaultCover = `album_cover:${albumId}`;
+          } else if (isCurrentlyDefaultCover) {
+            updates.defaultCover = '';
+          }
+        }
+
+        if (Object.keys(updates).length > 1) {
+          updateItems.push(updates);
+        }
+      }
+
+      if (updateItems.length > 0) {
+        const result = await batchUpdateSongsDisplay(updateItems);
+        if (result.failed.length > 0) {
+          console.warn('Failed to update songs display:', result.failed);
+        }
       }
 
       await editLock.removeEditLock();

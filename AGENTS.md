@@ -104,6 +104,10 @@ await playSong(song);
 - **代码规范**: 修改代码后必须先进行类型检查和格式化。
 - **音乐播放**: 需要启动 `server/` 目录下的音乐服务器 (见 server/README.md)
 
+### 批量操作规范
+
+禁止前端循环发送多个请求（如 `Promise.allSettled` 循环 DELETE/UPDATE）。应使用批量 API：前端发送 1 个请求，后端批量处理。参考 `src/lib/batchOperations.ts`。
+
 ## 图标使用规范
 
 SVG 图标统一使用 `AppIcon` 组件，位于 `src/components/AppIcon.vue`。

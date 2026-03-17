@@ -6,6 +6,7 @@
     updateSkipSingleLockDeleteConfirmPreference,
   } from '@/lib/adminPreferences';
   import { pb } from '@/lib/pocketbase';
+  import { batchDeleteEditLocks } from '@/lib/batchOperations';
   import { formatEditLockDateTime, type EditLockRecord } from '@/lib/editLock';
   import AppIcon from '@/components/AppIcon.vue';
 
@@ -257,18 +258,17 @@
 
     try {
       const idsToDelete = [...selectedLockIds.value];
-      const results = await Promise.allSettled(idsToDelete.map(lockId => pb.collection('edit_locks').delete(lockId)));
+      const result = await batchDeleteEditLocks(idsToDelete);
 
-      const succeededIds = idsToDelete.filter((_, index) => results[index]?.status === 'fulfilled');
-      const failedCount = results.length - succeededIds.length;
+      const succeededIds = idsToDelete.filter(id => !result.failed.includes(id));
 
       locks.value = locks.value.filter(lock => !succeededIds.includes(lock.id));
       selectedLockIds.value = selectedLockIds.value.filter(id => !succeededIds.includes(id));
       batchDeleteConfirm.value = false;
 
-      if (failedCount > 0) {
+      if (result.failed.length > 0) {
         await fetchLocks(true);
-        alert(`已尝试批量移除所选锁，但有 ${failedCount} 个锁移除失败，请刷新后重试。`);
+        alert(`已尝试批量移除所选锁，但有 ${result.failed.length} 个锁移除失败，请刷新后重试。`);
       }
     } catch (deleteError) {
       console.error('Failed to bulk delete edit locks:', deleteError);
