@@ -427,7 +427,7 @@
                       <template v-if="item.link">
                         <RouterLink
                           :to="item.link"
-                          class="flex items-center gap-1.5 hover:text-red-300 transition-colors"
+                          class="flex items-center gap-1.5 hover:text-red-300 transition-all duration-300 border-b border-transparent hover:border-red-300"
                         >
                           <AppIcon :name="item.icon as any" class-name="w-4 h-4" />
                           <span v-if="item.label">{{ item.label }}：{{ item.value }}</span>
@@ -435,9 +435,11 @@
                         </RouterLink>
                       </template>
                       <template v-else>
-                        <AppIcon :name="item.icon as any" class-name="w-4 h-4" />
-                        <span v-if="item.label">{{ item.label }}：{{ item.value }}</span>
-                        <span v-else>{{ item.value }}</span>
+                        <div class="flex items-center gap-1.5 transition-colors duration-300">
+                          <AppIcon :name="item.icon as any" class-name="w-4 h-4" />
+                          <span v-if="item.label">{{ item.label }}：{{ item.value }}</span>
+                          <span v-else>{{ item.value }}</span>
+                        </div>
                       </template>
                     </div>
                     <span
