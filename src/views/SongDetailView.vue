@@ -423,15 +423,19 @@
               <div class="flex flex-wrap items-center gap-y-2 text-[#888] text-sm tracking-widest mt-4">
                 <template v-for="(item, index) in metaItems" :key="index">
                   <div class="flex items-center">
-                    <div class="flex items-center gap-1.5">
-                      <AppIcon :name="item.icon as any" />
+                    <div class="flex items-center gap-1.5 group">
                       <template v-if="item.link">
-                        <RouterLink :to="item.link" class="hover:text-red-300 transition-colors">
+                        <RouterLink
+                          :to="item.link"
+                          class="flex items-center gap-1.5 hover:text-red-300 transition-colors"
+                        >
+                          <AppIcon :name="item.icon as any" class-name="w-4 h-4" />
                           <span v-if="item.label">{{ item.label }}：{{ item.value }}</span>
                           <span v-else>{{ item.value }}</span>
                         </RouterLink>
                       </template>
                       <template v-else>
+                        <AppIcon :name="item.icon as any" class-name="w-4 h-4" />
                         <span v-if="item.label">{{ item.label }}：{{ item.value }}</span>
                         <span v-else>{{ item.value }}</span>
                       </template>
