@@ -478,7 +478,10 @@
                 class="text-[#c9c9c9]/80 hover:text-red-300 transition-all duration-300 text-sm tracking-[0.2em] flex items-start group whitespace-pre-line"
               >
                 <div class="flex items-start gap-2">
-                  <div class="transition-all duration-300 transform group-hover:translate-x-1 shrink-0">
+                  <div
+                    class="transition-all duration-300 transform shrink-0"
+                    :class="!getPlatformIcon(link.url) ? 'group-hover:translate-x-1' : ''"
+                  >
                     <AppIcon v-if="getPlatformIcon(link.url)" :name="getPlatformIcon(link.url) as any" />
                     <span
                       v-else
@@ -503,7 +506,10 @@
                 class="text-[#c9c9c9]/80 hover:text-red-300 transition-all duration-300 text-sm tracking-[0.2em] flex items-start group whitespace-pre-line"
               >
                 <div class="flex items-start gap-2">
-                  <div class="transition-all duration-300 transform group-hover:translate-x-1 shrink-0 mt-[1px]">
+                  <div
+                    class="transition-all duration-300 transform shrink-0 mt-[1px]"
+                    :class="!getPlatformIcon(link.url) ? 'group-hover:translate-x-1' : ''"
+                  >
                     <AppIcon v-if="getPlatformIcon(link.url)" :name="getPlatformIcon(link.url) as any" />
                     <span
                       v-else
