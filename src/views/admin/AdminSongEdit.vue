@@ -365,6 +365,54 @@
           }, 0);
         }
       }
+    } else {
+      // 检查是否有复制数据
+      const copyFromStr = window.history.state?.copyFrom as string | undefined;
+      if (copyFromStr) {
+        try {
+          const copyFrom = JSON.parse(copyFromStr) as Song;
+          const decodedRecord = decodeSongLinkNames(copyFrom);
+          song.value = {
+            title: decodedRecord.title || '',
+            artist: Array.isArray(decodedRecord.artist)
+              ? [...decodedRecord.artist]
+              : decodedRecord.artist
+                ? [decodedRecord.artist]
+                : [],
+            releaseDate: decodedRecord.releaseDate ? parseDateFromBackend(decodedRecord.releaseDate) : '',
+            lyricist: Array.isArray(decodedRecord.lyricist)
+              ? [...decodedRecord.lyricist]
+              : decodedRecord.lyricist
+                ? [decodedRecord.lyricist]
+                : [],
+            composer: Array.isArray(decodedRecord.composer)
+              ? [...decodedRecord.composer]
+              : decodedRecord.composer
+                ? [decodedRecord.composer]
+                : [],
+            lyrics: decodedRecord.lyrics || '',
+            credits: decodedRecord.credits || '',
+            description: decodedRecord.description || '',
+            defaultAlbum: '',
+            defaultAlbumName: '',
+            defaultCover: '',
+            links: Array.isArray(decodedRecord.links)
+              ? decodedRecord.links.map(l => ({ ...l }))
+              : [
+                  { name: '网易云音乐', url: '' },
+                  { name: '酷狗音乐', url: '' },
+                  { name: 'QQ 音乐', url: '' },
+                  { name: '酷我音乐', url: '' },
+                ],
+            otherLinks: Array.isArray(decodedRecord.otherLinks) ? decodedRecord.otherLinks.map(l => ({ ...l })) : [],
+            qqId: decodedRecord.qqId || '',
+            neteaseId: decodedRecord.neteaseId || '',
+            enabledPlatform: decodedRecord.enabledPlatform || '',
+          };
+        } catch (e) {
+          console.error('Failed to parse copy data:', e);
+        }
+      }
     }
   });
 

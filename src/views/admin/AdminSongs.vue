@@ -115,6 +115,20 @@
   const editSong = (id: string) => {
     router.push(`/admin/songs/${id}`);
   };
+
+  const copySong = async (songId: string) => {
+    try {
+      // 获取完整的歌曲数据
+      const fullSong = await pb.collection('songs').getOne(songId);
+      router.push({
+        path: '/admin/songs/new',
+        state: { copyFrom: JSON.stringify(fullSong) },
+      });
+    } catch (error) {
+      console.error('Failed to fetch song for copy:', error);
+      alert('获取歌曲信息失败');
+    }
+  };
 </script>
 
 <template>
@@ -234,6 +248,13 @@
               </td>
               <td class="px-4 py-3 text-right relative">
                 <div class="flex items-center justify-end gap-2">
+                  <button
+                    class="p-1.5 text-[#888] hover:text-red-300 hover:bg-white/10 rounded-lg transition-colors"
+                    title="复制"
+                    @click="copySong(song.id)"
+                  >
+                    <AppIcon name="copy" class-name="w-5 h-5" />
+                  </button>
                   <button
                     class="p-1.5 text-[#888] hover:text-red-300 hover:bg-white/10 rounded-lg transition-colors"
                     title="编辑"
