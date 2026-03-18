@@ -108,7 +108,7 @@
       if (album.id === song.value.defaultAlbum) continue;
       items.push({ label: '专辑', value: album.title, icon: 'album', link: `/albums/${album.index || album.id}` });
     }
-    if (song.value.releaseDate) items.push({ value: formatDateToDisplay(song.value.releaseDate), icon: 'date' });
+    if (song.value.releaseDate) items.push({ label: '发行日期', value: formatDateToDisplay(song.value.releaseDate), icon: 'date' });
     return items;
   });
 
@@ -423,22 +423,20 @@
               <div class="flex flex-wrap items-center gap-y-2 text-[#888] text-sm tracking-widest mt-4">
                 <template v-for="(item, index) in metaItems" :key="index">
                   <div class="flex items-center">
-                    <div class="flex items-center gap-1.5 group">
+                    <div class="flex items-center gap-1.5 group relative" :title="item.label ? `${item.label}：${item.value}` : item.value">
                       <template v-if="item.link">
                         <RouterLink
                           :to="item.link"
                           class="flex items-center gap-1.5 hover:text-red-300 transition-all duration-300 border-b border-transparent hover:border-red-300"
                         >
                           <AppIcon :name="item.icon as any" class-name="w-4 h-4" />
-                          <span v-if="item.label">{{ item.label }}：{{ item.value }}</span>
-                          <span v-else>{{ item.value }}</span>
+                          <span>{{ item.value }}</span>
                         </RouterLink>
                       </template>
                       <template v-else>
                         <div class="flex items-center gap-1.5 transition-colors duration-300">
                           <AppIcon :name="item.icon as any" class-name="w-4 h-4" />
-                          <span v-if="item.label">{{ item.label }}：{{ item.value }}</span>
-                          <span v-else>{{ item.value }}</span>
+                          <span>{{ item.value }}</span>
                         </div>
                       </template>
                     </div>
