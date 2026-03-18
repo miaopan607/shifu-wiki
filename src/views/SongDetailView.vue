@@ -114,7 +114,7 @@
 
   // 打开灯箱
   const openLightbox = () => {
-    if (allCovers.value.length <= 1) return;
+    if (allCovers.value.length === 0) return;
     lightboxInitialIndex.value = 0;
     showLightbox.value = true;
   };
@@ -353,9 +353,9 @@
             <div
               class="shrink-0 w-24 h-24 rounded-lg overflow-hidden shadow-lg flex items-center justify-center bg-[#c9c9c9]/10"
               :class="
-                defaultCoverUrl && allCovers.length > 1 ? 'hover:ring-2 hover:ring-red-300/50 cursor-pointer' : ''
+                defaultCoverUrl && allCovers.length > 0 ? 'hover:ring-2 hover:ring-red-300/50 cursor-pointer' : ''
               "
-              @click="defaultCoverUrl && openLightbox"
+              @click="defaultCoverUrl && openLightbox()"
             >
               <img v-if="defaultCoverUrl" :src="defaultCoverUrl" :alt="song.title" class="w-full h-full object-cover" />
               <AppIcon v-else name="image-placeholder" class-name="w-12 h-12 text-[#888]" />
