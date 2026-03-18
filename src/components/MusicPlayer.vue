@@ -101,8 +101,8 @@
         <!-- 进度条 -->
         <div ref="progressRef" class="h-1 bg-[#c9c9c9]/20 cursor-pointer group select-none" @mousedown="startDrag">
           <div
-            class="h-full bg-red-400 relative"
-            :class="{ 'transition-all': !isDragging }"
+            class="h-full bg-red-400 relative progress-bar-transition"
+            :class="{ 'is-dragging': isDragging }"
             :style="{ width: `${displayProgress}%` }"
           >
             <div
@@ -197,6 +197,14 @@
 </template>
 
 <style scoped>
+  .progress-bar-transition {
+    transition: width 0.25s linear;
+  }
+
+  .progress-bar-transition.is-dragging {
+    transition: none;
+  }
+
   .slide-up-enter-active,
   .slide-up-leave-active {
     transition: transform 0.3s ease;
