@@ -88,7 +88,7 @@ function getTask(taskId: string): BatchUploadTask | undefined {
 }
 
 function taskUsesRemoteUploadBatch(task: BatchUploadTask): boolean {
-  return task.type === 'gallery_images' || task.type === 'song_covers';
+  return task.type === 'gallery_images' || task.type === 'song_covers' || task.type === 'album_covers';
 }
 
 function getActiveRequestCount(taskId?: string): number {
@@ -225,7 +225,11 @@ function discardTask(taskId: string): void {
   refreshSchedulerState();
 }
 
-function attachTaskLock(taskId: string, lockId: string, lockCollection: 'galleries' | 'songs'): void {
+function attachTaskLock(
+  taskId: string,
+  lockId: string,
+  lockCollection: 'galleries' | 'songs' | 'albums'
+): void {
   const task = getTask(taskId);
   if (!task) return;
 
@@ -233,11 +237,14 @@ function attachTaskLock(taskId: string, lockId: string, lockCollection: 'galleri
   task.lockCollection = lockCollection;
 }
 
-function findTaskByTargetId(targetId: string, targetType: 'gallery' | 'song'): BatchUploadTask | undefined {
+function findTaskByTargetId(
+  targetId: string,
+  targetType: 'gallery' | 'song' | 'album'
+): BatchUploadTask | undefined {
   return tasks.value.find(task => task.targetId === targetId && task.targetType === targetType);
 }
 
-function startPendingTasks(targetId: string, targetType: 'gallery' | 'song'): void {
+function startPendingTasks(targetId: string, targetType: 'gallery' | 'song' | 'album'): void {
   tasks.value.forEach(task => {
     if (
       task.targetType === targetType &&
@@ -533,7 +540,11 @@ function retryTask(taskId: string): void {
       file.status = 'pending';
       file.progress = 0;
       file.error = undefined;
-      if (task.type === 'gallery_images' || task.type === 'song_covers') {
+      if (
+        task.type === 'gallery_images' ||
+        task.type === 'song_covers' ||
+        task.type === 'album_covers'
+      ) {
         file.uploadedRecordId = undefined;
       }
     }
@@ -778,6 +789,10 @@ function minimizePanel(): void {
 
 function maximizePanel(): void {
   panelState.value.isMinimized = false;
+}
+
+export function useUploadStore() {
+  return uploadStore;
 }
 
 export const uploadStore = {

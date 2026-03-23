@@ -14,8 +14,8 @@ routerAdd('POST', '/api/shifu/upload-batches', e => {
   e.bindBody(data);
 
   const targetType = String(data.targetType || 'gallery');
-  if (targetType !== 'gallery' && targetType !== 'song') {
-    throw new BadRequestError('当前只支持图库图片或音乐封面的上传批次');
+  if (targetType !== 'gallery' && targetType !== 'song' && targetType !== 'album') {
+    throw new BadRequestError('当前只支持图库图片、音乐封面或专辑封面的上传批次');
   }
 
   const collection = e.app.findCollectionByNameOrId('upload_batches');
@@ -81,6 +81,13 @@ routerAdd('POST', '/api/shifu/upload-batches/{batchId}/cancel', e => {
     } catch (error) {
       cleanupSucceeded = false;
       console.log('[upload batch] cancel cleanup song_covers failed:', batch.id, error);
+    }
+  } else if (targetType === 'album') {
+    try {
+      cleanupCollectionByBatchId(e.app, 'album_covers', batch.id);
+    } catch (error) {
+      cleanupSucceeded = false;
+      console.log('[upload batch] cancel cleanup album_covers failed:', batch.id, error);
     }
   }
 

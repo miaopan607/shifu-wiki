@@ -77,8 +77,23 @@
       const decodedAlbumRecord = decodeLinkNames(albumRecord as Album);
       albumInfo.value = decodedAlbumRecord;
 
-      // 使用 album.cover 单封面
-      if (decodedAlbumRecord.cover) {
+      // 解析封面
+      if (decodedAlbumRecord.defaultCover === 'old_cover') {
+        if (decodedAlbumRecord.cover) {
+          albumCoverUrl.value = pb.files.getURL(decodedAlbumRecord as any, decodedAlbumRecord.cover);
+        }
+      } else if (decodedAlbumRecord.defaultCover?.startsWith('album_cover:')) {
+        const coverId = decodedAlbumRecord.defaultCover.replace('album_cover:', '');
+        try {
+          const coverRecord = await pb.collection('album_covers').getOne(coverId);
+          albumCoverUrl.value = pb.files.getURL(coverRecord as any, coverRecord.image);
+        } catch (e) {
+          console.error('Failed to fetch album cover:', e);
+        }
+      }
+
+      // 如果没有解析到封面，则回退到原始 cover 字段
+      if (!albumCoverUrl.value && decodedAlbumRecord.cover) {
         albumCoverUrl.value = pb.files.getURL(decodedAlbumRecord as any, decodedAlbumRecord.cover);
       }
 

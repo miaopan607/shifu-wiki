@@ -51,11 +51,25 @@
 | `releaseDate` | date     | 发布日期                           |
 | `description` | text     | 描述                               |
 | `links`       | json     | 平台链接                           |
-| `otherLinks`  | json     | 其他相关链接                       |
-| `cover`       | file     | 专辑封面图片                       |
-| `tracks`      | json     | Disc 与歌曲关联 (AlbumDisc[] JSON) |
-| `created`     | autodate | 创建时间                           |
-| `updated`     | autodate | 更新时间                           |
+| `otherLinks`   | json     | 其他相关链接                       |
+| `cover`        | file     | [废弃] 专辑封面图片 (单图)         |
+| `defaultCover` | text     | 默认封面: 空, `album_cover:ID`     |
+| `tracks`       | json     | Disc 与歌曲关联 (AlbumDisc[] JSON) |
+| `created`      | autodate | 创建时间                           |
+| `updated`      | autodate | 更新时间                           |
+
+### album_covers (专辑封面 - 关联 albums)
+
+| 字段名           | 类型     | 说明                 |
+| :--------------- | :------- | :------------------- |
+| `id`             | text     | 主键                 |
+| `image`          | file     | 封面图片 (必填)      |
+| `album`          | relation | 关联到 albums (必填) |
+| `sort`           | number   | 排序权重             |
+| `uploadBatchId`  | text     | 批量上传ID           |
+| `clientUploadId` | text     | 客户端上传标识       |
+| `created`        | autodate | 创建时间             |
+| `updated`        | autodate | 更新时间             |
 
 `tracks` JSON 结构示例:
 

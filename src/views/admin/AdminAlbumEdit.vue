@@ -13,10 +13,21 @@
   import EditLockWarning from '@/components/EditLockWarning.vue';
   import VersionConflictDialog from '@/components/VersionConflictDialog.vue';
   import AdminInput from '@/components/AdminInput.vue';
-  import type { Album, AlbumDisc } from '@/types';
   import { normalizeAlbumTracks } from '@/lib/albumTracks';
-  import { batchUpdateSongsDisplay, type SongDisplayUpdateItem } from '@/lib/batchOperations';
+  import {
+    batchUpdateSongsDisplay,
+    batchDeleteAlbumCovers,
+    type SongDisplayUpdateItem,
+  } from '@/lib/batchOperations';
   import AppIcon from '@/components/AppIcon.vue';
+  import { useUploadStore } from '@/stores/uploadStore';
+  import type { BatchUploadTask } from '@/types/upload';
+  import type { Album, AlbumDisc, AlbumCover } from '@/types';
+
+  interface AlbumCoverWithFile extends AlbumCover {
+    localUrl?: string; // 用于预览尚未上传的文件
+    showDelete?: boolean;
+  }
 
   interface DragState {
     songId: string;
@@ -59,20 +70,139 @@
     tracks: [{ disc: 1, name: 'Disc 1', songs: [] }],
   });
 
-  // === 单封面管理 ===
-  const coverFile = ref<File | null>(null);
-  const coverPreviewUrl = ref('');
-  const removeCoverFlag = ref(false);
+  // === 封面管理 ===
+  const covers = ref<AlbumCoverWithFile[]>([]);
+  const coversToDelete = ref<string[]>([]);
   const fileInput = ref<HTMLInputElement | null>(null);
 
-  const currentCoverUrl = computed(() => {
-    if (removeCoverFlag.value) return '';
-    if (coverPreviewUrl.value) return coverPreviewUrl.value;
-    if (isEdit.value && album.value.cover && album.value.collectionId) {
-      return pb.files.getURL(album.value as any, album.value.cover, { thumb: '400x400' });
+  const uploadStore = useUploadStore();
+  const currentBatchTask = computed<BatchUploadTask | null>(() => {
+    if (!isEdit.value) return null;
+    return (
+      uploadStore.activeTasks.value.find(
+        (t: BatchUploadTask) =>
+          t.type === 'album_covers' && t.targetId === (route.params.id as string) && t.status === 'pending'
+      ) || null
+    );
+  });
+
+  const getCoverUrl = (cover: AlbumCoverWithFile, thumb = true) => {
+    if (cover.localUrl) return cover.localUrl;
+    if (cover.image && cover.collectionId) {
+      return pb.files.getURL(cover, cover.image, thumb ? { thumb: '400x400' } : undefined);
+    }
+    return '';
+  };
+
+  // 获取默认封面URL
+  const defaultCoverPreviewUrl = computed(() => {
+    if (album.value.defaultCover === 'old_cover') {
+      if (album.value.cover && album.value.collectionId) {
+        return pb.files.getURL(album.value as any, album.value.cover, { thumb: '400x400' });
+      }
+      return '';
+    }
+
+    if (!album.value.defaultCover) {
+      return '';
+    }
+
+    if (album.value.defaultCover.startsWith('album_cover:')) {
+      const coverId = album.value.defaultCover.replace('album_cover:', '');
+      const cover = covers.value.find(c => c.id === coverId);
+      if (cover) return getCoverUrl(cover);
     }
     return '';
   });
+
+  // 检查封面是否是默认封面
+  const isDefaultCover = (cover: AlbumCoverWithFile) => {
+    if (album.value.defaultCover?.startsWith('album_cover:')) {
+      const coverId = album.value.defaultCover.replace('album_cover:', '');
+      return cover.id === coverId;
+    }
+    return false;
+  };
+
+  // 设置默认封面
+  const setDefaultCover = (coverId: string) => {
+    album.value.defaultCover = `album_cover:${coverId}`;
+    markChanged();
+  };
+
+  const setOldCoverAsDefault = () => {
+    album.value.defaultCover = 'old_cover';
+    markChanged();
+  };
+
+  const clearDefaultCover = () => {
+    album.value.defaultCover = '';
+    markChanged();
+  };
+
+  // 拖放相关
+  const isDraggingOver = ref(false);
+  const dragCounter = ref(0);
+
+  const isFileDragEvent = (e: DragEvent): boolean => {
+    const types = e.dataTransfer?.types;
+    if (!types) return false;
+    return Array.from(types).includes('Files');
+  };
+
+  const handleCoverDragOver = (e: DragEvent) => {
+    if (isFileDragEvent(e)) {
+      e.preventDefault();
+    }
+  };
+
+  const handleDragEnter = (e: DragEvent) => {
+    e.preventDefault();
+    if (!isFileDragEvent(e)) return;
+
+    dragCounter.value++;
+    if (dragCounter.value === 1) {
+      isDraggingOver.value = true;
+    }
+  };
+
+  const handleDragLeave = (e: DragEvent) => {
+    e.preventDefault();
+    if (!isFileDragEvent(e)) return;
+
+    dragCounter.value--;
+    if (dragCounter.value === 0) {
+      isDraggingOver.value = false;
+    }
+  };
+
+  const handleCoverDrop = (e: DragEvent) => {
+    e.preventDefault();
+    dragCounter.value = 0;
+    isDraggingOver.value = false;
+
+    const files = e.dataTransfer?.files;
+    if (files && files.length > 0) {
+      addCoverFiles(Array.from(files));
+    }
+  };
+
+  const handoffEditLockToTask = async (task: BatchUploadTask, targetId: string) => {
+    let lockId = editLock.currentLockId.value;
+
+    if (!lockId) {
+      const result = await editLock.createEditLock();
+      if (!result) {
+        throw new Error('无法为后台上传创建编辑锁');
+      }
+      lockId = editLock.currentLockId.value;
+    }
+
+    if (lockId) {
+      uploadStore.attachTaskLock(task.id, lockId, 'albums');
+      editLock.currentLockId.value = null;
+    }
+  };
 
   // === 曲目管理 ===
   const songSearchQuery = ref('');
@@ -101,10 +231,9 @@
   const songDefaultCoverFlags = ref<Map<string, boolean>>(new Map());
 
   const hasAlbumCover = computed(() => {
-    if (removeCoverFlag.value) return false;
-    if (coverFile.value) return true;
+    if (album.value.defaultCover) return true;
     if (isEdit.value && album.value.cover && album.value.collectionId) return true;
-    return false;
+    return covers.value.some(c => !c.id.startsWith('pending-'));
   });
 
   // 拖拽排序状态
@@ -252,6 +381,8 @@
           links: Array.isArray(decodedRecord.links) ? decodedRecord.links : [],
           otherLinks: Array.isArray(decodedRecord.otherLinks) ? decodedRecord.otherLinks : [],
           tracks: tracksWithName.length > 0 ? tracksWithName : [{ disc: 1, name: 'Disc 1', songs: [] }],
+          // 自动处理兼容性：如果 defaultCover 为空，但存在旧封面，则默认应显示为选用原始封面
+          defaultCover: !decodedRecord.defaultCover && decodedRecord.cover ? 'old_cover' : (decodedRecord.defaultCover || ''),
         } as unknown as Album;
 
         // 加载歌曲名缓存
@@ -269,7 +400,7 @@
             } else {
               songShowAlbumFlags.value.set(s.id, false);
             }
-            // 初始化展示封面勾选状态：如果歌曲的 defaultCover 是当前专辑的封面，则勾选
+            // 初始化展示封面勾选状态：如果歌曲的 defaultCover 指向当前专辑，则勾选
             if (s.defaultCover === `album_cover:${route.params.id}`) {
               songDefaultCoverFlags.value.set(s.id, true);
             } else {
@@ -277,10 +408,38 @@
             }
           });
         }
+
+        // 加载专辑封面
+        const coversRes = await pb.collection('album_covers').getFullList({
+          filter: `album = "${route.params.id}"`,
+          sort: 'sort',
+        });
+        covers.value = coversRes.map(c => ({
+          ...c,
+          collectionId: c.collectionId || '',
+          collectionName: c.collectionName || 'album_covers',
+          created: c.created,
+          updated: c.updated,
+          id: c.id,
+          image: c.image,
+          album: c.album,
+          sort: c.sort,
+        })) as AlbumCoverWithFile[];
+
+        // 重新检查一遍歌曲的封面勾选状态
+        const allSongIdsForCovers = (album.value.tracks || []).flatMap(d => d.songs);
+        allSongIdsForCovers.forEach(id => {
+          const s = songCache.value.get(id);
+          if (s && s.defaultCover === `album_cover:${route.params.id}`) {
+            songDefaultCoverFlags.value.set(s.id, true);
+          }
+        });
       } catch (err) {
         console.error('Failed to fetch album:', err);
-        alert('获取专辑详情失败');
-        router.push('/admin/albums');
+        const pbErr = err as any;
+        error.value = `获取专辑详情失败: ${pbErr.message || '未知错误'}`;
+        // alert('获取专辑详情失败');
+        // router.push('/admin/albums');
       } finally {
         loading.value = false;
         if (!error.value) {
@@ -293,24 +452,75 @@
   });
 
   // === 封面操作 ===
+  const addCoverFiles = (files: File[]) => {
+    if (!isEdit.value) {
+      alert('请先填写专辑基本信息并保存后，再上传封面。');
+      return;
+    }
+
+    const newCovers: AlbumCoverWithFile[] = files.map((file, index) => {
+      const clientId = `pending-${Date.now()}-${index}`;
+      return {
+        id: clientId,
+        collectionId: '',
+        collectionName: 'album_covers',
+        created: '',
+        updated: '',
+        image: file.name,
+        album: route.params.id as string,
+        localUrl: URL.createObjectURL(file),
+      };
+    });
+
+    covers.value.push(...newCovers);
+    markChanged();
+
+    // 自动创建后台上传任务
+    if (currentBatchTask.value) {
+      uploadStore.appendFilesToTask(currentBatchTask.value.id, {
+        files: files,
+        clientIds: newCovers.map(c => c.id),
+      });
+    } else {
+      uploadStore.addBatchTask({
+        type: 'album_covers',
+        targetId: route.params.id as string,
+        targetType: 'album',
+        targetName: album.value.title || '未命名专辑',
+        files: files,
+        clientIds: newCovers.map(c => c.id),
+      });
+    }
+  };
+
   const handleCoverSelect = (event: Event) => {
     const target = event.target as HTMLInputElement;
-    if (target.files && target.files[0]) {
-      coverFile.value = target.files[0];
-      if (coverPreviewUrl.value) URL.revokeObjectURL(coverPreviewUrl.value);
-      coverPreviewUrl.value = URL.createObjectURL(target.files[0]);
-      removeCoverFlag.value = false;
-      hasChanges.value = true;
+    if (target.files && target.files.length > 0) {
+      addCoverFiles(Array.from(target.files));
       target.value = '';
     }
   };
 
-  const removeCover = () => {
-    if (coverPreviewUrl.value) URL.revokeObjectURL(coverPreviewUrl.value);
-    coverFile.value = null;
-    coverPreviewUrl.value = '';
-    removeCoverFlag.value = true;
-    hasChanges.value = true;
+  const removeCover = (index: number) => {
+    const cover: AlbumCoverWithFile | undefined = covers.value[index];
+    if (!cover) return;
+
+    if (cover.id.startsWith('pending-')) {
+      // 取消待上传的文件
+      if (currentBatchTask.value) {
+        uploadStore.removeFileFromTask(currentBatchTask.value.id, cover.id);
+      }
+      if (cover.localUrl) URL.revokeObjectURL(cover.localUrl);
+    } else {
+      // 标记待删除
+      coversToDelete.value.push(cover.id);
+      // 如果删除的是默认封面，清除默认设置
+      if (isDefaultCover(cover)) {
+        album.value.defaultCover = '';
+      }
+    }
+    covers.value.splice(index, 1);
+    markChanged();
   };
 
   // === 曲目操作 ===
@@ -657,13 +867,8 @@
         tracks: normalizedTracks,
         links: normalizedLinks,
         otherLinks: normalizedOtherLinks,
+        defaultCover: album.value.defaultCover || '',
       }) as Record<string, unknown>;
-
-      if (coverFile.value) {
-        payload.cover = coverFile.value;
-      } else if (removeCoverFlag.value) {
-        payload.cover = '';
-      }
 
       let albumId = (route.params.id as string) || '';
       if (isEdit.value) {
@@ -671,6 +876,25 @@
       } else {
         const created = await pb.collection('albums').create(payload);
         albumId = created.id;
+      }
+
+      // 处理封面删除
+      if (coversToDelete.value.length > 0) {
+        await batchDeleteAlbumCovers(coversToDelete.value);
+        coversToDelete.value = [];
+      }
+
+      // 处理后台上传任务
+      const task = currentBatchTask.value;
+      if (task) {
+        // 如果是新创建的专辑，开始上传
+        if (!isEdit.value) {
+          uploadStore.startPendingTasks(albumId, 'album');
+        }
+        // 交接编辑锁给后台任务
+        await handoffEditLockToTask(task, albumId);
+        // 开始上传（如果是 pending 状态）
+        uploadStore.resumeTask(task.id);
       }
 
       // 更新选中的歌曲的展示专辑和展示封面
@@ -756,7 +980,11 @@
     isDisposed = true;
     window.removeEventListener('beforeunload', handleBeforeUnload);
     document.removeEventListener('click', closePlatformDropdown);
-    if (coverPreviewUrl.value) URL.revokeObjectURL(coverPreviewUrl.value);
+
+    covers.value.forEach(cover => {
+      if (cover.localUrl) URL.revokeObjectURL(cover.localUrl);
+    });
+
     // 删除编辑锁（Composable 会自动处理，这里显式调用以确保顺序）
     void editLock.dispose();
   });
@@ -1231,39 +1459,166 @@
       </div>
 
       <div class="lg:col-span-4 lg:order-2 space-y-6">
-        <!-- 封面 -->
+        <!-- 封面管理 (多图) -->
         <div class="bg-[rgb(60,0,0)] border border-[#c9c9c9]/20 rounded-xl p-6 space-y-4">
           <h2 class="text-lg font-medium text-[#c9c9c9] flex items-center gap-2">
             <AppIcon name="image" class-name="w-5 h-5 text-red-300" /> 专辑封面
           </h2>
-          <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="handleCoverSelect" />
 
-          <div v-if="currentCoverUrl" class="relative group aspect-square rounded-lg overflow-hidden">
-            <img :src="currentCoverUrl" class="w-full h-full object-cover" />
+          <input
+            ref="fileInput"
+            type="file"
+            accept="image/*"
+            multiple
+            class="hidden"
+            @change="handleCoverSelect"
+          />
+
+          <!-- 默认封面预览 -->
+          <div
+            class="aspect-square rounded-lg overflow-hidden border-2 border-[#c9c9c9]/20 relative"
+            @dragenter="handleDragEnter"
+            @dragover="handleCoverDragOver"
+            @dragleave="handleDragLeave"
+            @drop="handleCoverDrop"
+          >
+            <img v-if="defaultCoverPreviewUrl" :src="defaultCoverPreviewUrl" class="w-full h-full object-cover" />
+            <div v-else class="w-full h-full flex flex-col items-center justify-center bg-black/10">
+              <AppIcon name="image-placeholder" class-name="w-12 h-12 text-[#888] mb-2" />
+              <p class="text-sm text-[#888]">暂无封面</p>
+            </div>
+            <!-- 拖拽提示遮罩 -->
             <div
-              class="absolute inset-0 bg-black/60 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2"
+              v-if="isDraggingOver"
+              class="absolute inset-0 bg-red-300/20 backdrop-blur-[2px] border-2 border-red-300 border-dashed flex items-center justify-center z-10"
             >
-              <button
-                tabindex="-1"
-                class="text-xs text-[#c9c9c9] hover:text-red-300 px-2 py-1 bg-black/40 rounded"
-                @click="fileInput?.click()"
-                >更换</button
-              >
-              <button
-                tabindex="-1"
-                class="text-xs text-red-400 hover:text-red-300 px-2 py-1 bg-black/40 rounded"
-                @click="removeCover"
-                >删除</button
-              >
+              <div class="text-center">
+                <AppIcon name="upload" class-name="w-12 h-12 text-red-300 mx-auto mb-2" />
+                <p class="text-red-300 font-medium">松开以上传封面</p>
+              </div>
             </div>
           </div>
-          <div
-            v-else
-            class="aspect-square rounded-lg border-2 border-dashed border-[#c9c9c9]/20 flex flex-col items-center justify-center cursor-pointer hover:border-red-300/50 transition-colors"
-            @click="fileInput?.click()"
-          >
-            <AppIcon name="image-placeholder" class-name="w-12 h-12 mx-auto text-[#888] mb-2" />
-            <p class="text-sm text-[#888]">点击上传封面</p>
+
+          <!-- 封面列表 -->
+          <div class="space-y-2">
+            <!-- 缺省封面选项 -->
+            <button
+              tabindex="-1"
+              class="w-full flex items-center gap-3 p-2 rounded-lg border transition-all text-left"
+              :class="
+                !album.defaultCover ? 'border-red-300 bg-red-300/10' : 'border-[#c9c9c9]/10 hover:border-[#c9c9c9]/30'
+              "
+              @click="clearDefaultCover"
+            >
+              <div class="w-12 h-12 rounded bg-[#c9c9c9]/10 flex items-center justify-center shrink-0">
+                <AppIcon name="image-placeholder" class-name="w-6 h-6 text-[#888]" />
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm" :class="!album.defaultCover ? 'text-red-300' : 'text-[#c9c9c9]'"
+                  >不展示封面（缺省）</p
+                >
+              </div>
+              <span v-if="!album.defaultCover" class="text-red-300 text-sm flex items-center gap-1">
+                <AppIcon name="check" class-name="w-4 h-4" /> 默认展示
+              </span>
+            </button>
+
+            <!-- 原始单一封面 (兼容老数据) -->
+            <button
+              v-if="isEdit && album.cover && album.collectionId"
+              type="button"
+              class="w-full flex items-center gap-3 p-2 rounded-lg border transition-all text-left group"
+              :class="
+                album.defaultCover === 'old_cover'
+                  ? 'border-red-300 bg-red-300/10'
+                  : 'border-[#c9c9c9]/10 hover:border-[#c9c9c9]/30'
+              "
+              @click="setOldCoverAsDefault"
+            >
+              <div class="w-12 h-12 rounded overflow-hidden shrink-0">
+                <img
+                  :src="pb.files.getURL(album as any, album.cover!, { thumb: '400x400' })"
+                  class="w-full h-full object-cover"
+                />
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-xs text-[#888] mb-0.5">原始封面</p>
+                <p class="text-sm truncate" :class="album.defaultCover === 'old_cover' ? 'text-red-300' : 'text-[#c9c9c9]'">
+                  {{ album.cover }}
+                </p>
+              </div>
+              <span v-if="album.defaultCover === 'old_cover'" class="text-red-300 text-sm flex items-center gap-1">
+                <AppIcon name="check" class-name="w-4 h-4" /> 默认展示
+              </span>
+            </button>
+
+            <!-- 自有封面列表 (album_covers) -->
+            <div
+              v-for="(cover, index) in covers"
+              :key="cover.id"
+              class="w-full flex items-center gap-3 p-2 rounded-lg border transition-all group"
+              :class="[
+                isDefaultCover(cover)
+                  ? 'border-red-300 bg-red-300/10'
+                  : 'border-[#c9c9c9]/10 hover:border-[#c9c9c9]/30',
+                cover.id.startsWith('pending-') ? 'opacity-70' : '',
+              ]"
+              @mouseenter="cover.showDelete = true"
+              @mouseleave="cover.showDelete = false"
+            >
+              <div
+                class="w-12 h-12 rounded overflow-hidden shrink-0 cursor-pointer"
+                :class="cover.id.startsWith('pending-') ? 'border border-dashed border-[#c9c9c9]/30' : ''"
+                @click="!cover.id.startsWith('pending-') && setDefaultCover(cover.id)"
+              >
+                <img :src="getCoverUrl(cover)" class="w-full h-full object-cover" />
+              </div>
+              <div
+                class="flex-1 min-w-0 cursor-pointer"
+                @click="!cover.id.startsWith('pending-') && setDefaultCover(cover.id)"
+              >
+                <p class="text-sm" :class="isDefaultCover(cover) ? 'text-red-300' : 'text-[#c9c9c9]'">
+                  封面 #{{ index + 1 }}
+                  <span v-if="cover.id.startsWith('pending-')" class="text-[#888] text-xs ml-1">（待上传）</span>
+                </p>
+              </div>
+              <div class="flex items-center gap-2">
+                <span v-if="isDefaultCover(cover)" class="text-red-300 text-sm flex items-center gap-1">
+                  <AppIcon name="check" class-name="w-4 h-4" /> 默认展示
+                </span>
+                <!-- 删除按钮 -->
+                <button
+                  v-if="!cover.id.startsWith('pending-')"
+                  tabindex="-1"
+                  class="text-red-400 hover:text-red-300 p-1.5 rounded hover:bg-white/5 transition-all"
+                  :class="cover.showDelete ? 'opacity-100' : 'opacity-0'"
+                  title="删除"
+                  @click.stop="removeCover(index)"
+                >
+                  <AppIcon name="trash" class-name="w-4 h-4" />
+                </button>
+                <button
+                  v-else
+                  tabindex="-1"
+                  class="text-[#888] hover:text-red-300 p-1.5 rounded hover:bg-white/5 transition-all"
+                  :class="cover.showDelete ? 'opacity-100' : 'opacity-0'"
+                  title="取消"
+                  @click.stop="removeCover(index)"
+                >
+                  <AppIcon name="close" class-name="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            <!-- 上传按钮 -->
+            <button
+              tabindex="-1"
+              class="w-full flex items-center justify-center gap-2 p-3 rounded-lg border border-dashed border-[#c9c9c9]/20 hover:border-red-300/50 hover:bg-red-300/5 transition-all text-[#888] hover:text-red-300"
+              @click="fileInput?.click()"
+            >
+              <AppIcon name="plus" class-name="w-4 h-4" />
+              <span class="text-sm">上传封面</span>
+            </button>
           </div>
         </div>
       </div>

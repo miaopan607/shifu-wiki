@@ -6,7 +6,7 @@
   import SubPageNav from '@/components/SubPageNav.vue';
   import SongsNav from '@/components/SongsNav.vue';
   import AppIcon from '@/components/AppIcon.vue';
-  import type { Album } from '@/types';
+  import type { Album, AlbumCover } from '@/types';
 
   interface AlbumWithMeta {
     id: string;
@@ -25,16 +25,34 @@
     try {
       const albumsResult = await pb.collection('albums').getFullList({
         sort: '-releaseDate',
-        fields: 'id,collectionId,title,index,releaseDate,cover,tracks',
+        expand: 'album_covers_via_album',
+        fields: 'id,collectionId,title,index,releaseDate,cover,defaultCover,tracks,expand.album_covers_via_album',
       });
 
       albums.value = (albumsResult as unknown as Album[]).map(album => {
         const tracks = normalizeAlbumTracks((album as any).tracks);
         const songCount = tracks.reduce((sum, disc) => sum + (Array.isArray(disc.songs) ? disc.songs.length : 0), 0);
         let coverUrl = '';
-        if (album.cover && album.collectionId) {
+
+        // 优先使用 defaultCover
+        if (album.defaultCover === 'old_cover') {
+          if (album.cover && album.collectionId) {
+            coverUrl = pb.files.getURL(album as any, album.cover, { thumb: '400x400' });
+          }
+        } else if (album.defaultCover?.startsWith('album_cover:')) {
+          const coverId = album.defaultCover.replace('album_cover:', '');
+          const expandCovers = (album as any).expand?.album_covers_via_album as AlbumCover[] | undefined;
+          const coverRecord = expandCovers?.find(c => c.id === coverId);
+          if (coverRecord) {
+            coverUrl = pb.files.getURL(coverRecord as any, coverRecord.image, { thumb: '400x400' });
+          }
+        }
+
+        // 如果没有解析到封面，则回退到原始 cover 字段
+        if (!coverUrl && album.cover && album.collectionId) {
           coverUrl = pb.files.getURL(album as any, album.cover, { thumb: '400x400' });
         }
+
         return {
           id: album.id,
           collectionId: album.collectionId,

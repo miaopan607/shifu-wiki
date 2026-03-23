@@ -34,8 +34,21 @@ export function useSongCover() {
     if (song.defaultCover.startsWith('album_cover:')) {
       const albumId = song.defaultCover.replace('album_cover:', '');
       try {
-        const album = await pb.collection('albums').getOne(albumId, { fields: 'id,cover,collectionId' });
-        if (album.cover) {
+        const album = await pb.collection('albums').getOne(albumId, { expand: 'album_covers_via_album' });
+        
+        if (album.defaultCover === 'old_cover') {
+          if (album.cover && album.collectionId) {
+            return pb.files.getURL(album, album.cover, { thumb: thumbSize });
+          }
+        } else if (album.defaultCover?.startsWith('album_cover:')) {
+          const coverId = album.defaultCover.replace('album_cover:', '');
+          const expandCovers = album.expand?.album_covers_via_album as any[] | undefined;
+          const coverRecord = expandCovers?.find(c => c.id === coverId);
+          if (coverRecord) {
+            return pb.files.getURL(coverRecord, coverRecord.image, { thumb: thumbSize });
+          }
+        } else if (!album.defaultCover && album.cover && album.collectionId) {
+          // 兼容老数据，如果 defaultCover 没设置但有封面
           return pb.files.getURL(album, album.cover, { thumb: thumbSize });
         }
       } catch {

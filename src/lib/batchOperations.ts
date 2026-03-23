@@ -52,6 +52,16 @@ export async function batchDeleteSongCovers(ids: string[]): Promise<BatchDeleteR
   });
 }
 
+// === Album Covers ===
+
+export async function batchDeleteAlbumCovers(ids: string[]): Promise<BatchDeleteResponse> {
+  return pb.send<BatchDeleteResponse>('/api/shifu/album-covers/batch-delete', {
+    method: 'POST',
+    body: { ids },
+    requestKey: null,
+  });
+}
+
 // === Edit Locks ===
 
 export async function batchDeleteEditLocks(ids: string[]): Promise<BatchDeleteResponse> {

@@ -85,6 +85,19 @@ export interface SongCover {
   clientUploadId?: string;
 }
 
+export interface AlbumCover {
+  id: string;
+  collectionId: string;
+  collectionName: string;
+  created: string;
+  updated: string;
+  image: string;
+  album: string; // Relation ID
+  sort?: number;
+  uploadBatchId?: string;
+  clientUploadId?: string;
+}
+
 export interface Album {
   id: string;
   collectionId: string;
@@ -97,7 +110,8 @@ export interface Album {
   description?: string;
   links?: { name: string; url: string }[];
   otherLinks?: { name: string; url: string }[];
-  cover?: string; // 单封面文件名
+  cover?: string; // [废弃] 单封面文件名
+  defaultCover?: string; // 默认封面: 空, `album_cover:ID`
   tracks?: AlbumDisc[];
 }
 
