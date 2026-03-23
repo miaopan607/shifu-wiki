@@ -329,6 +329,20 @@ cronAdd('upload-batch-cancel-cleanup', '*/10 * * * *', () => {
     }
   );
 
+  function cleanupCollectionByBatchId(app, collectionName, batchId) {
+    while (true) {
+      const records = app.findRecordsByFilter(collectionName, 'uploadBatchId = {:batchId}', '-created', 500, 0, {
+        batchId: batchId,
+      });
+      if (!records.length) {
+        break;
+      }
+      for (const record of records) {
+        app.delete(record);
+      }
+    }
+  }
+
   for (const batch of batches) {
     try {
       let shouldSaveBatch = false;
