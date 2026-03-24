@@ -161,6 +161,7 @@
               v-model="misc.content"
               class="w-full h-96 px-4 py-3 bg-black/20 border border-[#c9c9c9]/20 rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all font-mono resize-y"
               placeholder="请输入正文内容..."
+              spellcheck="false"
             ></textarea>
             <p v-if="contentError" class="text-xs text-red-300 mt-1">{{ contentError }}</p>
           </div>

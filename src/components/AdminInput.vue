@@ -167,6 +167,7 @@
         :rows="rows"
         :placeholder="placeholder"
         :disabled="disabled"
+        spellcheck="false"
         :class="[
           'w-full px-4 py-3 bg-black/20 border rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all leading-relaxed resize-none',
           error ? 'border-red-400/70' : 'border-[#c9c9c9]/20',
@@ -179,6 +180,7 @@
         type="text"
         :placeholder="placeholder"
         :disabled="disabled"
+        spellcheck="false"
         :class="[
           'w-full px-4 py-2.5 bg-black/20 border rounded-lg text-[#e0e0e0] focus:outline-none focus:border-red-300/50 transition-all',
           error ? 'border-red-400/70' : 'border-[#c9c9c9]/20',

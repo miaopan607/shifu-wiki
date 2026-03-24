@@ -1189,12 +1189,14 @@
                 v-autosize
                 rows="1"
                 placeholder="链接描述"
+                spellcheck="false"
                 class="w-1/3 px-3 py-2 bg-black/20 border border-[#c9c9c9]/20 rounded text-[#e0e0e0] resize-none"
               ></textarea>
               <input
                 v-model="link.url"
                 type="text"
                 placeholder="链接地址"
+                spellcheck="false"
                 class="flex-1 px-3 py-2 bg-black/20 border border-[#c9c9c9]/20 rounded text-[#e0e0e0] text-sm"
               />
               <button tabindex="-1" class="text-red-400 hover:text-red-300 p-2" @click="removeOtherLink(index)">
