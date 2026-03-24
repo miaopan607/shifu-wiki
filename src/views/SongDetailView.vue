@@ -108,7 +108,8 @@
       if (album.id === song.value.defaultAlbum) continue;
       items.push({ label: '专辑', value: album.title, icon: 'album', link: `/albums/${album.index || album.id}` });
     }
-    if (song.value.releaseDate) items.push({ label: '发行日期', value: formatDateToDisplay(song.value.releaseDate), icon: 'date' });
+    if (song.value.releaseDate)
+      items.push({ label: '发行日期', value: formatDateToDisplay(song.value.releaseDate), icon: 'date' });
     return items;
   });
 
@@ -423,7 +424,10 @@
               <div class="flex flex-wrap items-center gap-y-2 text-[#888] text-sm tracking-widest mt-4">
                 <template v-for="(item, index) in metaItems" :key="index">
                   <div class="flex items-center">
-                    <div class="flex items-center gap-1.5 group relative" :title="item.label ? `${item.label}：${item.value}` : item.value">
+                    <div
+                      class="flex items-center gap-1.5 group relative"
+                      :title="item.label ? `${item.label}：${item.value}` : item.value"
+                    >
                       <template v-if="item.link">
                         <RouterLink
                           :to="item.link"

@@ -43,14 +43,14 @@
 
 ### albums (专辑)
 
-| 字段名        | 类型     | 说明                               |
-| :------------ | :------- | :--------------------------------- |
-| `id`          | text     | 主键                               |
-| `index`       | number   | 索引                               |
-| `title`       | text     | 专辑名 (必填)                      |
-| `releaseDate` | date     | 发布日期                           |
-| `description` | text     | 描述                               |
-| `links`       | json     | 平台链接                           |
+| 字段名         | 类型     | 说明                               |
+| :------------- | :------- | :--------------------------------- |
+| `id`           | text     | 主键                               |
+| `index`        | number   | 索引                               |
+| `title`        | text     | 专辑名 (必填)                      |
+| `releaseDate`  | date     | 发布日期                           |
+| `description`  | text     | 描述                               |
+| `links`        | json     | 平台链接                           |
 | `otherLinks`   | json     | 其他相关链接                       |
 | `cover`        | file     | [废弃] 专辑封面图片 (单图)         |
 | `defaultCover` | text     | 默认封面: 空, `album_cover:ID`     |

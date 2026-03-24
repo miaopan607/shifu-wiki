@@ -35,7 +35,7 @@ export function useSongCover() {
       const albumId = song.defaultCover.replace('album_cover:', '');
       try {
         const album = await pb.collection('albums').getOne(albumId, { expand: 'album_covers_via_album' });
-        
+
         if (album.defaultCover === 'old_cover') {
           if (album.cover && album.collectionId) {
             return pb.files.getURL(album, album.cover, { thumb: thumbSize });

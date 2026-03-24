@@ -225,11 +225,7 @@ function discardTask(taskId: string): void {
   refreshSchedulerState();
 }
 
-function attachTaskLock(
-  taskId: string,
-  lockId: string,
-  lockCollection: 'galleries' | 'songs' | 'albums'
-): void {
+function attachTaskLock(taskId: string, lockId: string, lockCollection: 'galleries' | 'songs' | 'albums'): void {
   const task = getTask(taskId);
   if (!task) return;
 
@@ -237,10 +233,7 @@ function attachTaskLock(
   task.lockCollection = lockCollection;
 }
 
-function findTaskByTargetId(
-  targetId: string,
-  targetType: 'gallery' | 'song' | 'album'
-): BatchUploadTask | undefined {
+function findTaskByTargetId(targetId: string, targetType: 'gallery' | 'song' | 'album'): BatchUploadTask | undefined {
   return tasks.value.find(task => task.targetId === targetId && task.targetType === targetType);
 }
 
@@ -540,11 +533,7 @@ function retryTask(taskId: string): void {
       file.status = 'pending';
       file.progress = 0;
       file.error = undefined;
-      if (
-        task.type === 'gallery_images' ||
-        task.type === 'song_covers' ||
-        task.type === 'album_covers'
-      ) {
+      if (task.type === 'gallery_images' || task.type === 'song_covers' || task.type === 'album_covers') {
         file.uploadedRecordId = undefined;
       }
     }

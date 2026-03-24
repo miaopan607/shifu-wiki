@@ -14,11 +14,7 @@
   import VersionConflictDialog from '@/components/VersionConflictDialog.vue';
   import AdminInput from '@/components/AdminInput.vue';
   import { normalizeAlbumTracks } from '@/lib/albumTracks';
-  import {
-    batchUpdateSongsDisplay,
-    batchDeleteAlbumCovers,
-    type SongDisplayUpdateItem,
-  } from '@/lib/batchOperations';
+  import { batchUpdateSongsDisplay, batchDeleteAlbumCovers, type SongDisplayUpdateItem } from '@/lib/batchOperations';
   import AppIcon from '@/components/AppIcon.vue';
   import { useUploadStore } from '@/stores/uploadStore';
   import type { BatchUploadTask } from '@/types/upload';
@@ -287,6 +283,104 @@
   const presetPlatforms = ['网易云音乐', '酷狗音乐', 'QQ 音乐', '酷我音乐', '哔哩哔哩'];
   const showPlatformDropdown = ref<number | null>(null);
 
+  // 链接拖拽排序状态
+  const draggedLinkIndex = ref<number | null>(null);
+  const draggedOtherLinkIndex = ref<number | null>(null);
+  const tempLinks = ref<Array<{ name: string; url: string }> | null>(null);
+  const tempOtherLinks = ref<Array<{ name: string; url: string }> | null>(null);
+
+  const previewLinks = computed(() => {
+    if (tempLinks.value) return tempLinks.value;
+    return album.value.links || [];
+  });
+
+  const previewOtherLinks = computed(() => {
+    if (tempOtherLinks.value) return tempOtherLinks.value;
+    return album.value.otherLinks || [];
+  });
+
+  const handleLinkDragStart = (index: number, event: DragEvent) => {
+    if (album.value.links) {
+      tempLinks.value = [...album.value.links];
+    }
+    draggedLinkIndex.value = index;
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.dropEffect = 'move';
+      const transparentImg = new Image();
+      transparentImg.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+      event.dataTransfer.setDragImage(transparentImg, 0, 0);
+    }
+  };
+
+  const handleLinkDragEnd = () => {
+    draggedLinkIndex.value = null;
+    tempLinks.value = null;
+  };
+
+  const handleLinkDragOver = (targetIndex: number, event: DragEvent) => {
+    event.preventDefault();
+    if (draggedLinkIndex.value === null || !tempLinks.value) return;
+    if (draggedLinkIndex.value === targetIndex) return;
+
+    const links = [...tempLinks.value];
+    const [removed] = links.splice(draggedLinkIndex.value, 1);
+    if (!removed) return;
+    links.splice(targetIndex, 0, removed);
+    tempLinks.value = links;
+    draggedLinkIndex.value = targetIndex;
+  };
+
+  const handleLinkDrop = (event: DragEvent) => {
+    event.preventDefault();
+    if (tempLinks.value) {
+      album.value.links = [...tempLinks.value];
+      markChanged();
+    }
+    handleLinkDragEnd();
+  };
+
+  const handleOtherLinkDragStart = (index: number, event: DragEvent) => {
+    if (album.value.otherLinks) {
+      tempOtherLinks.value = [...album.value.otherLinks];
+    }
+    draggedOtherLinkIndex.value = index;
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.dropEffect = 'move';
+      const transparentImg = new Image();
+      transparentImg.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+      event.dataTransfer.setDragImage(transparentImg, 0, 0);
+    }
+  };
+
+  const handleOtherLinkDragEnd = () => {
+    draggedOtherLinkIndex.value = null;
+    tempOtherLinks.value = null;
+  };
+
+  const handleOtherLinkDragOver = (targetIndex: number, event: DragEvent) => {
+    event.preventDefault();
+    if (draggedOtherLinkIndex.value === null || !tempOtherLinks.value) return;
+    if (draggedOtherLinkIndex.value === targetIndex) return;
+
+    const links = [...tempOtherLinks.value];
+    const [removed] = links.splice(draggedOtherLinkIndex.value, 1);
+    if (!removed) return;
+    links.splice(targetIndex, 0, removed);
+    tempOtherLinks.value = links;
+    draggedOtherLinkIndex.value = targetIndex;
+  };
+
+  const handleOtherLinkDrop = (event: DragEvent) => {
+    event.preventDefault();
+    if (tempOtherLinks.value) {
+      album.value.otherLinks = [...tempOtherLinks.value];
+      markChanged();
+    }
+    handleOtherLinkDragEnd();
+  };
+
   const selectPlatform = (index: number, platform: string) => {
     if (album.value.links && album.value.links[index]) {
       album.value.links[index].name = platform;
@@ -382,7 +476,8 @@
           otherLinks: Array.isArray(decodedRecord.otherLinks) ? decodedRecord.otherLinks : [],
           tracks: tracksWithName.length > 0 ? tracksWithName : [{ disc: 1, name: 'Disc 1', songs: [] }],
           // 自动处理兼容性：如果 defaultCover 为空，但存在旧封面，则默认应显示为选用原始封面
-          defaultCover: !decodedRecord.defaultCover && decodedRecord.cover ? 'old_cover' : (decodedRecord.defaultCover || ''),
+          defaultCover:
+            !decodedRecord.defaultCover && decodedRecord.cover ? 'old_cover' : decodedRecord.defaultCover || '',
         } as unknown as Album;
 
         // 加载歌曲名缓存
@@ -1146,7 +1241,20 @@
             </button>
           </div>
           <div class="space-y-3">
-            <div v-for="(link, index) in album.links" :key="index" class="flex gap-3">
+            <div
+              v-for="(link, index) in previewLinks"
+              :key="index"
+              class="flex gap-3 items-center transition-all"
+              :class="{
+                'opacity-40': draggedLinkIndex === index,
+              }"
+              draggable="true"
+              @dragstart="handleLinkDragStart(index, $event)"
+              @dragend="handleLinkDragEnd"
+              @dragover="handleLinkDragOver(index, $event)"
+              @drop="handleLinkDrop($event)"
+            >
+              <AppIcon name="drag" class-name="w-4 h-4 text-[#666] shrink-0 cursor-move" />
               <div class="w-1/3 relative platform-select-container">
                 <div class="flex gap-1">
                   <input
@@ -1214,7 +1322,20 @@
             </button>
           </div>
           <div class="space-y-3">
-            <div v-for="(link, index) in album.otherLinks" :key="index" class="flex gap-3">
+            <div
+              v-for="(link, index) in previewOtherLinks"
+              :key="index"
+              class="flex gap-3 items-center transition-all"
+              :class="{
+                'opacity-40': draggedOtherLinkIndex === index,
+              }"
+              draggable="true"
+              @dragstart="handleOtherLinkDragStart(index, $event)"
+              @dragend="handleOtherLinkDragEnd"
+              @dragover="handleOtherLinkDragOver(index, $event)"
+              @drop="handleOtherLinkDrop($event)"
+            >
+              <AppIcon name="drag" class-name="w-4 h-4 text-[#666] shrink-0 cursor-move" />
               <textarea
                 v-model="link.name"
                 v-autosize
@@ -1467,14 +1588,7 @@
             <AppIcon name="image" class-name="w-5 h-5 text-red-300" /> 专辑封面
           </h2>
 
-          <input
-            ref="fileInput"
-            type="file"
-            accept="image/*"
-            multiple
-            class="hidden"
-            @change="handleCoverSelect"
-          />
+          <input ref="fileInput" type="file" accept="image/*" multiple class="hidden" @change="handleCoverSelect" />
 
           <!-- 默认封面预览 -->
           <div
@@ -1545,7 +1659,10 @@
               </div>
               <div class="flex-1 min-w-0">
                 <p class="text-xs text-[#888] mb-0.5">原始封面</p>
-                <p class="text-sm truncate" :class="album.defaultCover === 'old_cover' ? 'text-red-300' : 'text-[#c9c9c9]'">
+                <p
+                  class="text-sm truncate"
+                  :class="album.defaultCover === 'old_cover' ? 'text-red-300' : 'text-[#c9c9c9]'"
+                >
                   {{ album.cover }}
                 </p>
               </div>

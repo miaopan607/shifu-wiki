@@ -523,6 +523,104 @@
   const showPlatformDropdown = ref<number | null>(null);
   const showAlbumDiscDropdown = ref<string | null>(null);
 
+  // 链接拖拽排序状态
+  const draggedLinkIndex = ref<number | null>(null);
+  const draggedOtherLinkIndex = ref<number | null>(null);
+  const tempLinks = ref<Array<{ name: string; url: string }> | null>(null);
+  const tempOtherLinks = ref<Array<{ name: string; url: string }> | null>(null);
+
+  const previewLinks = computed(() => {
+    if (tempLinks.value) return tempLinks.value;
+    return song.value.links || [];
+  });
+
+  const previewOtherLinks = computed(() => {
+    if (tempOtherLinks.value) return tempOtherLinks.value;
+    return song.value.otherLinks || [];
+  });
+
+  const handleLinkDragStart = (index: number, event: DragEvent) => {
+    if (song.value.links) {
+      tempLinks.value = [...song.value.links];
+    }
+    draggedLinkIndex.value = index;
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.dropEffect = 'move';
+      const transparentImg = new Image();
+      transparentImg.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+      event.dataTransfer.setDragImage(transparentImg, 0, 0);
+    }
+  };
+
+  const handleLinkDragEnd = () => {
+    draggedLinkIndex.value = null;
+    tempLinks.value = null;
+  };
+
+  const handleLinkDragOver = (targetIndex: number, event: DragEvent) => {
+    event.preventDefault();
+    if (draggedLinkIndex.value === null || !tempLinks.value) return;
+    if (draggedLinkIndex.value === targetIndex) return;
+
+    const links = [...tempLinks.value];
+    const [removed] = links.splice(draggedLinkIndex.value, 1);
+    if (!removed) return;
+    links.splice(targetIndex, 0, removed);
+    tempLinks.value = links;
+    draggedLinkIndex.value = targetIndex;
+  };
+
+  const handleLinkDrop = (event: DragEvent) => {
+    event.preventDefault();
+    if (tempLinks.value) {
+      song.value.links = [...tempLinks.value];
+      markChanged();
+    }
+    handleLinkDragEnd();
+  };
+
+  const handleOtherLinkDragStart = (index: number, event: DragEvent) => {
+    if (song.value.otherLinks) {
+      tempOtherLinks.value = [...song.value.otherLinks];
+    }
+    draggedOtherLinkIndex.value = index;
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.dropEffect = 'move';
+      const transparentImg = new Image();
+      transparentImg.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+      event.dataTransfer.setDragImage(transparentImg, 0, 0);
+    }
+  };
+
+  const handleOtherLinkDragEnd = () => {
+    draggedOtherLinkIndex.value = null;
+    tempOtherLinks.value = null;
+  };
+
+  const handleOtherLinkDragOver = (targetIndex: number, event: DragEvent) => {
+    event.preventDefault();
+    if (draggedOtherLinkIndex.value === null || !tempOtherLinks.value) return;
+    if (draggedOtherLinkIndex.value === targetIndex) return;
+
+    const links = [...tempOtherLinks.value];
+    const [removed] = links.splice(draggedOtherLinkIndex.value, 1);
+    if (!removed) return;
+    links.splice(targetIndex, 0, removed);
+    tempOtherLinks.value = links;
+    draggedOtherLinkIndex.value = targetIndex;
+  };
+
+  const handleOtherLinkDrop = (event: DragEvent) => {
+    event.preventDefault();
+    if (tempOtherLinks.value) {
+      song.value.otherLinks = [...tempOtherLinks.value];
+      markChanged();
+    }
+    handleOtherLinkDragEnd();
+  };
+
   const selectPlatform = (index: number, platform: string) => {
     if (song.value.links && song.value.links[index]) {
       song.value.links[index].name = platform;
@@ -1117,7 +1215,20 @@
             </button>
           </div>
           <div class="space-y-3">
-            <div v-for="(link, index) in song.links" :key="index" class="flex gap-3">
+            <div
+              v-for="(link, index) in previewLinks"
+              :key="index"
+              class="flex gap-3 items-center transition-all"
+              :class="{
+                'opacity-40': draggedLinkIndex === index,
+              }"
+              draggable="true"
+              @dragstart="handleLinkDragStart(index, $event)"
+              @dragend="handleLinkDragEnd"
+              @dragover="handleLinkDragOver(index, $event)"
+              @drop="handleLinkDrop($event)"
+            >
+              <AppIcon name="drag" class-name="w-4 h-4 text-[#666] shrink-0 cursor-move" />
               <div class="w-1/3 relative platform-select-container">
                 <div class="flex gap-1">
                   <input
@@ -1183,7 +1294,20 @@
             </button>
           </div>
           <div class="space-y-3">
-            <div v-for="(link, index) in song.otherLinks" :key="index" class="flex gap-3">
+            <div
+              v-for="(link, index) in previewOtherLinks"
+              :key="index"
+              class="flex gap-3 items-center transition-all"
+              :class="{
+                'opacity-40': draggedOtherLinkIndex === index,
+              }"
+              draggable="true"
+              @dragstart="handleOtherLinkDragStart(index, $event)"
+              @dragend="handleOtherLinkDragEnd"
+              @dragover="handleOtherLinkDragOver(index, $event)"
+              @drop="handleOtherLinkDrop($event)"
+            >
+              <AppIcon name="drag" class-name="w-4 h-4 text-[#666] shrink-0 cursor-move" />
               <textarea
                 v-model="link.name"
                 v-autosize
