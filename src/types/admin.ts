@@ -1,4 +1,4 @@
-import type { Gallery, GalleryImage, SongCover } from './index';
+import type { Gallery, GalleryImage, SongCover, ActivityImage } from './index';
 
 export interface AdminUser {
   id: string;
@@ -42,6 +42,13 @@ export interface SongCoverWithFile extends SongCover {
   localUrl?: string;
   uploadTaskFileId?: string;
   showDelete?: boolean;
+}
+
+export interface ActivityImageWithFile extends ActivityImage {
+  file?: File;
+  isNew?: boolean;
+  localUrl?: string;
+  uploadTaskFileId?: string;
 }
 
 export interface UploadProgress {

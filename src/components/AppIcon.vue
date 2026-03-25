@@ -25,6 +25,7 @@
       | 'location'
       | 'music'
       | 'users'
+      | 'user'
       | 'tag'
       | 'image'
       | 'file'
@@ -53,6 +54,7 @@
       | 'chevron-down'
       | 'chevron-right'
       | 'external-link'
+      | 'external'
       | 'pause'
       | 'play'
       | 'link'
@@ -60,6 +62,8 @@
       | 'save'
       // 时间图标
       | 'clock'
+      // 活动相关图标
+      | 'ticket'
       // 平台图标
       | 'netease'
       | 'qq-music'
@@ -396,6 +400,19 @@
     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
     <circle cx="9" cy="7" r="4" />
     <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+  </svg>
+
+  <!-- 单个用户图标 -->
+  <svg
+    v-else-if="name === 'user'"
+    :class="className || 'w-3.5 h-3.5 opacity-70'"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+  >
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+    <circle cx="12" cy="7" r="4" />
   </svg>
 
   <!-- 标签图标 -->
@@ -768,6 +785,25 @@
     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5v14h14" />
   </svg>
 
+  <!-- 外部链接（简短别名） -->
+  <svg
+    v-else-if="name === 'external'"
+    :class="className || 'w-4 h-4'"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+  >
+    <path
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="2"
+      d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+    />
+    <polyline points="15 3 21 3 21 9" />
+    <line x1="10" y1="14" x2="21" y2="3" />
+  </svg>
+
   <!-- 暂停 -->
   <svg
     v-else-if="name === 'pause'"
@@ -859,6 +895,23 @@
   >
     <circle cx="12" cy="12" r="10" />
     <polyline points="12 6 12 12 16 14" />
+  </svg>
+
+  <!-- 票档图标 -->
+  <svg
+    v-else-if="name === 'ticket'"
+    :class="className || 'w-5 h-5'"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+  >
+    <path
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="2"
+      d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"
+    />
   </svg>
 
   <!-- ========== 平台图标 ========== -->

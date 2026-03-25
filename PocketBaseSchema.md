@@ -86,17 +86,21 @@
 
 ### activities (活动)
 
-| 字段名        | 类型     | 说明                            |
-| :------------ | :------- | :------------------------------ |
-| `id`          | text     | 主键                            |
-| `index`       | number   | 索引                            |
-| `title`       | text     | 标题 (必填)                     |
-| `timeSlots`   | json     | 时间段数组 (ActivityTimeSlot[]) |
-| `location`    | text     | 地点                            |
-| `tags`        | json     | 标签数组 (string[])             |
-| `description` | text     | 活动详情 (Markdown)             |
-| `created`     | autodate | 创建时间                        |
-| `updated`     | autodate | 更新时间                        |
+| 字段名            | 类型     | 说明                            |
+| :---------------- | :------- | :------------------------------ |
+| `id`              | text     | 主键                            |
+| `index`           | number   | 索引                            |
+| `title`           | text     | 标题 (必填)                     |
+| `timeSlots`       | json     | 时间段数组 (ActivityTimeSlot[]) |
+| `location`        | text     | 地点                            |
+| `saleStartTimes`  | json     | 起售时间数组 (string[])         |
+| `ticketTiers`     | json     | 票档数组 (TicketTier[])         |
+| `ticketPlatforms` | json     | 开票平台数组 (TicketPlatform[]) |
+| `lineup`          | json     | 阵容数组 (string[])             |
+| `tags`            | json     | 标签数组 (string[])             |
+| `description`     | text     | 活动详情 (Markdown)             |
+| `created`         | autodate | 创建时间                        |
+| `updated`         | autodate | 更新时间                        |
 
 `timeSlots` JSON 结构示例:
 
@@ -110,6 +114,57 @@
 - `type`: 时间类型 - `datetime`(详细时间) 或 `date`(仅日期)
 - `start`: 开始时间 (ISO8601 格式)。若 `type` 为 `date`，时间固定为零点 (`00:00:00.000Z`)
 - `end`: 可选的结束时间 (ISO8601 格式)。规则同 `start`
+
+`saleStartTimes` JSON 结构示例:
+
+```json
+["2024-01-10T10:00:00.000Z", "2024-01-12T14:00:00.000Z"]
+```
+
+ISO8601 格式的起售时间字符串数组。
+
+`ticketTiers` JSON 结构示例:
+
+```json
+[{ "price": "￥580", "name": "VIP票", "description": "前排座位+签名海报" }, { "price": "￥280" }]
+```
+
+- `price`: 价格文本（必填）
+- `name`: 票档名称（可选）
+- `description`: 票档描述/权益说明（可选）
+
+`ticketPlatforms` JSON 结构示例:
+
+```json
+[
+  { "name": "大麦", "url": "https://www.damai.cn/..." },
+  { "name": "猫眼", "url": "https://www.maoyan.com/..." }
+]
+```
+
+- `name`: 平台名称（必填）
+- `url`: 购票链接（可选）
+
+`lineup` JSON 结构示例:
+
+```json
+["黄诗扶", "特邀嘉宾A", "主持人B"]
+```
+
+简单的艺人名称字符串数组。
+
+### activity_images (活动图片 - 关联 activities)
+
+| 字段名           | 类型     | 说明                     |
+| :--------------- | :------- | :----------------------- |
+| `id`             | text     | 主键                     |
+| `image`          | file     | 图片文件 (必填)          |
+| `activity`       | relation | 关联到 activities (必填) |
+| `sort`           | number   | 排序权重                 |
+| `uploadBatchId`  | text     | 批量上传ID               |
+| `clientUploadId` | text     | 客户端上传标识           |
+| `created`        | autodate | 创建时间                 |
+| `updated`        | autodate | 更新时间                 |
 
 ### galleries (图集)
 
@@ -180,7 +235,7 @@
 | `id`                | text     | 主键                                                     |
 | `status`            | text     | 批次状态: `open`, `cancelling`, `cancelled`, `completed` |
 | `ownerId`           | text     | 创建者用户ID                                             |
-| `targetType`        | text     | 目标类型: `gallery` 或 `song`                            |
+| `targetType`        | text     | 目标类型: `gallery`、`song` 或 `activity`                |
 | `targetId`          | text     | 目标记录ID                                               |
 | `targetName`        | text     | 目标名称（用于显示）                                     |
 | `snapshotCoverName` | text     | 封面快照名称（可选）                                     |

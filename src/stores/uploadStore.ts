@@ -88,7 +88,12 @@ function getTask(taskId: string): BatchUploadTask | undefined {
 }
 
 function taskUsesRemoteUploadBatch(task: BatchUploadTask): boolean {
-  return task.type === 'gallery_images' || task.type === 'song_covers' || task.type === 'album_covers';
+  return (
+    task.type === 'gallery_images' ||
+    task.type === 'song_covers' ||
+    task.type === 'album_covers' ||
+    task.type === 'activity_images'
+  );
 }
 
 function getActiveRequestCount(taskId?: string): number {
@@ -225,7 +230,11 @@ function discardTask(taskId: string): void {
   refreshSchedulerState();
 }
 
-function attachTaskLock(taskId: string, lockId: string, lockCollection: 'galleries' | 'songs' | 'albums'): void {
+function attachTaskLock(
+  taskId: string,
+  lockId: string,
+  lockCollection: 'galleries' | 'songs' | 'albums' | 'activities'
+): void {
   const task = getTask(taskId);
   if (!task) return;
 
@@ -233,11 +242,14 @@ function attachTaskLock(taskId: string, lockId: string, lockCollection: 'galleri
   task.lockCollection = lockCollection;
 }
 
-function findTaskByTargetId(targetId: string, targetType: 'gallery' | 'song' | 'album'): BatchUploadTask | undefined {
+function findTaskByTargetId(
+  targetId: string,
+  targetType: 'gallery' | 'song' | 'album' | 'activity'
+): BatchUploadTask | undefined {
   return tasks.value.find(task => task.targetId === targetId && task.targetType === targetType);
 }
 
-function startPendingTasks(targetId: string, targetType: 'gallery' | 'song' | 'album'): void {
+function startPendingTasks(targetId: string, targetType: 'gallery' | 'song' | 'album' | 'activity'): void {
   tasks.value.forEach(task => {
     if (
       task.targetType === targetType &&
@@ -363,7 +375,13 @@ async function rollbackCancelledTaskUploads(task: BatchUploadTask): Promise<void
   }
 
   const collectionName =
-    task.type === 'gallery_images' ? 'gallery_images' : task.type === 'song_covers' ? 'song_covers' : null;
+    task.type === 'gallery_images'
+      ? 'gallery_images'
+      : task.type === 'song_covers'
+        ? 'song_covers'
+        : task.type === 'activity_images'
+          ? 'activity_images'
+          : null;
 
   if (collectionName) {
     const uploadedIds = new Set(
@@ -658,6 +676,14 @@ async function uploadSingleFile(task: BatchUploadTask, fileInfo: FileUploadInfo)
       if (fileInfo.sort !== undefined) {
         formData.append('sort', String(fileInfo.sort));
       }
+    } else if (task.type === 'activity_images') {
+      formData.append('image', file);
+      formData.append('activity', task.targetId);
+      formData.append('uploadBatchId', uploadBatchId || '');
+      formData.append('clientUploadId', fileInfo.clientId || fileInfo.id);
+      if (fileInfo.sort !== undefined) {
+        formData.append('sort', String(fileInfo.sort));
+      }
     }
 
     if (task.status === 'cancelled') {
@@ -671,7 +697,14 @@ async function uploadSingleFile(task: BatchUploadTask, fileInfo: FileUploadInfo)
     }
 
     const method = 'POST';
-    const uploadCollectionName = task.type === 'gallery_images' ? 'gallery_images' : 'song_covers';
+    const uploadCollectionName =
+      task.type === 'gallery_images'
+        ? 'gallery_images'
+        : task.type === 'song_covers'
+          ? 'song_covers'
+          : task.type === 'activity_images'
+            ? 'activity_images'
+            : null;
     const url = `${pb.baseUrl}/api/collections/${uploadCollectionName}/records`;
     const request = uploadFileWithXHR(
       url,

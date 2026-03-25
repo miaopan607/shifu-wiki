@@ -125,6 +125,19 @@ export interface ActivityTimeSlot {
 // 默认时间段输入模式配置
 export const DEFAULT_TIME_INPUT_MODE: 'datetime' | 'date' = 'datetime';
 
+// 票档类型
+export interface TicketTier {
+  price: string;
+  name?: string;
+  description?: string;
+}
+
+// 开票平台类型
+export interface TicketPlatform {
+  name: string;
+  url?: string;
+}
+
 export interface Activity {
   id: string;
   collectionId: string;
@@ -133,8 +146,28 @@ export interface Activity {
   updated: string;
   title: string;
   index: number;
-  timeSlots?: ActivityTimeSlot[]; // 多个时间段（替代原来的 date 字段）
+  timeSlots?: ActivityTimeSlot[];
   location?: string;
+  saleStartTimes?: string[];
+  ticketTiers?: TicketTier[];
+  ticketPlatforms?: TicketPlatform[];
+  lineup?: string[];
   tags?: string[];
   description?: string;
+}
+
+export interface ActivityImage {
+  id: string;
+  collectionId: string;
+  collectionName: string;
+  created: string;
+  updated: string;
+  image: string;
+  activity: string;
+  sort?: number;
+  uploadBatchId?: string;
+  clientUploadId?: string;
+  expand?: {
+    activity?: Activity;
+  };
 }

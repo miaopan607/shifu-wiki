@@ -2,17 +2,19 @@
   import { ref, onMounted, computed } from 'vue';
   import { useRoute, useRouter, RouterLink } from 'vue-router';
   import { pb, formatDateTimeToDisplay } from '@/lib/pocketbase';
-  import type { ActivityTimeSlot } from '@/types';
+  import type { ActivityTimeSlot, TicketTier, TicketPlatform, ActivityImage } from '@/types';
   import { marked } from 'marked';
   import AppIcon from '@/components/AppIcon.vue';
 
   const route = useRoute();
   const router = useRouter();
   const activity = ref<any>(null);
+  const images = ref<ActivityImage[]>([]);
   const loading = ref(true);
 
-  // 弹窗相关
   const showTimeModal = ref(false);
+  const showImageModal = ref(false);
+  const currentImageIndex = ref(0);
 
   const renderMarkdown = (content: string | undefined) => {
     if (!content) return '';
@@ -21,7 +23,6 @@
 
   const THEME_COLOR = 'rgb(77,0,0)';
 
-  // 元数据项配置
   interface MetaItem {
     label?: string;
     value: string;
@@ -32,7 +33,6 @@
   const metaItems = computed<MetaItem[]>(() => {
     if (!activity.value) return [];
     const items: MetaItem[] = [];
-    // 显示日期（可点击）
     const timeSlots = parseTimeSlots(activity.value.timeSlots);
     if (timeSlots.length > 0) {
       const dateDisplay = getFirstDate(timeSlots);
@@ -45,10 +45,27 @@
       }
     }
     if (activity.value.location) items.push({ value: activity.value.location, icon: 'location' });
+    if (activity.value.saleStartTimes && activity.value.saleStartTimes.length > 0) {
+      const times = activity.value.saleStartTimes as string[];
+      const firstTime = formatDateTimeToDisplay(times[0]!);
+      items.push({
+        label: '开票',
+        value: times.length > 1 ? `${firstTime} 等 ${times.length} 个时间` : firstTime,
+        icon: 'ticket',
+      });
+    }
     return items;
   });
 
-  // 解析时间段数据
+  const hasExtraInfo = computed(() => {
+    return (
+      (activity.value?.ticketTiers && activity.value.ticketTiers.length > 0) ||
+      (activity.value?.ticketPlatforms && activity.value.ticketPlatforms.length > 0) ||
+      (activity.value?.lineup && activity.value.lineup.length > 0) ||
+      images.value.length > 0
+    );
+  });
+
   const parseTimeSlots = (raw: unknown): ActivityTimeSlot[] => {
     if (!raw) return [];
     if (Array.isArray(raw)) {
@@ -57,7 +74,6 @@
         let start = slot.start || '';
         let end = slot.end || undefined;
 
-        // 如果是日期类型，提取日期部分 YYYY-MM-DD
         if (type === 'date') {
           if (start.includes('T')) start = start.split('T')[0];
           if (start.includes(' ')) start = start.split(' ')[0];
@@ -71,7 +87,6 @@
     return [];
   };
 
-  // 获取第一个日期
   const getFirstDate = (slots: ActivityTimeSlot[]): string => {
     if (slots.length === 0) return '';
     const firstSlot = slots[0];
@@ -79,35 +94,59 @@
     return extractDate(firstSlot.start);
   };
 
-  // 从时间字符串提取日期
   const extractDate = (timeStr: string): string => {
     if (!timeStr) return '';
     return timeStr.split('T')[0]?.split(' ')[0] || timeStr;
   };
 
-  // 打开时间段弹窗
   const openTimeModal = () => {
     showTimeModal.value = true;
   };
 
-  // 关闭弹窗
   const closeTimeModal = () => {
     showTimeModal.value = false;
   };
 
-  // 格式化弹窗中的时间段显示
   const formatSlotForModal = (slot: ActivityTimeSlot, index: number): string => {
     const date = extractDate(slot.start);
     if (slot.type === 'date') {
       return `${index + 1}. ${date}`;
     }
-    // 详细时间模式
     const startTime = formatDateTimeToDisplay(slot.start);
     const endTime = slot.end ? formatDateTimeToDisplay(slot.end) : null;
     if (endTime) {
       return `${index + 1}. ${startTime} - ${endTime}`;
     }
     return `${index + 1}. ${startTime} 开始`;
+  };
+
+  const openImageModal = (index: number) => {
+    currentImageIndex.value = index;
+    showImageModal.value = true;
+  };
+
+  const closeImageModal = () => {
+    showImageModal.value = false;
+  };
+
+  const prevImage = () => {
+    if (currentImageIndex.value > 0) {
+      currentImageIndex.value--;
+    } else {
+      currentImageIndex.value = images.value.length - 1;
+    }
+  };
+
+  const nextImage = () => {
+    if (currentImageIndex.value < images.value.length - 1) {
+      currentImageIndex.value++;
+    } else {
+      currentImageIndex.value = 0;
+    }
+  };
+
+  const getImageUrl = (image: ActivityImage, thumb?: string): string => {
+    return pb.files.getURL(image, image.image, thumb ? { thumb } : undefined);
   };
 
   onMounted(async () => {
@@ -121,6 +160,12 @@
       activity.value = await pb.collection('activities').getFirstListItem(`index=${index}`);
       if (activity.value) {
         document.title = `${activity.value.title} | 黄诗扶 Wiki`;
+
+        const imagesRes = await pb.collection('activity_images').getFullList({
+          filter: `activity = "${activity.value.id}"`,
+          sort: 'sort',
+        });
+        images.value = imagesRes as ActivityImage[];
       }
     } catch (error) {
       console.error('Failed to fetch activity:', error);
@@ -152,6 +197,7 @@
               <div class="flex items-center">
                 <div class="flex items-center gap-1.5">
                   <AppIcon :name="item.icon as any" />
+                  <span v-if="item.label" class="text-[#c9c9c9]/60">{{ item.label }}：</span>
                   <span
                     :class="{
                       'cursor-pointer hover:text-red-300 hover:underline': item.clickable,
@@ -167,11 +213,90 @@
         </header>
         <hr class="border-[#c9c9c9]/30 mb-8" />
 
+        <!-- 阵容 -->
+        <div
+          v-if="activity.lineup && activity.lineup.length > 0"
+          class="mb-8 p-6 bg-black/20 rounded-xl border border-[#c9c9c9]/10"
+        >
+          <h2 class="text-xl text-[#c9c9c9] mb-4 flex items-center gap-2">
+            <AppIcon name="user" class-name="w-5 h-5 text-red-300" />
+            阵容
+          </h2>
+          <p class="text-[#c9c9c9]">
+            {{ activity.lineup.join('、') }}
+          </p>
+        </div>
+
+        <!-- 票档 -->
+        <div
+          v-if="activity.ticketTiers && activity.ticketTiers.length > 0"
+          class="mb-8 p-6 bg-black/20 rounded-xl border border-[#c9c9c9]/10"
+        >
+          <h2 class="text-xl text-[#c9c9c9] mb-4 flex items-center gap-2">
+            <AppIcon name="ticket" class-name="w-5 h-5 text-red-300" />
+            票档
+          </h2>
+          <div class="space-y-3">
+            <div
+              v-for="(tier, index) in activity.ticketTiers"
+              :key="index"
+              class="flex items-start justify-between py-2 border-b border-[#c9c9c9]/10 last:border-0"
+            >
+              <div>
+                <span v-if="tier.name" class="text-[#c9c9c9]">{{ tier.name }}</span>
+                <span v-if="tier.description" class="text-sm text-[#888] ml-2">{{ tier.description }}</span>
+              </div>
+              <span class="text-red-300 font-medium">{{ tier.price }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 开票平台 -->
+        <div
+          v-if="activity.ticketPlatforms && activity.ticketPlatforms.length > 0"
+          class="mb-8 p-6 bg-black/20 rounded-xl border border-[#c9c9c9]/10"
+        >
+          <h2 class="text-xl text-[#c9c9c9] mb-4 flex items-center gap-2">
+            <AppIcon name="link" class-name="w-5 h-5 text-red-300" />
+            购票渠道
+          </h2>
+          <div class="flex flex-wrap gap-3">
+            <a
+              v-for="(platform, index) in activity.ticketPlatforms"
+              :key="index"
+              :href="platform.url || '#'"
+              :target="platform.url ? '_blank' : undefined"
+              class="inline-flex items-center gap-2 px-4 py-2 bg-red-300/10 hover:bg-red-300/20 text-red-300 rounded-lg transition-colors"
+            >
+              {{ platform.name }}
+              <AppIcon v-if="platform.url" name="external" class-name="w-4 h-4" />
+            </a>
+          </div>
+        </div>
+
         <!-- 活动正文内容 -->
         <div
           class="prose prose-invert mx-auto content-container text-lg leading-relaxed text-[#c9c9c9]"
           v-html="renderMarkdown(activity.description || '暂无详细介绍')"
         ></div>
+
+        <!-- 相关图片 -->
+        <div v-if="images.length > 0" class="mt-12">
+          <h2 class="text-xl text-[#c9c9c9] mb-4 flex items-center gap-2">
+            <AppIcon name="image" class-name="w-5 h-5 text-red-300" />
+            相关图片
+          </h2>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div
+              v-for="(image, index) in images"
+              :key="image.id"
+              class="aspect-square rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
+              @click="openImageModal(index)"
+            >
+              <img :src="getImageUrl(image, '400x400')" :alt="`图片 ${index + 1}`" class="w-full h-full object-cover" />
+            </div>
+          </div>
+        </div>
       </article>
     </div>
 
@@ -208,9 +333,55 @@
         </div>
       </div>
     </div>
+
+    <!-- 图片查看弹窗 -->
+    <div
+      v-if="showImageModal"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
+      @click="closeImageModal"
+    >
+      <button
+        class="absolute top-4 right-4 p-2 text-white/60 hover:text-white transition-colors z-10"
+        @click="closeImageModal"
+      >
+        <AppIcon name="close" class-name="w-8 h-8" />
+      </button>
+
+      <button
+        class="absolute left-4 top-1/2 -translate-y-1/2 p-2 text-white/60 hover:text-white transition-colors z-10"
+        @click.stop="prevImage"
+      >
+        <AppIcon name="chevron-left" class-name="w-8 h-8" />
+      </button>
+
+      <button
+        class="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-white/60 hover:text-white transition-colors z-10"
+        @click.stop="nextImage"
+      >
+        <AppIcon name="chevron-right" class-name="w-8 h-8" />
+      </button>
+
+      <img
+        v-if="images[currentImageIndex]"
+        :src="getImageUrl(images[currentImageIndex]!)"
+        :alt="`图片 ${currentImageIndex + 1}`"
+        class="max-h-[90vh] max-w-[90vw] object-contain"
+        @click.stop
+      />
+
+      <div class="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/60 text-sm">
+        {{ currentImageIndex + 1 }} / {{ images.length }}
+      </div>
+    </div>
   </main>
 </template>
 
 <style scoped>
-  /* Scoped styles can be added here if needed */
+  .prose :deep(a) {
+    color: #fca5a5;
+    text-decoration: none;
+  }
+  .prose :deep(a:hover) {
+    text-decoration: underline;
+  }
 </style>

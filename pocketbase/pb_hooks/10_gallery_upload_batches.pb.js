@@ -14,8 +14,8 @@ routerAdd('POST', '/api/shifu/upload-batches', e => {
   e.bindBody(data);
 
   const targetType = String(data.targetType || 'gallery');
-  if (targetType !== 'gallery' && targetType !== 'song' && targetType !== 'album') {
-    throw new BadRequestError('当前只支持图库图片、音乐封面或专辑封面的上传批次');
+  if (targetType !== 'gallery' && targetType !== 'song' && targetType !== 'album' && targetType !== 'activity') {
+    throw new BadRequestError('当前只支持图库图片、音乐封面、专辑封面或活动图片的上传批次');
   }
 
   const collection = e.app.findCollectionByNameOrId('upload_batches');
@@ -88,6 +88,13 @@ routerAdd('POST', '/api/shifu/upload-batches/{batchId}/cancel', e => {
     } catch (error) {
       cleanupSucceeded = false;
       console.log('[upload batch] cancel cleanup album_covers failed:', batch.id, error);
+    }
+  } else if (targetType === 'activity') {
+    try {
+      cleanupCollectionByBatchId(e.app, 'activity_images', batch.id);
+    } catch (error) {
+      cleanupSucceeded = false;
+      console.log('[upload batch] cancel cleanup activity_images failed:', batch.id, error);
     }
   }
 
@@ -313,6 +320,82 @@ onRecordAfterCreateSuccess(e => {
   return e.next();
 }, 'song_covers');
 
+// === Record hooks for activity_images ===
+
+onRecordCreateRequest(e => {
+  const uploadBatchId = String(e.record.get('uploadBatchId') || '');
+  const clientUploadId = String(e.record.get('clientUploadId') || '');
+
+  if (!uploadBatchId || !clientUploadId) {
+    return e.next();
+  }
+
+  const batch = e.app.findRecordById('upload_batches', uploadBatchId);
+  const batchStatus = String(batch.get('status') || '');
+
+  if (batchStatus === 'cancelling' || batchStatus === 'cancelled') {
+    throw new BadRequestError('上传批次已取消，请刷新页面后重试');
+  }
+
+  const ownerId = String(batch.get('ownerId') || '');
+  if (ownerId) {
+    if (!e.auth || ownerId !== e.auth.id) {
+      throw new ForbiddenError('你不能向其他人的上传批次写入图片');
+    }
+  }
+
+  let targetType = String(batch.get('targetType') || '');
+  const targetId = String(batch.get('targetId') || '');
+  const recordActivityId = String(e.record.get('activity') || '');
+
+  if (!recordActivityId) {
+    throw new BadRequestError('上传图片缺少目标活动 ID');
+  }
+
+  if (targetType !== 'activity') {
+    batch.set('targetType', 'activity');
+    e.app.save(batch);
+    targetType = 'activity';
+  }
+
+  if (!targetId || targetId === 'new') {
+    batch.set('targetId', recordActivityId);
+    e.app.save(batch);
+    return e.next();
+  }
+
+  if (recordActivityId !== targetId) {
+    throw new BadRequestError('上传批次与目标活动不匹配');
+  }
+
+  return e.next();
+}, 'activity_images');
+
+onRecordAfterCreateSuccess(e => {
+  const uploadBatchId = String(e.record.get('uploadBatchId') || '');
+
+  if (!uploadBatchId) {
+    return e.next();
+  }
+
+  try {
+    const batch = e.app.findRecordById('upload_batches', uploadBatchId);
+    const batchStatus = String(batch.get('status') || '');
+    if (batchStatus === 'cancelling' || batchStatus === 'cancelled') {
+      e.app.delete(e.record);
+    }
+  } catch (error) {
+    console.log('[activity_images upload batch] remove late record failed batch check:', error);
+    try {
+      e.app.delete(e.record);
+    } catch (deleteError) {
+      console.log('[activity_images upload batch] late record cleanup failed:', deleteError);
+    }
+  }
+
+  return e.next();
+}, 'activity_images');
+
 // === Cron: cleanup cancelled upload batches ===
 
 cronAdd('upload-batch-cancel-cleanup', '*/10 * * * *', () => {
@@ -352,6 +435,10 @@ cronAdd('upload-batch-cancel-cleanup', '*/10 * * * *', () => {
         cleanupCollectionByBatchId($app, 'gallery_images', batch.id);
       } else if (targetType === 'song') {
         cleanupCollectionByBatchId($app, 'song_covers', batch.id);
+      } else if (targetType === 'album') {
+        cleanupCollectionByBatchId($app, 'album_covers', batch.id);
+      } else if (targetType === 'activity') {
+        cleanupCollectionByBatchId($app, 'activity_images', batch.id);
       }
 
       if (String(batch.get('status') || '') === 'cancelling') {

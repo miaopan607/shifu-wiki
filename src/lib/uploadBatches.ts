@@ -5,13 +5,13 @@ export type UploadBatchStatus = 'open' | 'cancelling' | 'completed' | 'cancelled
 interface UploadBatchResponse {
   id: string;
   status: UploadBatchStatus;
-  targetType: 'gallery' | 'song' | 'album';
+  targetType: 'gallery' | 'song' | 'album' | 'activity';
   targetId: string;
   targetName: string;
 }
 
 type CreateUploadBatchPayload = {
-  targetType: 'gallery' | 'song' | 'album';
+  targetType: 'gallery' | 'song' | 'album' | 'activity';
   targetId: string;
   targetName: string;
 };

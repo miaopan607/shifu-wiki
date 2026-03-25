@@ -81,3 +81,21 @@ export async function batchUpdateSongsDisplay(items: SongDisplayUpdateItem[]): P
     requestKey: null,
   });
 }
+
+// === Activity Images ===
+
+export async function batchDeleteActivityImages(ids: string[]): Promise<BatchDeleteResponse> {
+  return pb.send<BatchDeleteResponse>('/api/shifu/activity-images/batch-delete', {
+    method: 'POST',
+    body: { ids },
+    requestKey: null,
+  });
+}
+
+export async function batchUpdateActivityImageSort(items: SortItem[]): Promise<BatchUpdateSortResponse> {
+  return pb.send<BatchUpdateSortResponse>('/api/shifu/activity-images/batch-update-sort', {
+    method: 'POST',
+    body: { items },
+    requestKey: null,
+  });
+}
